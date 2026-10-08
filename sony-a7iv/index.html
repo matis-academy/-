@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Sony α7 IV — 3D</title>
+  <meta name="description" content="Интерактивная 3D-модель Sony α7 IV: наведите на кнопку, чтобы узнать её назначение по официальной инструкции.">
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.min.js" } }
+  </script>
+</head>
+<body>
+  <div id="app">
+    <main id="stage">
+      <canvas id="scene" aria-label="3D-модель камеры Sony α7 IV"></canvas>
+
+      <header class="title">
+        <div class="eyebrow" data-i18n="eyebrow">Интерактивная 3D-модель</div>
+        <h1>Sony α7 IV <span>ILCE-7M4</span></h1>
+        <p class="hint" data-i18n="hint">Наведите на кнопку — она подсветится и появится описание. Вращайте модель мышью, колесо — масштаб.</p>
+      </header>
+
+      <div class="toolbar" role="toolbar">
+        <button class="tb" data-view="front"  data-i18n="vFront">Спереди</button>
+        <button class="tb" data-view="top"    data-i18n="vTop">Сверху</button>
+        <button class="tb" data-view="rear"   data-i18n="vRear">Сзади</button>
+        <button class="tb" data-view="left"   data-i18n="vLeft">Разъёмы</button>
+        <button class="tb" data-view="right"  data-i18n="vRight">Слоты</button>
+        <button class="tb" data-view="bottom" data-i18n="vBottom">Снизу</button>
+        <span class="sep"></span>
+        <button class="tb toggle" id="tLens" aria-pressed="true" data-i18n="tLens">Объектив</button>
+        <button class="tb toggle" id="tScreen" aria-pressed="false" data-i18n="tScreen">Открыть экран</button>
+        <button class="tb toggle" id="tSpin" aria-pressed="false" data-i18n="tSpin">Вращение</button>
+      </div>
+
+      <div id="tip" class="tip" hidden>
+        <div class="tip-head">
+          <span class="badge" id="tipBadge"></span>
+          <div>
+            <div class="tip-name" id="tipName"></div>
+            <div class="tip-alt" id="tipAlt"></div>
+          </div>
+        </div>
+        <div class="tip-group" id="tipGroup"></div>
+        <div class="tip-body" id="tipBody"></div>
+      </div>
+
+      <div class="loading" id="loading">Загрузка модели…</div>
+    </main>
+
+    <aside id="panel">
+      <div class="panel-head">
+        <div class="lang" role="group" aria-label="Language">
+          <button class="lang-b" data-lang="ru" aria-pressed="true">RU</button>
+          <button class="lang-b" data-lang="en" aria-pressed="false">EN</button>
+        </div>
+        <h2 data-i18n="controls">Органы управления</h2>
+        <input id="search" type="search" placeholder="Поиск: Fn, ISO, видео…" data-i18n-ph="search" autocomplete="off">
+      </div>
+      <nav id="list" aria-label="Список кнопок"></nav>
+      <footer class="src">
+        <span data-i18n="source">Источник:</span>
+        <a href="https://helpguide.sony.net/ilc/2110/v1/en/index.html" target="_blank" rel="noopener">Sony Help Guide ILCE-7M4</a>
+        <span class="note" data-i18n="disclaimer">3D-модель упрощённая; расположение органов управления — по инструкции.</span>
+      </footer>
+    </aside>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
