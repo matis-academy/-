@@ -733,6 +733,7 @@ let lensOn = true, screenOpen = false;
 const I18N = {
   ru: {
     eyebrow: 'Интерактивная 3D-модель', hint: 'Наведите на кнопку — она подсветится и появится описание. Вращайте модель мышью, колесо — масштаб.',
+    hintM: 'Нажмите на любую кнопку камеры', views: '☰ Виды',
     vFront: 'Спереди', vTop: 'Сверху', vRear: 'Сзади', vLeft: 'Разъёмы', vRight: 'Слоты', vBottom: 'Снизу',
     tLens: 'Объектив', tScreen: 'Открыть экран', tSpin: 'Вращение', controls: 'Органы управления', search: 'Поиск: Fn, ISO, видео…',
     source: 'Источник:', disclaimer: '3D-модель упрощённая; расположение и назначение органов управления — по официальной инструкции.',
@@ -740,6 +741,7 @@ const I18N = {
   },
   en: {
     eyebrow: 'Interactive 3D model', hint: 'Hover a control to highlight it and see what it does. Drag to rotate, scroll to zoom.',
+    hintM: 'Tap any control on the camera', views: '☰ Views',
     vFront: 'Front', vTop: 'Top', vRear: 'Rear', vLeft: 'Ports', vRight: 'Card slots', vBottom: 'Bottom',
     tLens: 'Lens', tScreen: 'Open screen', tSpin: 'Auto-rotate', controls: 'Controls', search: 'Search: Fn, ISO, movie…',
     source: 'Source:', disclaimer: 'Simplified 3D model; control layout and functions follow the official Help Guide.',
@@ -748,6 +750,10 @@ const I18N = {
 };
 
 const listEl = document.getElementById('list');
+const panel = document.getElementById('panel');
+const toolbar = document.getElementById('toolbar');
+const mobileMQ = matchMedia('(max-width: 860px)');
+const isMobile = () => mobileMQ.matches;
 const tip = document.getElementById('tip');
 const dot = document.createElement('div');
 dot.className = 'anchor-dot';
@@ -769,9 +775,13 @@ function buildList() {
       const other = lang === 'ru' ? 'en' : 'ru';
       b.innerHTML = `<span class="badge ${p.label ? '' : 'dot'}">${p.label || ''}</span>
         <span><div class="item-name">${p[lang]}</div><div class="item-alt">${p[other]}</div></span>`;
-      b.addEventListener('mouseenter', () => setHover(p.id, 'list'));
-      b.addEventListener('mouseleave', () => setHover(null, 'list'));
-      b.addEventListener('click', () => { pinnedId = p.id; focusPart(p.id); refresh(); });
+      b.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') setHover(p.id, 'list'); });
+      b.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') setHover(null, 'list'); });
+      b.addEventListener('click', () => {
+        pinnedId = p.id; hoverId = null;
+        if (isMobile()) { setSheet(false); document.getElementById('search').blur(); }
+        focusPart(p.id); refresh();
+      });
       listEl.appendChild(b);
     }
   }
@@ -853,11 +863,13 @@ function placeTip() {
   if (id === 'monitor') tmpV.copy(rec.meshes[0].getWorldPosition(new THREE.Vector3()));
   tmpV.project(camera);
   const r = stage.getBoundingClientRect();
-  if (tmpV.z > 1) { tip.style.opacity = 0; dot.style.display = 'none'; return; }
   const x = (tmpV.x * 0.5 + 0.5) * r.width;
   const y = (-tmpV.y * 0.5 + 0.5) * r.height;
-  dot.style.display = 'block';
+  const onScreen = tmpV.z <= 1;
+  dot.style.display = onScreen ? 'block' : 'none';
   dot.style.left = `${x}px`; dot.style.top = `${y}px`;
+  if (isMobile()) { tip.style.opacity = 1; tip.style.transform = ''; return; }   // на телефоне подсказка закреплена внизу
+  if (!onScreen) { tip.style.opacity = 0; return; }
   const tw = tip.offsetWidth, th = tip.offsetHeight;
   let tx = x + 26, ty = y - 24;
   if (tx + tw > r.width - 12) tx = x - 26 - tw;
@@ -923,12 +935,12 @@ function focusPart(id) {
   const rec = partObjects.get(id);
   const face = rec.face;
   const target = rec.local.clone().applyMatrix4(cam.matrixWorld).lerp(CENTER, 0.35);
-  flyTo(target, VIEWS[face] || VIEWS.home, face === 'front' && lensOn ? 26 : 19);
+  flyTo(target, VIEWS[face] || VIEWS.home, (face === 'front' && lensOn ? 26 : 19) * (isMobile() ? 1.45 : 1));
 }
 
 document.querySelectorAll('[data-view]').forEach((b) => b.addEventListener('click', () => {
   const v = b.dataset.view;
-  flyTo(CENTER, VIEWS[v], v === 'front' && lensOn ? 30 : 26);
+  flyTo(CENTER, VIEWS[v], (v === 'front' && lensOn ? 30 : 26) * (isMobile() ? 1.3 : 1));
 }));
 document.getElementById('tLens').addEventListener('click', () => setLens(!lensOn));
 document.getElementById('tSpin').addEventListener('click', (e) => {
@@ -942,7 +954,47 @@ document.getElementById('tScreen').addEventListener('click', (e) => {
   applyLang();
 });
 document.querySelectorAll('.lang-b').forEach((b) => b.addEventListener('click', () => { lang = b.dataset.lang; applyLang(); }));
-document.getElementById('search').addEventListener('input', applySearch);
+document.getElementById('search').addEventListener('input', () => { applySearch(); listEl.scrollTop = 0; });
+
+// Телефон: выдвижная панель списка
+function setSheet(open) {
+  panel.classList.toggle('open', open);
+  document.getElementById('sheetHandle').setAttribute('aria-expanded', String(open));
+}
+document.getElementById('sheetHandle').addEventListener('click', () => setSheet(!panel.classList.contains('open')));
+document.getElementById('sheetTitle').addEventListener('click', () => { if (isMobile()) setSheet(!panel.classList.contains('open')); });
+document.getElementById('search').addEventListener('focus', () => { if (isMobile()) setSheet(true); });
+document.getElementById('count').textContent = PARTS.length;
+
+// Панель видов: свернуть / развернуть (запоминается в браузере)
+function setToolbarMin(min) {
+  toolbar.classList.toggle('min', min);
+  const t = document.getElementById('tbToggle');
+  t.setAttribute('aria-expanded', String(!min));
+  t.title = min ? (lang === 'ru' ? 'Показать панель' : 'Show toolbar') : (lang === 'ru' ? 'Скрыть панель' : 'Hide toolbar');
+  try { localStorage.setItem('a7-toolbar-min', min ? '1' : '0'); } catch (e) { /* хранилище недоступно */ }
+}
+document.getElementById('tbToggle').addEventListener('click', () => setToolbarMin(!toolbar.classList.contains('min')));
+try { if (localStorage.getItem('a7-toolbar-min') === '1') setToolbarMin(true); } catch (e) { /* хранилище недоступно */ }
+new ResizeObserver(() => stage.style.setProperty('--tb-h', `${toolbar.offsetHeight}px`)).observe(toolbar);
+
+document.getElementById('tipClose').addEventListener('click', () => { pinnedId = null; hoverId = null; refresh(); });
+
+// На телефоне сдвигаем изображение вверх, чтобы модель не пряталась под подсказкой и панелью видов
+let viewShift = 0;
+function updateViewShift(dt) {
+  let want = 0;
+  if (isMobile()) {
+    const top = document.querySelector('.title').offsetHeight + 12;
+    let bottom = toolbar.offsetHeight + 10;
+    if (!tip.hidden) bottom = tip.offsetHeight + toolbar.offsetHeight + 28;
+    want = (bottom - top) / 2;
+  }
+  viewShift += (want - viewShift) * Math.min(1, dt * 8);
+  const w = renderer.domElement.clientWidth, h = renderer.domElement.clientHeight;
+  if (Math.abs(viewShift) < 0.5) camera.clearViewOffset();
+  else camera.setViewOffset(w, h, 0, viewShift, w, h);
+}
 
 // ───────────────────────── Указатель ─────────────────────────
 const ray = new THREE.Raycaster();
@@ -973,7 +1025,8 @@ canvas.addEventListener('pointerup', (ev) => {
   pinnedId = id;
   if (ev.pointerType !== 'mouse') hoverId = null;
   refresh();
-  if (id) listEl.querySelector(`.item[data-id="${id}"]`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  const item = id && listEl.querySelector(`.item[data-id="${id}"]`);
+  if (item) listEl.scrollTop = item.offsetTop - listEl.clientHeight / 2;   // прокручиваем только список, не панель
 });
 
 // ───────────────────────── Цикл ─────────────────────────
@@ -988,7 +1041,7 @@ new ResizeObserver(resize).observe(stage);
 resize();
 
 controls.target.copy(CENTER);
-camera.position.copy(CENTER).addScaledVector(VIEWS.home.clone().normalize(), camera.aspect < 0.9 ? 40 : 33);
+camera.position.copy(CENTER).addScaledVector(VIEWS.home.clone().normalize(), camera.aspect < 0.9 ? 35 : 33);
 
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 let last = performance.now();
@@ -1005,6 +1058,7 @@ function loop(now) {
   const want = screenOpen ? -Math.PI : 0;
   screenAngle += (want - screenAngle) * Math.min(1, dt * 5);
   monitorPivot.rotation.y = screenAngle;
+  updateViewShift(dt);
   controls.update();
   highlight(now);
   renderer.render(scene, camera);

@@ -19,9 +19,11 @@
         <div class="eyebrow" data-i18n="eyebrow">Интерактивная 3D-модель</div>
         <h1>Sony α7 IV <span>ILCE-7M4</span></h1>
         <p class="hint" data-i18n="hint">Наведите на кнопку — она подсветится и появится описание. Вращайте модель мышью, колесо — масштаб.</p>
+        <p class="hint-m" data-i18n="hintM">Нажмите на любую кнопку камеры</p>
       </header>
 
-      <div class="toolbar" role="toolbar">
+      <div class="toolbar" id="toolbar" role="toolbar">
+        <button class="tb tb-toggle" id="tbToggle" aria-expanded="true" title="Скрыть панель"><span class="tb-x">✕</span><span class="tb-open" data-i18n="views">☰ Виды</span></button>
         <button class="tb" data-view="front"  data-i18n="vFront">Спереди</button>
         <button class="tb" data-view="top"    data-i18n="vTop">Сверху</button>
         <button class="tb" data-view="rear"   data-i18n="vRear">Сзади</button>
@@ -35,6 +37,7 @@
       </div>
 
       <div id="tip" class="tip" hidden>
+        <button class="tip-close" id="tipClose" aria-label="Закрыть">✕</button>
         <div class="tip-head">
           <span class="badge" id="tipBadge"></span>
           <div>
@@ -51,11 +54,14 @@
 
     <aside id="panel">
       <div class="panel-head">
-        <div class="lang" role="group" aria-label="Language">
-          <button class="lang-b" data-lang="ru" aria-pressed="true">RU</button>
-          <button class="lang-b" data-lang="en" aria-pressed="false">EN</button>
+        <button class="sheet-handle" id="sheetHandle" aria-expanded="false" aria-label="Список кнопок"><span></span></button>
+        <div class="ph-row">
+          <h2 id="sheetTitle"><span data-i18n="controls">Органы управления</span> <span class="count" id="count"></span><span class="chev" aria-hidden="true">⌃</span></h2>
+          <div class="lang" role="group" aria-label="Language">
+            <button class="lang-b" data-lang="ru" aria-pressed="true">RU</button>
+            <button class="lang-b" data-lang="en" aria-pressed="false">EN</button>
+          </div>
         </div>
-        <h2 data-i18n="controls">Органы управления</h2>
         <input id="search" type="search" placeholder="Поиск: Fn, ISO, видео…" data-i18n-ph="search" autocomplete="off">
       </div>
       <nav id="list" aria-label="Список кнопок"></nav>
