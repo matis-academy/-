@@ -21,3 +21,5 @@ Settings → Pages → *Deploy from a branch* → выбрать ветку и �
 Страница откроется по адресу `https://matis-academy.github.io/-/sony-a7iv/`.
 
 Локальный запуск: `npx http-server .`, затем открыть `/sony-a7iv/`. Через `file://` страница не заработает, потому что ES-модули требуют HTTP.
+
+**Обновление сайта:** GitHub Pages разрешает браузерам кэшировать файлы на 10 минут. После правок в `style.css`, `main.js` или `parts.js` увеличьте номер `?v=…` в `index.html` и в импорте `parts.js` в `main.js`, иначе у посетителей может открыться новый HTML со старыми стилями.

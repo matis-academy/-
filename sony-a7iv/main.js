@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { RoundedBoxGeometry } from './vendor/RoundedBoxGeometry.js';
 import { RoomEnvironment } from './vendor/RoomEnvironment.js';
-import { PARTS, GROUPS } from './parts.js';
+import { PARTS, GROUPS } from './parts.js?v=3';
 
 // Единицы сцены: 1 = 1 см. Оси: +x — сторона разъёмов, −x — рукоятка,
 // +y — верх, +z — перед (байонет), −z — задняя панель (экран).
