@@ -1,0 +1,831 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Корабль с EMO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Nunito:wght@400;600;700;800&display=swap">
+<style>
+/* Layout: one centered column — the sea scene is the hero, then the route strip, then the grown-up controls */
+:root {
+  --bg: #eaf4f5;
+  --fg: #0e2830;
+  --muted: #4d6a72;
+  --card: #ffffff;
+  --line: #cfe1e4;
+  --sea: #0e7f90;
+  --sea-soft: #d5eef1;
+  --sun: #f5b120;
+  --coral: #e8573a;
+  --glass: rgba(255, 255, 255, 0.86);
+  --display: "Unbounded", "Arial Rounded MT Bold", system-ui, sans-serif;
+  --body: "Nunito", "Segoe UI", system-ui, sans-serif;
+  --radius: 22px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #071519; --fg: #e4f3f5; --muted: #8eb0b7; --card: #0e232a; --line: #1e3e47;
+    --sea: #3cbccd; --sea-soft: #10323a; --sun: #ffc94d; --coral: #ff7a5c;
+    --glass: rgba(7, 21, 25, 0.8); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #071519; --fg: #e4f3f5; --muted: #8eb0b7; --card: #0e232a; --line: #1e3e47;
+  --sea: #3cbccd; --sea-soft: #10323a; --sun: #ffc94d; --coral: #ff7a5c;
+  --glass: rgba(7, 21, 25, 0.8); color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.5; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 48px; display: grid; gap: 20px; }
+
+header { display: grid; gap: 6px; }
+.eyebrow { font-weight: 800; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sea); }
+h1 { font-family: var(--display); font-weight: 800; font-size: clamp(28px, 5vw, 48px); line-height: 1.05; margin: 0; text-wrap: balance; }
+h1 em { font-style: normal; color: var(--coral); }
+.status { margin: 0; color: var(--muted); font-size: 17px; max-width: 65ch; }
+.status b { color: var(--fg); }
+
+/* Scene */
+.scene { position: relative; border-radius: var(--radius); overflow: hidden; background: #8fd8f2; box-shadow: 0 18px 40px -24px rgba(6, 50, 60, 0.55); }
+#scene { display: block; width: 100%; aspect-ratio: 16 / 8.6; cursor: pointer; touch-action: manipulation; }
+.count {
+  position: absolute; top: clamp(12px, 2.6vw, 26px); left: clamp(12px, 2.6vw, 26px);
+  background: var(--glass); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  border-radius: 18px; padding: 14px 20px 16px; display: grid; gap: 2px; max-width: min(360px, 46%);
+}
+.count-label { font-weight: 800; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.count-num { display: flex; align-items: baseline; gap: 10px; font-family: var(--display); font-variant-numeric: tabular-nums; }
+#num { font-weight: 800; font-size: clamp(56px, 9vw, 104px); line-height: 0.95; color: var(--coral); }
+#unit { font-weight: 700; font-size: clamp(20px, 2.6vw, 30px); }
+#sleeps { font-weight: 700; font-size: 16px; line-height: 1.35; }
+.scene-btns { position: absolute; right: clamp(10px, 2vw, 20px); bottom: clamp(10px, 2vw, 20px); display: flex; gap: 8px; }
+.pill {
+  font: 800 15px/1 var(--body); color: var(--fg); background: var(--glass); border: 0; border-radius: 999px;
+  padding: 11px 18px; cursor: pointer; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.pill:hover { transform: translateY(-1px); }
+.pill:focus-visible, .step:focus-visible, .ghost:focus-visible, input:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }
+
+/* Cards */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(16px, 3vw, 28px); display: grid; gap: 18px; min-width: 0; }
+.card h2 { font-family: var(--display); font-weight: 700; font-size: clamp(19px, 2.4vw, 24px); margin: 0; text-wrap: balance; }
+.card-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; }
+.hint { color: var(--muted); font-size: 14px; margin: 0; }
+
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.stat { background: var(--sea-soft); border-radius: 16px; padding: 12px 16px; display: grid; gap: 2px; }
+.stat span { font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.stat b { font-family: var(--display); font-weight: 700; font-size: clamp(18px, 2.6vw, 26px); font-variant-numeric: tabular-nums; }
+
+.map-box { overflow-x: auto; border-radius: 16px; background: var(--sea-soft); }
+#map { display: block; width: 100%; min-width: 640px; height: auto; }
+#map .track-left { fill: none; stroke: var(--muted); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 1 14; opacity: 0.55; }
+#map .track-done { fill: none; stroke: var(--sea); stroke-width: 9; stroke-linecap: round; }
+#map .ripple { fill: none; stroke: var(--sea); stroke-width: 2.5; stroke-linecap: round; opacity: 0.25; }
+#map .stop { fill: var(--card); stroke: var(--sea); stroke-width: 4; }
+#map .stop.done { fill: var(--sea); }
+#map .stop-label { font: 800 21px var(--body); fill: var(--fg); text-anchor: middle; }
+#map .stop-km { font: 600 15px var(--body); fill: var(--muted); text-anchor: middle; font-variant-numeric: tabular-nums; }
+#map .goal { fill: var(--coral); stroke: none; }
+#map .hull { fill: var(--coral); }
+#map .cabin { fill: var(--card); stroke: var(--fg); stroke-width: 2; }
+#map .stack { fill: var(--sun); }
+.where { margin: 0; font-size: 18px; font-weight: 700; }
+.where small { display: block; font-size: 15px; font-weight: 600; color: var(--muted); }
+
+/* Controls */
+.controls { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px 28px; }
+.field { display: grid; gap: 8px; min-width: 0; align-content: start; }
+.field label, .field .lbl { font-weight: 800; font-size: 14px; }
+.stepper { display: flex; align-items: center; gap: 14px; }
+.step {
+  width: 56px; height: 56px; border-radius: 50%; border: 0; background: var(--sea); color: var(--card);
+  font: 800 30px/1 var(--display); cursor: pointer; flex: none;
+}
+.step:active { transform: scale(0.94); }
+.step-val { font-family: var(--display); font-weight: 800; font-size: 40px; min-width: 2.4ch; text-align: center; font-variant-numeric: tabular-nums; }
+.step-unit { color: var(--muted); font-weight: 700; }
+input[type="range"] { width: 100%; accent-color: var(--sea); }
+input[type="date"], input[type="text"] {
+  font: 700 16px var(--body); color: var(--fg); background: var(--bg); border: 1px solid var(--line);
+  border-radius: 12px; padding: 10px 12px; width: 100%;
+}
+.side { display: grid; gap: 14px; align-content: start; }
+.ghost { justify-self: start; font: 700 14px var(--body); color: var(--muted); background: none; border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; cursor: pointer; }
+footer { color: var(--muted); font-size: 13px; text-align: center; }
+
+@media (max-width: 640px) {
+  #scene { aspect-ratio: 1 / 1; }
+  .count { position: static; max-width: none; border-radius: 0; background: var(--card); backdrop-filter: none; -webkit-backdrop-filter: none; padding: 16px; }
+  .scene-btns { bottom: auto; top: 10px; right: 10px; }
+  .stats { grid-template-columns: 1fr; }
+  .stat { display: flex; justify-content: space-between; align-items: baseline; }
+  .controls { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pill:hover { transform: none; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Посылка из Китая</div>
+    <h1>EMO плывёт <em>в Одессу</em></h1>
+    <p class="status" id="status">Корабль вышел из Шанхая.</p>
+  </header>
+
+  <section class="scene" aria-label="Корабль с роботом EMO плывёт по морю">
+    <canvas id="scene" aria-label="Анимация: корабль везёт робота EMO. Нажми на картинку, и EMO обрадуется."></canvas>
+    <div class="count" aria-live="polite">
+      <div class="count-label">До Одессы осталось</div>
+      <div class="count-num"><span id="num">0</span><span id="unit">дней</span></div>
+      <div id="sleeps"></div>
+    </div>
+    <div class="scene-btns">
+      <button class="pill" id="horn" type="button">Гудок!</button>
+      <button class="pill" id="daynight" type="button">Ночь</button>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="route-h">
+    <div class="card-head">
+      <h2 id="route-h">Путь корабля</h2>
+      <p class="hint">Шанхай → Одесса, около 15 400 км по морю</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><span>Проплыли</span><b id="kmDone">0 км</b></div>
+      <div class="stat"><span>Осталось</span><b id="kmLeft">0 км</b></div>
+      <div class="stat"><span>Пройдено пути</span><b id="pct">0%</b></div>
+    </div>
+    <div class="map-box">
+      <svg id="map" viewBox="0 0 1000 270" role="img" aria-label="Маршрут корабля от Шанхая до Одессы">
+        <path class="ripple" d="M90 60 q12 -8 24 0 t24 0"></path>
+        <path class="ripple" d="M470 50 q12 -8 24 0 t24 0"></path>
+        <path class="ripple" d="M760 235 q12 -8 24 0 t24 0"></path>
+        <path class="ripple" d="M230 240 q12 -8 24 0 t24 0"></path>
+        <path id="track" class="track-left" d="M60 175 C 170 60, 270 60, 350 135 S 520 225, 620 145 S 820 55, 945 115"></path>
+        <path id="trackDone" class="track-done" d="M60 175 C 170 60, 270 60, 350 135 S 520 225, 620 145 S 820 55, 945 115"></path>
+        <g id="stops"></g>
+        <g id="mapShip">
+          <g transform="translate(0,-6)">
+            <rect class="stack" x="-10" y="-20" width="9" height="9" rx="1.5"></rect>
+            <rect class="stack" x="1" y="-20" width="9" height="9" rx="1.5"></rect>
+            <rect class="cabin" x="-20" y="-24" width="9" height="13" rx="2"></rect>
+            <path class="hull" d="M-26 -11 L26 -13 Q22 -1 16 5 L-20 5 Q-25 -2 -26 -11 Z"></path>
+          </g>
+        </g>
+      </svg>
+    </div>
+    <p class="where" id="where"></p>
+  </section>
+
+  <section class="card" aria-labelledby="ctl-h">
+    <div class="card-head">
+      <h2 id="ctl-h">Настройка доставки</h2>
+      <p class="hint">Для взрослых: поменяйте срок, если трек-номер показал новую дату</p>
+    </div>
+    <div class="controls">
+      <div class="field">
+        <span class="lbl" id="days-lbl">Сколько дней осталось</span>
+        <div class="stepper" role="group" aria-labelledby="days-lbl">
+          <button class="step" id="minus" type="button" aria-label="На день меньше">−</button>
+          <div><span class="step-val" id="daysVal">0</span> <span class="step-unit" id="daysUnit">дней</span></div>
+          <button class="step" id="plus" type="button" aria-label="На день больше">+</button>
+        </div>
+        <input type="range" id="daysRange" min="0" max="120" step="1" aria-labelledby="days-lbl">
+      </div>
+      <div class="side">
+        <div class="field">
+          <label for="startDate">Корабль вышел из Шанхая</label>
+          <input type="date" id="startDate">
+        </div>
+        <div class="field">
+          <label for="arrivalDate">Приплывёт в Одессу</label>
+          <input type="date" id="arrivalDate">
+        </div>
+        <div class="field">
+          <label for="kidName">Имя получателя (будет на коробке)</label>
+          <input type="text" id="kidName" maxlength="14" placeholder="Например, Миша" autocomplete="off">
+        </div>
+        <button class="ghost" id="reset" type="button">Сбросить настройки</button>
+      </div>
+    </div>
+  </section>
+
+  <footer>Расстояния примерные: Шанхай — Сингапур — Коломбо — Аден — Суэцкий канал — Стамбул — Одесса. Настройки сохраняются в этом браузере.</footer>
+</div>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const DAY = 864e5;
+  const KEY = "emo-ship-v1";
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- Dates & words ---------- */
+  const todayMid = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+  const parseDate = (s) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+  const fmtDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const addDays = (d, n) => { const r = new Date(d); r.setDate(r.getDate() + n); return r; };
+  const diffDays = (a, b) => Math.round((a - b) / DAY);
+  const MONTHS = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+  const WEEKDAYS = ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"];
+  const human = (d) => `${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  function plural(n, one, few, many) {
+    const a = Math.abs(n) % 100, b = a % 10;
+    if (a > 10 && a < 20) return many;
+    if (b > 1 && b < 5) return few;
+    if (b === 1) return one;
+    return many;
+  }
+  const days = (n) => plural(n, "день", "дня", "дней");
+  const fmtKm = (n) => `${Math.round(n / 10) * 10}`.replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " км";
+
+  /* ---------- Route (nautical miles along the sea route) ---------- */
+  const STOPS = [
+    { name: "Шанхай", ins: "Шанхаем", nm: 0 },
+    { name: "Сингапур", ins: "Сингапуром", nm: 2200 },
+    { name: "Коломбо", ins: "Коломбо", nm: 3770 },
+    { name: "Аден", ins: "Аденом", nm: 5870 },
+    { name: "Суэц", ins: "Суэцем", nm: 7170 },
+    { name: "Стамбул", ins: "Стамбулом", nm: 7970 },
+    { name: "Одесса", ins: "Одессой", nm: 8310 },
+  ];
+  const SEAS = ["по Южно-Китайскому морю", "по Индийскому океану", "по Аравийскому морю", "по Красному морю", "по Средиземному морю", "по Чёрному морю"];
+  const TOTAL_NM = STOPS[STOPS.length - 1].nm;
+  const TOTAL_KM = TOTAL_NM * 1.852;
+
+  /* ---------- State ---------- */
+  function defaults() {
+    const t = todayMid();
+    return { start: fmtDate(addDays(t, -12)), arrival: fmtDate(addDays(t, 24)), name: "" };
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* storage blocked */ } }
+  function load() {
+    try {
+      const s = JSON.parse(localStorage.getItem(KEY));
+      if (s && /^\d{4}-\d\d-\d\d$/.test(s.start) && /^\d{4}-\d\d-\d\d$/.test(s.arrival)) return { name: "", ...s };
+    } catch (e) { /* storage blocked */ }
+    const d = defaults();
+    try { localStorage.setItem(KEY, JSON.stringify(d)); } catch (e) { /* storage blocked */ }
+    return d;
+  }
+  let state = load();
+
+  function compute() {
+    const t = todayMid(), st = parseDate(state.start), ar = parseDate(state.arrival);
+    const left = Math.max(0, diffDays(ar, t));
+    const total = Math.max(0, diffDays(ar, st));
+    const elapsed = diffDays(t, st);
+    let p = total > 0 ? elapsed / total : 1;
+    if (left === 0) p = 1;
+    p = Math.min(1, Math.max(0, p));
+    return { left, total, elapsed, p, notYet: elapsed < 0 && left > 0, st, ar };
+  }
+  let info = compute();
+  let shownP = info.p;          // eased progress used by the drawings
+  let night = (() => { const h = new Date().getHours(); return h >= 21 || h < 7; })();
+
+  /* ---------- Map ---------- */
+  const track = $("#track"), trackDone = $("#trackDone"), stopsG = $("#stops"), mapShip = $("#mapShip");
+  const L = track.getTotalLength();
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const stopEls = STOPS.map((s, i) => {
+    const pt = track.getPointAtLength((L * i) / (STOPS.length - 1));
+    const g = document.createElementNS(SVGNS, "g");
+    const last = i === STOPS.length - 1;
+    const above = i % 2 === 0;
+    const c = document.createElementNS(SVGNS, "circle");
+    c.setAttribute("cx", pt.x); c.setAttribute("cy", pt.y); c.setAttribute("r", last ? 15 : 11);
+    c.setAttribute("class", "stop");
+    g.appendChild(c);
+    if (last) {
+      const star = document.createElementNS(SVGNS, "path");
+      const r1 = 9, r2 = 4; let d = "";
+      for (let k = 0; k < 10; k++) {
+        const r = k % 2 ? r2 : r1, a = -Math.PI / 2 + (k * Math.PI) / 5;
+        d += (k ? "L" : "M") + (pt.x + Math.cos(a) * r).toFixed(1) + " " + (pt.y + Math.sin(a) * r).toFixed(1);
+      }
+      star.setAttribute("d", d + "Z"); star.setAttribute("class", "goal");
+      g.appendChild(star);
+    }
+    const t = document.createElementNS(SVGNS, "text");
+    t.setAttribute("x", pt.x); t.setAttribute("y", above ? pt.y - 44 : pt.y + 42);
+    t.setAttribute("class", "stop-label"); t.textContent = s.name;
+    const km = document.createElementNS(SVGNS, "text");
+    km.setAttribute("x", pt.x); km.setAttribute("y", above ? pt.y - 24 : pt.y + 62);
+    km.setAttribute("class", "stop-km"); km.textContent = fmtKm(s.nm * 1.852);
+    g.appendChild(t); g.appendChild(km);
+    stopsG.appendChild(g);
+    return c;
+  });
+
+  // progress (0..1 by distance) -> position along the evenly spaced metro-style track
+  function trackFraction(p) {
+    const nm = p * TOTAL_NM;
+    for (let i = 0; i < STOPS.length - 1; i++) {
+      const a = STOPS[i].nm, b = STOPS[i + 1].nm;
+      if (nm <= b || i === STOPS.length - 2) {
+        const local = Math.min(1, Math.max(0, (nm - a) / (b - a)));
+        return (i + local) / (STOPS.length - 1);
+      }
+    }
+    return 1;
+  }
+  function drawMap(p, t) {
+    const q = trackFraction(p);
+    trackDone.style.strokeDasharray = `${(L * q).toFixed(1)} ${L + 10}`;
+    const at = Math.max(0.01, Math.min(L - 0.01, L * q));
+    const pt = track.getPointAtLength(at);
+    const ahead = track.getPointAtLength(Math.min(L, at + 4));
+    const behind = track.getPointAtLength(Math.max(0, at - 4));
+    const ang = (Math.atan2(ahead.y - behind.y, ahead.x - behind.x) * 180) / Math.PI;
+    const bob = reduceMotion ? 0 : Math.sin(t * 2.2) * 2;
+    mapShip.setAttribute("transform", `translate(${pt.x.toFixed(1)} ${(pt.y + bob).toFixed(1)}) rotate(${(ang * 0.6).toFixed(1)}) scale(1.35)`);
+    stopEls.forEach((c, i) => c.classList.toggle("done", i / (STOPS.length - 1) <= q + 1e-6));
+  }
+
+  /* ---------- Text UI ---------- */
+  function updateText() {
+    info = compute();
+    const { left, elapsed, p, notYet, st, ar, total } = info;
+    $("#num").textContent = left;
+    $("#unit").textContent = days(left);
+    let sleeps;
+    if (left === 0) sleeps = "EMO приплыл! Ура!";
+    else if (left === 1) sleeps = "Последняя ночь! Завтра EMO будет в Одессе.";
+    else sleeps = `Ещё ${left} ${plural(left, "раз", "раза", "раз")} поспать — и EMO приплывёт.`;
+    $("#sleeps").textContent = sleeps;
+
+    let status;
+    if (notYet) status = `Корабль выйдет из Шанхая <b>${human(st)}</b>. Ждём в Одессе <b>${human(ar)}</b>, это ${WEEKDAYS[ar.getDay()]}.`;
+    else if (left === 0) status = `Корабль пришёл в Одессу <b>${human(ar)}</b>. Он был в пути ${total} ${days(total)}.`;
+    else status = `Корабль вышел из Шанхая ${human(st)} и плывёт уже <b>${elapsed} ${days(elapsed)}</b>. Ждём в Одессе <b>${human(ar)}</b>, это ${WEEKDAYS[ar.getDay()]}.`;
+    $("#status").innerHTML = status;
+
+    $("#kmDone").textContent = fmtKm(TOTAL_KM * p);
+    $("#kmLeft").textContent = fmtKm(TOTAL_KM * (1 - p));
+    $("#pct").textContent = Math.round(p * 100) + "%";
+
+    let where;
+    if (notYet) where = "Корабль ещё в порту Шанхая. В него грузят контейнеры и коробку с EMO.<small>Скоро отплываем!</small>";
+    else if (p >= 1) where = "Корабль в порту Одессы!<small>Теперь посылку повезут домой.</small>";
+    else {
+      const nm = p * TOTAL_NM;
+      let i = 0;
+      while (i < STOPS.length - 2 && nm >= STOPS[i + 1].nm) i++;
+      const next = STOPS[i + 1];
+      const daysToNext = Math.max(1, Math.round(((next.nm - nm) / TOTAL_NM) * total));
+      where = `Сейчас корабль плывёт ${SEAS[i]}, между ${STOPS[i].ins} и ${next.ins}.` +
+        `<small>${next.name === "Одесса" ? "Дальше уже Одесса" : "Следующий порт: " + next.name}, примерно через ${daysToNext} ${days(daysToNext)}.</small>`;
+    }
+    $("#where").innerHTML = where;
+
+    // controls
+    const range = $("#daysRange");
+    range.max = Math.max(120, left);
+    range.value = left;
+    $("#daysVal").textContent = left;
+    $("#daysUnit").textContent = days(left);
+    $("#startDate").value = state.start;
+    $("#arrivalDate").value = state.arrival;
+    if (document.activeElement !== $("#kidName")) $("#kidName").value = state.name || "";
+  }
+
+  function setDaysLeft(n) {
+    n = Math.max(0, Math.min(365, Math.round(n)));
+    const t = todayMid();
+    state.arrival = fmtDate(addDays(t, n));
+    if (parseDate(state.start) > parseDate(state.arrival)) state.start = state.arrival;
+    save(); updateText();
+  }
+  $("#minus").addEventListener("click", () => setDaysLeft(info.left - 1));
+  $("#plus").addEventListener("click", () => setDaysLeft(info.left + 1));
+  $("#daysRange").addEventListener("input", (e) => setDaysLeft(+e.target.value));
+  $("#startDate").addEventListener("change", (e) => {
+    if (!e.target.value) return;
+    state.start = e.target.value;
+    if (parseDate(state.start) > parseDate(state.arrival)) state.arrival = state.start;
+    save(); updateText();
+  });
+  $("#arrivalDate").addEventListener("change", (e) => {
+    if (!e.target.value) return;
+    state.arrival = e.target.value;
+    if (parseDate(state.start) > parseDate(state.arrival)) state.start = state.arrival;
+    save(); updateText();
+  });
+  $("#kidName").addEventListener("input", (e) => { state.name = e.target.value.trim(); save(); });
+  $("#reset").addEventListener("click", () => { state = defaults(); save(); updateText(); });
+
+  /* ---------- Sound (starts only from a tap) ---------- */
+  let audio = null;
+  function ac() {
+    try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; }
+    if (audio.state === "suspended") audio.resume();
+    return audio;
+  }
+  function horn() {
+    const a = ac(); if (!a) return;
+    const now = a.currentTime, out = a.createGain(), lp = a.createBiquadFilter();
+    lp.type = "lowpass"; lp.frequency.value = 900;
+    out.gain.setValueAtTime(0, now);
+    out.gain.linearRampToValueAtTime(0.18, now + 0.08);
+    out.gain.setValueAtTime(0.18, now + 1.0);
+    out.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+    lp.connect(out); out.connect(a.destination);
+    [110, 138.6, 165].forEach((f) => {
+      const o = a.createOscillator(); o.type = "sawtooth"; o.frequency.value = f;
+      o.connect(lp); o.start(now); o.stop(now + 1.55);
+    });
+  }
+  function chirp() {
+    const a = ac(); if (!a) return;
+    const now = a.currentTime;
+    [[0, 880, 1400], [0.16, 1100, 1800]].forEach(([dt, f1, f2]) => {
+      const o = a.createOscillator(), g = a.createGain();
+      o.type = "sine";
+      o.frequency.setValueAtTime(f1, now + dt);
+      o.frequency.exponentialRampToValueAtTime(f2, now + dt + 0.12);
+      g.gain.setValueAtTime(0, now + dt);
+      g.gain.linearRampToValueAtTime(0.12, now + dt + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, now + dt + 0.14);
+      o.connect(g); g.connect(a.destination); o.start(now + dt); o.stop(now + dt + 0.16);
+    });
+  }
+
+  /* ---------- Scene ---------- */
+  const cv = $("#scene"), ctx = cv.getContext("2d");
+  let W = 0, H = 0, DPR = 1, S = 1;
+  function resize() {
+    const r = cv.getBoundingClientRect();
+    DPR = Math.min(2, window.devicePixelRatio || 1);
+    W = r.width; H = r.height;
+    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+    S = Math.min(W / 600, H / 470);
+  }
+  resize();
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(cv); else window.addEventListener("resize", resize);
+
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const clouds = Array.from({ length: 6 }, () => ({ x: Math.random(), y: rand(0.06, 0.32), s: rand(0.6, 1.3), v: rand(0.006, 0.014) }));
+  const stars = Array.from({ length: 70 }, () => ({ x: Math.random(), y: Math.random() * 0.45, r: rand(0.6, 1.8), ph: rand(0, 6.28) }));
+  const gulls = Array.from({ length: 3 }, (_, i) => ({ x: rand(0, 1), y: rand(0.12, 0.3), v: rand(0.015, 0.03), ph: i * 2 }));
+  let smoke = [], spray = [], confetti = [];
+  const emo = { blinkAt: 2, blink: 0, look: 0, lookTo: 0, lookAt: 1.5, happy: 0, jump: 0, jv: 0 };
+  let hornFlash = 0, smokeTimer = 0;
+
+  const WAVES = {
+    back: { y: 0.6, amp: 5, k: 0.014, w: 0.9, ph: 1 },
+    mid: { y: 0.7, amp: 9, k: 0.009, w: 1.2, ph: 2 },
+    front: { y: 0.88, amp: 12, k: 0.007, w: 1.6, ph: 4 },
+  };
+  function waveY(x, t, L) {
+    const a = L.amp * S, kx = (x / S) * L.k;
+    return H * L.y + Math.sin(kx + t * L.w + L.ph) * a + Math.sin(kx * 2.3 - t * L.w * 0.7 + L.ph * 2) * a * 0.35;
+  }
+  function fillWave(t, L, color, foam) {
+    ctx.beginPath();
+    ctx.moveTo(0, H);
+    for (let x = 0; x <= W + 8; x += 8) ctx.lineTo(x, waveY(x, t, L));
+    ctx.lineTo(W, H); ctx.closePath();
+    ctx.fillStyle = color; ctx.fill();
+    if (foam) {
+      ctx.beginPath();
+      for (let x = 0; x <= W + 8; x += 8) { const y = waveY(x, t, L); x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+      ctx.strokeStyle = foam; ctx.lineWidth = Math.max(1.5, 2.5 * S); ctx.stroke();
+    }
+  }
+  function rr(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+
+  function sky(t) {
+    const g = ctx.createLinearGradient(0, 0, 0, H * 0.6);
+    if (night) { g.addColorStop(0, "#0a1433"); g.addColorStop(1, "#2d4a7a"); }
+    else { g.addColorStop(0, "#6ccdf2"); g.addColorStop(1, "#dff6ff"); }
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    if (night) {
+      stars.forEach((s) => {
+        ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 2 + s.ph);
+        ctx.fillStyle = "#fff8d6";
+        ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r, 0, 6.29); ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+      const mx = W * 0.8, my = H * 0.17, mr = 28 * S;
+      ctx.fillStyle = "#fff3c4"; ctx.shadowColor = "#fff3c4"; ctx.shadowBlur = 30;
+      ctx.beginPath(); ctx.arc(mx, my, mr, 0, 6.29); ctx.fill();
+      ctx.shadowBlur = 0; ctx.fillStyle = "#16244a";
+      ctx.beginPath(); ctx.arc(mx + mr * 0.45, my - mr * 0.2, mr * 0.85, 0, 6.29); ctx.fill();
+    } else {
+      const sx = W * 0.8, sy = H * 0.17, sr = 30 * S;
+      ctx.save(); ctx.translate(sx, sy); ctx.rotate(t * 0.15);
+      ctx.fillStyle = "rgba(255, 205, 60, 0.45)";
+      for (let i = 0; i < 12; i++) {
+        ctx.rotate(Math.PI / 6);
+        ctx.beginPath(); ctx.moveTo(-5 * S, sr * 1.25); ctx.lineTo(0, sr * 1.9); ctx.lineTo(5 * S, sr * 1.25); ctx.fill();
+      }
+      ctx.restore();
+      ctx.fillStyle = "#ffd447"; ctx.shadowColor = "#ffcf3a"; ctx.shadowBlur = 40;
+      ctx.beginPath(); ctx.arc(sx, sy, sr, 0, 6.29); ctx.fill(); ctx.shadowBlur = 0;
+    }
+    clouds.forEach((c) => {
+      const x = ((c.x - t * c.v) % 1.3 + 1.3) % 1.3 * W - 0.15 * W, y = c.y * H, s = c.s * S;
+      ctx.fillStyle = night ? "rgba(170, 190, 230, 0.25)" : "rgba(255, 255, 255, 0.92)";
+      ctx.beginPath();
+      ctx.arc(x, y, 22 * s, 0, 6.29); ctx.arc(x + 26 * s, y - 10 * s, 28 * s, 0, 6.29);
+      ctx.arc(x + 56 * s, y, 22 * s, 0, 6.29); ctx.rect(x, y, 56 * s, 20 * s);
+      ctx.fill();
+    });
+  }
+
+  // China shore fades behind at the start, Odessa with its lighthouse grows near the end
+  function shores(t, p) {
+    const hy = H * WAVES.back.y - 4 * S;
+    if (p < 0.22) {
+      const k = 1 - p / 0.22, s = S * (0.5 + 0.7 * k), x0 = W * (0.12 - 0.12 * (1 - k));
+      ctx.globalAlpha = Math.min(1, k * 1.4);
+      ctx.fillStyle = night ? "#22385a" : "#7fae9f";
+      ctx.beginPath(); ctx.moveTo(x0 - 160 * s, hy);
+      ctx.quadraticCurveTo(x0 - 80 * s, hy - 60 * s, x0, hy - 30 * s);
+      ctx.quadraticCurveTo(x0 + 70 * s, hy - 50 * s, x0 + 130 * s, hy); ctx.fill();
+      // pagoda
+      ctx.fillStyle = night ? "#1a2b47" : "#b84a3a";
+      const px = x0 - 20 * s, py = hy - 38 * s;
+      for (let i = 0; i < 3; i++) {
+        const w = (34 - i * 8) * s, y = py - i * 16 * s;
+        ctx.fillRect(px - w * 0.35, y - 12 * s, w * 0.7, 12 * s);
+        ctx.beginPath(); ctx.moveTo(px - w * 0.7, y - 10 * s); ctx.lineTo(px, y - 20 * s); ctx.lineTo(px + w * 0.7, y - 10 * s); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+    if (p > 0.55) {
+      const k = Math.min(1, (p - 0.55) / 0.45), s = S * (0.35 + 0.85 * k), x0 = W * (1.02 - 0.2 * k);
+      ctx.globalAlpha = Math.min(1, k * 2);
+      ctx.fillStyle = night ? "#1f3354" : "#9cc3a7";
+      ctx.beginPath(); ctx.moveTo(x0 - 60 * s, hy);
+      ctx.quadraticCurveTo(x0 + 20 * s, hy - 36 * s, x0 + 140 * s, hy - 30 * s); ctx.lineTo(x0 + 260 * s, hy); ctx.fill();
+      // city houses
+      const cols = night ? ["#2b3f66", "#33497a", "#2b3f66"] : ["#f2e3c6", "#e9cfa3", "#f6efe0"];
+      for (let i = 0; i < 5; i++) {
+        ctx.fillStyle = cols[i % 3];
+        const bx = x0 + (30 + i * 26) * s, bh = (22 + (i * 7) % 18) * s;
+        ctx.fillRect(bx, hy - 26 * s - bh, 20 * s, bh + 6 * s);
+        if (night) { ctx.fillStyle = "#ffd36b"; ctx.fillRect(bx + 6 * s, hy - 20 * s - bh * 0.6, 5 * s, 5 * s); }
+      }
+      // opera-house dome
+      ctx.fillStyle = night ? "#3a5285" : "#7fb7a6";
+      ctx.beginPath(); ctx.arc(x0 + 100 * s, hy - 50 * s, 12 * s, Math.PI, 0); ctx.fill();
+      // lighthouse on the pier
+      const lx = x0 - 30 * s, ly = hy;
+      ctx.fillStyle = night ? "#c9d4e8" : "#ffffff";
+      ctx.beginPath(); ctx.moveTo(lx - 9 * s, ly); ctx.lineTo(lx - 5 * s, ly - 70 * s); ctx.lineTo(lx + 5 * s, ly - 70 * s); ctx.lineTo(lx + 9 * s, ly); ctx.fill();
+      ctx.fillStyle = "#e8573a";
+      ctx.fillRect(lx - 7.6 * s, ly - 22 * s, 15.2 * s, 8 * s);
+      ctx.fillRect(lx - 6.2 * s, ly - 48 * s, 12.4 * s, 8 * s);
+      ctx.fillStyle = "#2a3346"; ctx.fillRect(lx - 7 * s, ly - 82 * s, 14 * s, 12 * s);
+      const blink = 0.5 + 0.5 * Math.sin(t * 3);
+      ctx.fillStyle = `rgba(255, 220, 90, ${0.6 + 0.4 * blink})`;
+      ctx.beginPath(); ctx.arc(lx, ly - 76 * s, 4 * s, 0, 6.29); ctx.fill();
+      if (night) {
+        ctx.save(); ctx.translate(lx, ly - 76 * s); ctx.rotate(Math.sin(t * 0.8) * 0.5 + Math.PI);
+        const g = ctx.createLinearGradient(0, 0, 260 * s, 0);
+        g.addColorStop(0, "rgba(255, 230, 140, 0.45)"); g.addColorStop(1, "rgba(255, 230, 140, 0)");
+        ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(260 * s, -24 * s); ctx.lineTo(260 * s, 24 * s); ctx.fill();
+        ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function drawEmo(t) {
+    ctx.save();
+    ctx.translate(0, -emo.jump);
+    // legs and feet
+    ctx.fillStyle = "#2a2d33"; rr(-11, -17, 7, 15, 2); ctx.fill(); rr(4, -17, 7, 15, 2); ctx.fill();
+    ctx.fillStyle = "#121418"; rr(-15, -5, 13, 6, 3); ctx.fill(); rr(2, -5, 13, 6, 3); ctx.fill();
+    // body
+    ctx.fillStyle = "#25282e"; rr(-14, -32, 28, 18, 7); ctx.fill();
+    ctx.fillStyle = "#3d424b"; rr(-7, -27, 14, 7, 3); ctx.fill();
+    // head
+    ctx.translate(0, -31);
+    ctx.rotate(Math.sin(t * 1.3) * 0.05 + (emo.happy > 0 ? Math.sin(t * 14) * 0.08 : 0));
+    ["-", "+"].forEach((sgn) => {
+      const x = sgn === "-" ? -27 : 27;
+      ctx.fillStyle = "#30343b"; ctx.beginPath(); ctx.arc(x, -21, 8, 0, 6.29); ctx.fill();
+      ctx.strokeStyle = "#5a606b"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, -21, 4.5, 0, 6.29); ctx.stroke();
+    });
+    const hg = ctx.createLinearGradient(0, -44, 0, 0);
+    hg.addColorStop(0, "#3a3e46"); hg.addColorStop(1, "#16181c");
+    ctx.fillStyle = hg; rr(-26, -44, 52, 44, 12); ctx.fill();
+    ctx.fillStyle = "#03060a"; rr(-21, -38, 42, 31, 8); ctx.fill();
+    // eyes
+    const arrived = info.p >= 1;
+    ctx.save();
+    ctx.shadowColor = "#5ff2ff"; ctx.shadowBlur = 10;
+    ctx.fillStyle = "#6ff4ff"; ctx.strokeStyle = "#6ff4ff";
+    ctx.lineWidth = 3.4; ctx.lineCap = "round";
+    const lx = emo.look * 4;
+    [-9, 9].forEach((ex) => {
+      const cx = ex + lx, cy = -22;
+      if (arrived) {
+        // heart eyes
+        ctx.fillStyle = "#ff6f91"; ctx.shadowColor = "#ff6f91";
+        ctx.beginPath(); ctx.moveTo(cx, cy + 6);
+        ctx.bezierCurveTo(cx - 10, cy - 1, cx - 6, cy - 9, cx, cy - 4);
+        ctx.bezierCurveTo(cx + 6, cy - 9, cx + 10, cy - 1, cx, cy + 6); ctx.fill();
+      } else if (emo.happy > 0) {
+        ctx.beginPath(); ctx.moveTo(cx - 5, cy + 3); ctx.lineTo(cx, cy - 4); ctx.lineTo(cx + 5, cy + 3); ctx.stroke();
+      } else {
+        const h = 14 * (1 - emo.blink * 0.9);
+        rr(cx - 5, cy - h / 2, 10, h, Math.min(4, h / 2)); ctx.fill();
+      }
+    });
+    ctx.restore();
+    ctx.restore();
+  }
+
+  function drawShip(t, p) {
+    const x0 = W * (W > 640 ? 0.53 : 0.45), base = waveY(x0, t, WAVES.mid);
+    const slope = (waveY(x0 + 30 * S, t, WAVES.mid) - waveY(x0 - 30 * S, t, WAVES.mid)) / (60 * S);
+    const ang = Math.atan(slope) * 0.7;
+    const sy = base + 6 * S;
+    const toWorld = (px, py) => [x0 + (px * Math.cos(ang) - py * Math.sin(ang)) * S, sy + (px * Math.sin(ang) + py * Math.cos(ang)) * S];
+
+    ctx.save();
+    ctx.translate(x0, sy); ctx.rotate(ang); ctx.scale(S, S);
+
+    // chimney
+    ctx.fillStyle = "#e8573a"; ctx.fillRect(-128, -136, 22, 32);
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(-128, -126, 22, 6);
+    ctx.fillStyle = "#1b1f27"; ctx.fillRect(-130, -140, 26, 6);
+    // mast + flag
+    ctx.strokeStyle = "#2b3242"; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(-92, -104); ctx.lineTo(-92, -158); ctx.stroke();
+    ctx.fillStyle = "#ffc93c";
+    ctx.beginPath(); ctx.moveTo(-92, -158);
+    for (let i = 0; i <= 6; i++) ctx.lineTo(-92 - i * 5, -158 + i * 0.5 + Math.sin(t * 6 + i) * 2.2);
+    for (let i = 6; i >= 0; i--) ctx.lineTo(-92 - i * 5, -146 - i * 0.5 + Math.sin(t * 6 + i) * 2.2);
+    ctx.fill();
+    // bridge
+    ctx.fillStyle = "#f6f7f2"; rr(-146, -110, 70, 8, 3); ctx.fill();
+    ctx.fillRect(-142, -104, 62, 68);
+    ctx.fillStyle = night ? "#ffd66b" : "#2a4d69";
+    for (let i = 0; i < 5; i++) rr(-138 + i * 12, -98, 9, 9, 2), ctx.fill();
+    for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.arc(-132 + i * 14, -70, 3.6, 0, 6.29); ctx.fill(); }
+    // containers
+    const COLS = ["#ffc93c", "#2aa7b8", "#e8573a", "#3d6fd1", "#7cc36a", "#f28c38", "#2aa7b8"];
+    const cont = (x, y, c) => {
+      ctx.fillStyle = c; ctx.fillRect(x, y, 38, 22);
+      ctx.fillStyle = "rgba(0, 0, 0, 0.14)";
+      for (let k = 4; k < 38; k += 6) ctx.fillRect(x + k, y + 2, 2, 18);
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.22)"; ctx.lineWidth = 1.2; ctx.strokeRect(x + 0.5, y + 0.5, 37, 21);
+    };
+    for (let i = 0; i < 4; i++) cont(-72 + i * 40, -60, COLS[i]);
+    for (let i = 0; i < 3; i++) cont(-52 + i * 40, -82, COLS[i + 4]);
+    // parcel box with EMO on the bow
+    ctx.fillStyle = "#c98f55"; ctx.fillRect(104, -80, 46, 38);
+    ctx.fillStyle = "#e0b07a"; ctx.fillRect(104, -80, 46, 6);
+    ctx.fillStyle = "rgba(120, 72, 30, 0.35)"; ctx.fillRect(124, -80, 6, 38);
+    ctx.fillStyle = "#fff8ec"; ctx.fillRect(108, -66, 38, 16);
+    ctx.fillStyle = "#3a2a1c"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    const label = (state.name || "ОДЕССА").toUpperCase();
+    ctx.font = `800 ${label.length > 7 ? 6 : 8}px Nunito, sans-serif`;
+    ctx.fillText(label.slice(0, 12), 127, -57.5);
+    ctx.save(); ctx.translate(127, -80); ctx.scale(1.15, 1.15); drawEmo(t); ctx.restore();
+    // hull
+    ctx.beginPath();
+    ctx.moveTo(-152, -36); ctx.lineTo(178, -46);
+    ctx.quadraticCurveTo(164, -6, 140, 26); ctx.lineTo(-128, 26);
+    ctx.quadraticCurveTo(-148, 0, -152, -36); ctx.closePath();
+    ctx.fillStyle = "#1f3a5f"; ctx.fill();
+    ctx.save(); ctx.clip();
+    ctx.fillStyle = "#e63946"; ctx.fillRect(-200, 6, 420, 40);
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(-200, -1, 420, 5);
+    ctx.restore();
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.85)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(-150, -40); ctx.lineTo(176, -50); ctx.stroke();
+    ctx.fillStyle = "#ffffff"; ctx.font = "700 13px Unbounded, Nunito, sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("EMO EXPRESS", 20, -17);
+    ctx.restore();
+
+    // world-space effects anchored to the ship
+    const [cx, cy] = toWorld(-117, -142);
+    smokeTimer -= 1 / 60;
+    if (smokeTimer <= 0 && !reduceMotion) {
+      smoke.push({ x: cx, y: cy, r: 6 * S, a: night ? 0.35 : 0.6, vx: -26 * S, vy: -18 * S });
+      smokeTimer = 0.28;
+    }
+    if (hornFlash > 0) {
+      for (let i = 0; i < 3; i++) smoke.push({ x: cx, y: cy, r: rand(5, 9) * S, a: 0.8, vx: rand(-60, -20) * S, vy: rand(-50, -20) * S });
+      hornFlash--;
+    }
+    if (!reduceMotion && Math.random() < 0.25) {
+      const [bx, by] = toWorld(150, 12);
+      spray.push({ x: bx, y: by, vx: rand(10, 50) * S, vy: rand(-70, -30) * S, life: 1 });
+    }
+    return { emoWorld: toWorld(127, -130) };
+  }
+
+  function particles(dt) {
+    smoke = smoke.filter((s) => s.a > 0.02);
+    smoke.forEach((s) => {
+      s.x += s.vx * dt; s.y += s.vy * dt; s.r += 9 * S * dt; s.a -= 0.18 * dt;
+      ctx.fillStyle = night ? `rgba(200, 210, 230, ${s.a})` : `rgba(255, 255, 255, ${s.a})`;
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.29); ctx.fill();
+    });
+    spray = spray.filter((s) => s.life > 0);
+    spray.forEach((s) => {
+      s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 160 * S * dt; s.life -= 1.6 * dt;
+      ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0, s.life)})`;
+      ctx.beginPath(); ctx.arc(s.x, s.y, 2.2 * S, 0, 6.29); ctx.fill();
+    });
+  }
+
+  function seagulls(t) {
+    ctx.strokeStyle = night ? "rgba(220, 230, 255, 0.55)" : "#2f3d4a";
+    ctx.lineWidth = Math.max(1.5, 2.2 * S); ctx.lineCap = "round";
+    gulls.forEach((g) => {
+      const x = (((g.x - t * g.v) % 1.2) + 1.2) % 1.2 * W - 0.1 * W;
+      const y = g.y * H + Math.sin(t * 1.2 + g.ph) * 6 * S, f = Math.sin(t * 7 + g.ph) * 5 * S, s = 9 * S;
+      ctx.beginPath(); ctx.moveTo(x - s, y - f); ctx.quadraticCurveTo(x - s / 2, y - s / 2, x, y);
+      ctx.quadraticCurveTo(x + s / 2, y - s / 2, x + s, y - f); ctx.stroke();
+    });
+  }
+
+  function party(dt) {
+    if (info.p < 1 || reduceMotion) { confetti.length = 0; return; }
+    if (confetti.length < 140) for (let i = 0; i < 3; i++) confetti.push({
+      x: rand(0, W), y: -10, vx: rand(-20, 20), vy: rand(40, 110), r: rand(0, 6.28), vr: rand(-6, 6),
+      c: ["#ffc93c", "#e8573a", "#2aa7b8", "#7cc36a", "#ff6f91", "#ffffff"][(Math.random() * 6) | 0],
+    });
+    confetti = confetti.filter((c) => c.y < H + 20);
+    confetti.forEach((c) => {
+      c.x += c.vx * dt; c.y += c.vy * dt; c.r += c.vr * dt;
+      ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.r); ctx.fillStyle = c.c; ctx.fillRect(-4, -2, 8, 4); ctx.restore();
+    });
+  }
+
+  function updateEmo(t, dt) {
+    if (t > emo.blinkAt + 0.2) emo.blinkAt = t + rand(2, 5);
+    const bt = t - emo.blinkAt;
+    emo.blink = bt >= 0 && bt < 0.2 ? 1 - Math.abs(bt - 0.1) / 0.1 : 0;
+    if (t > emo.lookAt) { emo.lookTo = [-1, 0, 0, 1][(Math.random() * 4) | 0]; emo.lookAt = t + rand(1.5, 4); }
+    emo.look += (emo.lookTo - emo.look) * Math.min(1, dt * 6);
+    emo.happy = Math.max(0, emo.happy - dt);
+    if (emo.jump > 0 || emo.jv !== 0) {
+      emo.jump += emo.jv * dt; emo.jv -= 260 * dt;
+      if (emo.jump <= 0) { emo.jump = 0; emo.jv = emo.happy > 0.6 ? 70 : 0; }
+    }
+  }
+
+  let last = performance.now(), clock = 0, frame = 0;
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    clock += dt * (reduceMotion ? 0.25 : 1);
+    const t = clock;
+    shownP += (info.p - shownP) * Math.min(1, dt * 3);
+
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    sky(t);
+    shores(t, shownP);
+    const night0 = night;
+    fillWave(t, WAVES.back, night0 ? "#1d4b6e" : "#4fb8c8", null);
+    updateEmo(t, dt);
+    drawShip(t, shownP);
+    fillWave(t, WAVES.mid, night0 ? "#163d5c" : "#1d97aa", night0 ? "rgba(180, 210, 255, 0.25)" : "rgba(255, 255, 255, 0.55)");
+    particles(dt);
+    fillWave(t, WAVES.front, night0 ? "#0e2d46" : "#0f7a8f", night0 ? "rgba(180, 210, 255, 0.2)" : "rgba(255, 255, 255, 0.45)");
+    seagulls(t);
+    party(dt);
+
+    if (frame++ % 2 === 0) drawMap(shownP, t);
+    requestAnimationFrame(loop);
+  }
+
+  cv.addEventListener("click", () => { emo.happy = 1.6; emo.jv = 90; emo.jump = 0.1; chirp(); });
+  $("#horn").addEventListener("click", () => { hornFlash = 8; horn(); emo.happy = 1.2; });
+  const dn = $("#daynight");
+  const syncDN = () => { dn.textContent = night ? "День" : "Ночь"; };
+  dn.addEventListener("click", () => { night = !night; syncDN(); });
+  syncDN();
+
+  // the countdown should tick over at midnight even if the page stays open
+  setInterval(() => { if (compute().left !== info.left) updateText(); }, 60000);
+  updateText();
+  drawMap(shownP, 0);
+  // on narrow screens the map scrolls sideways: start with the ship in view
+  const box = $(".map-box");
+  if (box.scrollWidth > box.clientWidth) {
+    const sx = track.getPointAtLength(L * trackFraction(info.p)).x * (box.scrollWidth / 1000);
+    box.scrollLeft = Math.max(0, sx - box.clientWidth / 2);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+
+</html>
