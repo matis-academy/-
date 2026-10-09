@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Симулятор света</title>
+<style>
+  :root { color-scheme: light; }
+  body { margin: 0; background: #f6f3ee; color: #1c1c1c; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  .page { max-width: 1160px; margin: 0 auto; padding: 32px 16px 48px; }
+  .kicker { color: #fd7e2f; font-weight: 700; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
+  h1 { font-size: clamp(26px, 4vw, 40px); margin: 6px 0 8px; line-height: 1.15; }
+  .sub { color: #555; max-width: 720px; margin: 0 0 24px; font-size: 17px; line-height: 1.5; }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="kicker">Практикум · свет и экспозиция</div>
+    <h1>Симулятор съёмки в разное время суток</h1>
+    <p class="sub">Выберите время суток и настройте камеру так, чтобы кадр получился правильным: без пересвета, с плавным движением, без шума и с красивым цветом.</p>
+    <div data-ml-widget="daylight"></div>
+  </div>
+  <script src="daylight-sim.js"></script>
+</body>
+</html>
