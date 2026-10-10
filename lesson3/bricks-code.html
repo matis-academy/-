@@ -1,0 +1,1673 @@
+<script>
+/*!
+ * Matis.Academy — 3D-студия для урока 3 (композиция, позы, свет, движение камеры, крупности)
+ * Виджеты: data-ml-widget="studio-pose" | "studio-compose" | "studio-move" | "studio-sun" | "studio-shots"
+ * Нужен Three.js r128 — скрипт подгружает его сам с cdnjs, если на странице его нет.
+ */
+(function () {
+  'use strict';
+  if (window.MLStudio) return;
+
+  var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+  var T = null; /* THREE */
+  var waiting = [], loading = false, failed = false;
+  function withThree(cb, onFail) {
+    if (window.THREE) { T = window.THREE; return cb(); }
+    if (failed) return onFail && onFail();
+    waiting.push([cb, onFail]);
+    if (loading) return;
+    loading = true;
+    var s = document.createElement('script');
+    s.src = THREE_URL; s.async = true;
+    s.onload = function () { T = window.THREE; var w = waiting; waiting = []; w.forEach(function (f) { f[0](); }); };
+    s.onerror = function () { failed = true; var w = waiting; waiting = []; w.forEach(function (f) { f[1] && f[1](); }); };
+    document.head.appendChild(s);
+  }
+
+  /* ---------- утилиты ---------- */
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function smooth(t) { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); }
+  function ease(t) { t = clamp(t, 0, 1); return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+  var D2R = Math.PI / 180;
+  function rng(seed) {
+    return function () {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+  /* фокусное расстояние (мм, полный кадр, кадр 16:9) → вертикальный угол обзора */
+  function focalToFov(mm) { return 2 * Math.atan(10.125 / mm) / D2R; }
+
+  /* ---------- общие стили ---------- */
+  var CSS = [
+    '.mls{--acc:#fd7e2f;--bg:#111214;--panel:#1a1c1f;--panel2:#212428;--line:#2d3035;--tx:#efece7;--mut:#9da0a6;--ok:#3ecf7a;--warn:#f3b23a;--bad:#ff5d52;',
+    'font-family:inherit;color:var(--tx);background:var(--bg);border-radius:20px;padding:14px;box-sizing:border-box;max-width:1120px;margin:0 auto;line-height:1.4;-webkit-text-size-adjust:100%;text-align:left}',
+    '.mls *,.mls *::before,.mls *::after{box-sizing:border-box}',
+    '.mls button{font:inherit;color:inherit;cursor:pointer}',
+    '.mls-view{position:relative;width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#0b0c0e;user-select:none;-webkit-user-select:none;touch-action:pan-y;container-type:inline-size}',
+    '.mls-view>canvas{position:absolute;inset:0;width:100%!important;height:100%!important;display:block}',
+    '.mls-view .ov{position:absolute;inset:0;pointer-events:none}',
+    '.mls-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:14px;text-align:center;padding:20px}',
+    '.mls-hud{position:absolute;pointer-events:none;color:#fff;font:600 12px/1.25 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:clamp(9px,1.7cqw,13px);text-shadow:0 1px 2px rgba(0,0,0,.85)}',
+    '.mls-tag{position:absolute;pointer-events:none;background:rgba(0,0,0,.55);color:#fff;border-radius:6px;padding:.3em .6em;font-size:clamp(10px,1.8cqw,13px);font-weight:600;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}',
+    '.mls-row2{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:12px;margin-top:12px}',
+    '@media (max-width:820px){.mls-row2{grid-template-columns:minmax(0,1fr)}}',
+    '.mls-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}',
+    '.mls-card h4{margin:0 0 10px;font-size:15px;font-weight:700;color:var(--tx)}',
+    '.mls-col{display:flex;flex-direction:column;gap:12px;min-width:0}',
+    '.mls-ctl{display:block;margin:0 0 12px}',
+    '.mls-ctl:last-child{margin-bottom:0}',
+    '.mls-ctl .hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:14px}',
+    '.mls-ctl .hd b{font-weight:600}',
+    '.mls-ctl output{font:700 14px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--acc);white-space:nowrap}',
+    '.mls-ctl .hint{display:block;font-size:12px;color:var(--mut);margin-top:3px}',
+    '.mls input[type=range]{width:100%;margin:6px 0 0;accent-color:var(--acc);height:22px;background:transparent}',
+    '.mls-seg{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}',
+    '.mls-seg button{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;line-height:1.2}',
+    '.mls-seg button.on{border-color:var(--acc);color:var(--acc);background:#2a1e16}',
+    '.mls-chips{display:grid;gap:6px;margin:12px 0 0}',
+    '.mls-chip{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;text-align:center;transition:border-color .15s,background .15s}',
+    '.mls-chip:hover{border-color:#4a4e55}',
+    '.mls-chip.on{border-color:var(--acc);background:#2a1e16}',
+    '.mls-chip .nm{font-size:13px;font-weight:700;line-height:1.15}',
+    '.mls-chip .sb{font-size:11px;color:var(--mut);line-height:1.2}',
+    '.mls-chip .mk{font-size:11px;font-weight:800;border-radius:999px;padding:1px 7px;margin-top:2px}',
+    '.mls-chip .mk.ok{background:#12301f;color:#7df0a9}.mls-chip .mk.bad{background:#3a1513;color:#ff8d84}.mls-chip .mk.mid{background:#33290f;color:#f6c766}',
+    '.mls-tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}',
+    '.mls-btn{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:14px;font-weight:600}',
+    '.mls-btn.on{border-color:var(--acc);color:var(--acc)}',
+    '.mls-btn.pr{background:var(--acc);border-color:var(--acc);color:#1a0f08}',
+    '.mls-checks{list-style:none;margin:0;padding:0}',
+    '.mls-checks li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}',
+    '.mls-checks li:first-child{border-top:0;padding-top:0}',
+    '.mls-checks .ic{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#111;margin-top:1px}',
+    '.mls-checks .ok .ic{background:var(--ok)}.mls-checks .warn .ic{background:var(--warn)}.mls-checks .bad .ic{background:var(--bad)}.mls-checks .info .ic{background:#6b7280;color:#fff}',
+    '.mls-checks b{font-weight:700}',
+    '.mls-checks small{display:block;color:var(--mut);font-size:12.5px;margin-top:2px}',
+    '.mls-sum{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:14px;font-weight:700;background:var(--panel2)}',
+    '.mls-sum.ok{background:#12301f;color:#7df0a9}',
+    '.mls-txt{font-size:14px;color:#d9d6d0;margin:0}',
+    '.mls-txt+.mls-txt{margin-top:8px}',
+    '.mls-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}',
+    '.mls-facts div{background:var(--panel2);border-radius:10px;padding:8px 10px;font-size:13px}',
+    '.mls-facts span{display:block;color:var(--mut);font-size:11.5px;margin-bottom:2px}',
+    '.mls-tips{margin:0;padding-left:18px;font-size:13.5px;color:#d9d6d0}',
+    '.mls-tips li{margin:4px 0}',
+    '.mls-note{font-size:12px;color:var(--mut);margin-top:10px}',
+    '.mls-badge{display:inline-block;font-size:12px;font-weight:800;border-radius:999px;padding:2px 9px;margin-left:6px;vertical-align:2px}',
+    '.mls-badge.ok{background:#12301f;color:#7df0a9}.mls-badge.bad{background:#3a1513;color:#ff8d84}.mls-badge.mid{background:#33290f;color:#f6c766}',
+    '@media (max-width:820px){.mls>.mls-view{position:sticky;top:6px;z-index:5;box-shadow:0 6px 18px rgba(0,0,0,.45)}}',
+    '@media (max-width:520px){.mls{padding:10px;border-radius:14px}.mls-card{padding:12px}.mls-chip .nm{font-size:12px}.mls-chip .sb{font-size:10.5px}}'
+  ].join('\n');
+  function injectCSS(id, css) {
+    if (document.getElementById(id)) return;
+    var s = document.createElement('style'); s.id = id; s.textContent = css; document.head.appendChild(s);
+  }
+
+  /* ---------- сцена ---------- */
+  var SKY_VS = 'varying vec3 vW; void main(){ vec4 w = modelMatrix * vec4(position,1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }';
+  var SKY_FS = [
+    'uniform vec3 top; uniform vec3 hor; uniform vec3 glow; uniform vec3 sunDir; uniform float glowK; uniform vec3 gnd;',
+    'varying vec3 vW;',
+    'void main(){',
+    '  vec3 d = normalize(vW);',
+    '  float h = d.y;',
+    '  vec3 c = mix(hor, top, pow(clamp(h,0.0,1.0), 0.55));',
+    '  float s = max(dot(d, normalize(sunDir)), 0.0);',
+    '  c += glow * (pow(s, 8.0) * 0.55 + pow(s, 120.0) * 1.2) * glowK;',
+    '  c = mix(c, gnd, smoothstep(0.0, -0.08, h));',
+    '  gl_FragColor = vec4(c, 1.0);',
+    '}'
+  ].join('\n');
+
+  function canvasTex(w, h, draw, rep) {
+    var c = document.createElement('canvas'); c.width = w; c.height = h;
+    draw(c.getContext('2d'), w, h);
+    var t = new T.CanvasTexture(c);
+    t.encoding = T.sRGBEncoding;
+    t.anisotropy = 4;
+    if (rep) { t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(rep, rep); }
+    return t;
+  }
+  function grassTex() {
+    return canvasTex(512, 512, function (g, w, h) {
+      g.fillStyle = '#6f8a4a'; g.fillRect(0, 0, w, h);
+      var R = rng(4);
+      for (var i = 0; i < 9000; i++) {
+        var x = R() * w, y = R() * h, l = 2 + R() * 5;
+        g.strokeStyle = R() < 0.5 ? 'rgba(40,60,20,0.25)' : 'rgba(170,190,110,0.18)';
+        g.lineWidth = 1; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (R() - 0.5) * 2, y - l); g.stroke();
+      }
+      for (i = 0; i < 40; i++) {
+        g.fillStyle = 'rgba(' + (R() < 0.5 ? '60,80,35' : '140,150,80') + ',0.12)';
+        g.beginPath(); g.arc(R() * w, R() * h, 20 + R() * 60, 0, 6.283); g.fill();
+      }
+    }, 60);
+  }
+  function stoneTex() {
+    return canvasTex(512, 512, function (g, w, h) {
+      g.fillStyle = '#b9b3a8'; g.fillRect(0, 0, w, h);
+      var R = rng(9), n = 8, s = w / n;
+      for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) {
+        var v = 170 + Math.floor(R() * 30);
+        g.fillStyle = 'rgb(' + v + ',' + (v - 5) + ',' + (v - 14) + ')';
+        g.fillRect(x * s + 2, y * s + 2, s - 4, s - 4);
+      }
+      for (var i = 0; i < 4000; i++) { g.fillStyle = 'rgba(0,0,0,' + (R() * 0.06) + ')'; g.fillRect(R() * w, R() * h, 2, 2); }
+    }, 3);
+  }
+
+  function Stage(host, opt) {
+    opt = opt || {};
+    var self = this;
+    this.host = host;
+    this.aspect = opt.aspect || 16 / 9;
+    var r = this.renderer = new T.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    r.outputEncoding = T.sRGBEncoding;
+    r.toneMapping = T.ACESFilmicToneMapping;
+    r.toneMappingExposure = 0.95;
+    r.shadowMap.enabled = true;
+    r.shadowMap.type = T.PCFSoftShadowMap;
+    host.insertBefore(r.domElement, host.firstChild);
+
+    var sc = this.scene = new T.Scene();
+    this.camera = new T.PerspectiveCamera(focalToFov(35), this.aspect, 0.05, 600);
+    this.camera.position.set(0, 1.6, 5);
+
+    /* небо */
+    this.skyU = { top: { value: new T.Color('#4f86d1') }, hor: { value: new T.Color('#cfe0ee') }, glow: { value: new T.Color('#fff2d0') },
+      sunDir: { value: new T.Vector3(0.3, 0.6, -0.7) }, glowK: { value: 1 }, gnd: { value: new T.Color('#9fb08a') } };
+    var sky = new T.Mesh(new T.SphereGeometry(400, 32, 16), new T.ShaderMaterial({ uniforms: this.skyU, vertexShader: SKY_VS, fragmentShader: SKY_FS, side: T.BackSide, depthWrite: false, fog: false }));
+    sky.renderOrder = -1;
+    sc.add(sky);
+    sc.fog = new T.Fog('#cfe0ee', 25, 190);
+
+    /* свет */
+    this.hemi = new T.HemisphereLight('#cfe3ff', '#6b6a4e', 0.3);
+    sc.add(this.hemi);
+    var sun = this.sun = new T.DirectionalLight('#fff4e0', 2.4);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    var sc2 = sun.shadow.camera; sc2.left = -6; sc2.right = 6; sc2.top = 6; sc2.bottom = -6; sc2.near = 1; sc2.far = 80;
+    sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
+    sc.add(sun); sc.add(sun.target);
+    this.fill = new T.DirectionalLight('#ffffff', 0); /* отражатель / заполняющий свет */
+    sc.add(this.fill); sc.add(this.fill.target);
+    this.setSun(140, 35);
+
+    /* земля */
+    var ground = new T.Mesh(new T.CircleGeometry(220, 64), new T.MeshStandardMaterial({ map: grassTex(), roughness: 1 }));
+    ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true;
+    sc.add(ground);
+    this.ground = ground;
+
+    this.anims = [];
+    this.visible = true; this.dirty = true; this.running = false;
+    this._resize = function () {
+      var w = host.clientWidth || 640, h = Math.round(w / self.aspect);
+      r.setSize(w, h, false);
+      self.camera.aspect = self.aspect; self.camera.updateProjectionMatrix();
+      self.invalidate();
+    };
+    this._last = 0;
+    this._tick = function (now) {
+      self.running = false;
+      if (!self.visible || document.hidden) { self._last = 0; return; }
+      var dt = self._last ? Math.min(0.1, (now - self._last) / 1000) : 0.016;
+      self._last = now;
+      var busy = false;
+      for (var i = 0; i < self.anims.length; i++) if (self.anims[i](dt, now / 1000)) busy = true;
+      if (self.onFrame) self.onFrame(dt);
+      r.render(sc, self.camera);
+      if (self.afterRender) self.afterRender();
+      self.dirty = false;
+      if (busy) self._req(); else self._last = 0;
+    };
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) self.invalidate(); });
+    if ('ResizeObserver' in window) new ResizeObserver(this._resize).observe(host); else window.addEventListener('resize', this._resize);
+    this._resize();
+    if ('IntersectionObserver' in window) new IntersectionObserver(function (e) { self.visible = e[0].isIntersecting; if (self.visible) self.invalidate(); }).observe(host);
+
+  }
+  Stage.prototype._req = function () { if (this._tick && !this.running) { this.running = true; requestAnimationFrame(this._tick); } };
+  Stage.prototype.invalidate = function () { this.dirty = true; this._req(); };
+  /* функция f(dt, t) возвращает true, пока нужна анимация */
+  Stage.prototype.animate = function (f) { this.anims.push(f); this.invalidate(); };
+  Stage.prototype.setFocal = function (mm) { this.camera.fov = focalToFov(mm); this.camera.updateProjectionMatrix(); this.invalidate(); };
+  /* азимут (0 — солнце за спиной у зрителя, на оси +z), высота над горизонтом, град. */
+  Stage.prototype.setSun = function (az, el, target) {
+    var a = az * D2R, e = el * D2R, d = 30, t = target || new T.Vector3(0, 0.9, 0);
+    var dir = new T.Vector3(Math.sin(a) * Math.cos(e), Math.sin(e), Math.cos(a) * Math.cos(e));
+    this.sun.position.copy(t).addScaledVector(dir, d);
+    this.sun.target.position.copy(t);
+    this.skyU.sunDir.value.copy(dir);
+    this.sunDir = dir;
+    this.invalidate();
+  };
+  /* цвет неба/света по высоте солнца — от рассвета до полудня */
+  Stage.prototype.setDaylight = function (el) {
+    var k = smooth(clamp((el - 2) / 40, 0, 1));
+    var warm = new T.Color('#ff9a4a'), noon = new T.Color('#fff6ea');
+    this.sun.color.copy(warm).lerp(noon, k);
+    this.sun.intensity = lerp(2.1, 2.5, k) * (el < 0 ? 0 : clamp(el / 4, 0.15, 1));
+    this.skyU.top.value.set('#33508f').lerp(new T.Color('#3f7fd6'), k);
+    this.skyU.hor.value.set('#f2b38a').lerp(new T.Color('#cfe0ee'), k);
+    this.skyU.glow.value.set('#ffb070').lerp(new T.Color('#fff2d0'), k);
+    this.skyU.glowK.value = lerp(1.6, 0.8, k);
+    this.hemi.color.set('#9fb0d8').lerp(new T.Color('#cfe3ff'), k);
+    this.hemi.intensity = lerp(0.26, 0.32, k);
+    this.scene.fog.color.copy(this.skyU.hor.value);
+    this.invalidate();
+  };
+  Stage.prototype.projectPx = function (v) {
+    var p = v.clone().project(this.camera);
+    return { x: (p.x + 1) / 2, y: (1 - p.y) / 2, z: p.z };
+  };
+
+  /* ---------- окружение ---------- */
+  function mat(c, o) { var m = new T.MeshStandardMaterial({ color: c, roughness: 0.85 }); if (o) for (var k in o) m[k] = o[k]; return m; }
+  function shadowy(o) { o.traverse(function (m) { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); return o; }
+  function makeTree(h, seed) {
+    var R = rng(seed || 1), g = new T.Group();
+    var trunk = new T.Mesh(new T.CylinderGeometry(0.09 * h / 5, 0.16 * h / 5, h * 0.45, 8), mat('#5b4634'));
+    trunk.position.y = h * 0.225; g.add(trunk);
+    var greens = ['#4f7a35', '#5c8a3c', '#46702f', '#628f40'];
+    for (var i = 0; i < 6; i++) {
+      var r = h * (0.17 + R() * 0.1);
+      var b = new T.Mesh(new T.IcosahedronGeometry(r, 1), mat(greens[i % 4]));
+      b.position.set((R() - 0.5) * h * 0.35, h * (0.55 + R() * 0.3), (R() - 0.5) * h * 0.35);
+      b.scale.y = 0.85;
+      g.add(b);
+    }
+    return shadowy(g);
+  }
+  function makeLamp() {
+    var g = new T.Group(), m = mat('#2b2d31', { roughness: 0.5, metalness: 0.4 });
+    var p = new T.Mesh(new T.CylinderGeometry(0.045, 0.07, 3.6, 10), m); p.position.y = 1.8; g.add(p);
+    var arm = new T.Mesh(new T.BoxGeometry(0.5, 0.05, 0.05), m); arm.position.set(0.22, 3.55, 0); g.add(arm);
+    var head = new T.Mesh(new T.CylinderGeometry(0.06, 0.16, 0.16, 12), m); head.position.set(0.45, 3.48, 0); g.add(head);
+    return shadowy(g);
+  }
+  function makeBench() {
+    var g = new T.Group(), wood = mat('#8a5a36', { roughness: 0.7 }), iron = mat('#2a2b2f', { roughness: 0.5, metalness: 0.5 });
+    for (var i = 0; i < 4; i++) { var s = new T.Mesh(new T.BoxGeometry(1.7, 0.035, 0.1), wood); s.position.set(0, 0.45, -0.18 + i * 0.12); g.add(s); }
+    for (i = 0; i < 3; i++) { var b2 = new T.Mesh(new T.BoxGeometry(1.7, 0.09, 0.03), wood); b2.position.set(0, 0.62 + i * 0.12, -0.27); b2.rotation.x = -0.12; g.add(b2); }
+    [-0.7, 0.7].forEach(function (x) {
+      var l = new T.Mesh(new T.BoxGeometry(0.05, 0.45, 0.5), iron); l.position.set(x, 0.225, -0.05); g.add(l);
+      var bk = new T.Mesh(new T.BoxGeometry(0.05, 0.42, 0.04), iron); bk.position.set(x, 0.66, -0.29); bk.rotation.x = -0.12; g.add(bk);
+    });
+    return shadowy(g);
+  }
+  function makeWall(w, h) {
+    var tex = canvasTex(512, 256, function (g, W, H) {
+      g.fillStyle = '#a7826a'; g.fillRect(0, 0, W, H);
+      var R = rng(3), bh = 16, bw = 46;
+      for (var y = 0; y < H; y += bh) for (var x = -((y / bh) % 2) * bw / 2; x < W; x += bw) {
+        var v = R();
+        g.fillStyle = 'rgb(' + (150 + v * 40 | 0) + ',' + (95 + v * 30 | 0) + ',' + (75 + v * 20 | 0) + ')';
+        g.fillRect(x + 1, y + 1, bw - 2, bh - 2);
+      }
+    });
+    tex.wrapS = tex.wrapT = T.RepeatWrapping; tex.repeat.set(w / 2.5, h / 1.25);
+    var m = new T.Mesh(new T.BoxGeometry(w, h, 0.3), new T.MeshStandardMaterial({ map: tex, roughness: 0.95 }));
+    m.position.y = h / 2;
+    return shadowy(m);
+  }
+  function makeBuilding(w, h, d, col) {
+    var tex = canvasTex(128, 256, function (g, W, H) {
+      g.fillStyle = col; g.fillRect(0, 0, W, H);
+      for (var y = 10; y < H - 6; y += 22) for (var x = 8; x < W - 8; x += 20) { g.fillStyle = 'rgba(40,55,75,0.55)'; g.fillRect(x, y, 11, 14); }
+    });
+    tex.wrapS = tex.wrapT = T.RepeatWrapping; tex.repeat.set(Math.max(1, Math.round(w / 6)), Math.max(1, Math.round(h / 10)));
+    var m = new T.Mesh(new T.BoxGeometry(w, h, d), new T.MeshStandardMaterial({ map: tex, roughness: 0.9 }));
+    m.position.y = h / 2; m.receiveShadow = true;
+    return m;
+  }
+  function makePlaza(r) {
+    var m = new T.Mesh(new T.CircleGeometry(r, 48), new T.MeshStandardMaterial({ map: stoneTex(), roughness: 0.9 }));
+    m.rotation.x = -Math.PI / 2; m.position.y = 0.004; m.receiveShadow = true;
+    return m;
+  }
+  /* парк: деревья, фонари, дома вдали */
+  function buildPark(stage, o) {
+    o = o || {};
+    var sc = stage.scene, R = rng(o.seed || 21), g = new T.Group();
+    var trees = o.trees || [[-8, -13, 5.5], [7.5, -15, 6.5], [-15, -22, 7], [14, -26, 8], [-3, -32, 8], [21, -14, 6], [-22, -11, 6.5], [4, -40, 9], [-30, -30, 8], [30, -34, 8]];
+    trees.forEach(function (t, i) { var tr = makeTree(t[2], i + 3); tr.position.set(t[0], 0, t[1]); tr.rotation.y = R() * 6; g.add(tr); });
+    (o.lamps || [[-4.5, -6], [4.5, -6]]).forEach(function (p) { var l = makeLamp(); l.position.set(p[0], 0, p[1]); g.add(l); });
+    if (o.buildings !== false) {
+      [[-60, -120, 22, 24, 14, '#b9a99a'], [-30, -130, 18, 32, 14, '#c7bfb2'], [0, -125, 24, 20, 14, '#a99f97'], [32, -128, 18, 28, 14, '#bdb2a4'], [62, -118, 22, 18, 14, '#ae9f8f']]
+        .forEach(function (b) { var m = makeBuilding(b[2], b[3], b[4], b[5]); m.position.set(b[0], 0, b[1]); g.add(m); });
+    }
+    if (o.path !== false) {
+      var path = new T.Mesh(new T.PlaneGeometry(300, 2.4), new T.MeshStandardMaterial({ color: '#b8ad9a', roughness: 1 }));
+      path.rotation.x = -Math.PI / 2; path.position.set(0, 0.003, o.pathZ == null ? -3.2 : o.pathZ); path.receiveShadow = true; g.add(path);
+    }
+    sc.add(g);
+    return g;
+  }
+
+  /* ---------- манекен ---------- */
+  var COL = { skin: '#d6a084', hair: '#3b2a20', jacket: '#c98a2e', tee: '#ebe6dc', jeans: '#33435f', shoe: '#242326' };
+  var DIM = { hipsY: 0.95, spine: 0.11, chest: 0.2, sh: [0.165, 0.185], neck: 0.235, head: 0.112, hip: [0.085, -0.045], up: 0.29, lo: 0.26, th: 0.42, sn: 0.42, ank: 0.075 };
+
+  function lathe(pts, segs, phiStart, phiLen, m) {
+    var v = pts.map(function (p) { return new T.Vector2(p[0], p[1]); });
+    var g = new T.LatheGeometry(v, segs || 24, phiStart || 0, phiLen || Math.PI * 2);
+    var mesh = new T.Mesh(g, m);
+    return mesh;
+  }
+  function limbMesh(len, r1, r2, m) {
+    var g = new T.Group();
+    var c = new T.Mesh(new T.CylinderGeometry(r2, r1, len, 14), m); c.position.y = -len / 2; g.add(c);
+    var s = new T.Mesh(new T.SphereGeometry(r1, 14, 10), m); g.add(s);
+    var e = new T.Mesh(new T.SphereGeometry(r2, 14, 10), m); e.position.y = -len; g.add(e);
+    return g;
+  }
+
+  function Figure(opt) {
+    opt = opt || {};
+    var c = Object.assign({}, COL, opt.colors || {});
+    var M = this.mats = {
+      skin: mat(c.skin, { roughness: 0.62 }), hair: mat(c.hair, { roughness: 0.75 }), jacket: mat(c.jacket, { roughness: 0.8 }),
+      tee: mat(c.tee, { roughness: 0.85 }), jeans: mat(c.jeans, { roughness: 0.9 }), shoe: mat(c.shoe, { roughness: 0.6 }),
+      dark: mat('#1d1512', { roughness: 0.4 }), lip: mat('#a8645a', { roughness: 0.6 })
+    };
+    this.mats.jacket.side = T.DoubleSide;
+    var root = this.root = new T.Group();
+    var hips = this.hips = new T.Group(); hips.position.y = DIM.hipsY; root.add(hips);
+    /* таз */
+    var pel = lathe([[0, -0.125], [0.135, -0.115], [0.172, -0.04], [0.165, 0.04], [0.15, 0.11], [0, 0.11]], 24, 0, 0, M.jeans);
+    pel.scale.z = 0.74; hips.add(pel);
+    var spine = this.spine = new T.Group(); spine.position.y = DIM.spine; hips.add(spine);
+    var chest = this.chest = new T.Group(); chest.position.y = DIM.chest; spine.add(chest);
+    /* торс: футболка + куртка с распахнутой полой */
+    var torsoPts = [[0.001, -0.31], [0.148, -0.3], [0.15, -0.2], [0.154, -0.08], [0.17, 0.04], [0.188, 0.13], [0.182, 0.19], [0.13, 0.225], [0.055, 0.24], [0.001, 0.24]];
+    var tee = lathe(torsoPts, 28, 0, 0, M.tee); tee.scale.z = 0.62; chest.add(tee);
+    var jk = lathe(torsoPts.map(function (p) { return [p[0] * 1.06 + 0.004, p[1] - 0.004]; }), 28, Math.PI * 0.12, Math.PI * 1.76, M.jacket);
+    jk.scale.z = 0.66; chest.add(jk);
+    /* шея и голова */
+    var neck = this.neck = new T.Group(); neck.position.y = DIM.neck; chest.add(neck);
+    var nk = new T.Mesh(new T.CylinderGeometry(0.048, 0.055, 0.1, 12), M.skin); nk.position.y = 0.03; neck.add(nk);
+    var head = this.head = new T.Group(); head.position.y = DIM.head; neck.add(head);
+    var hd = new T.Mesh(new T.SphereGeometry(0.1, 32, 24), M.skin); hd.scale.set(0.9, 1.12, 1.0); head.add(hd);
+    var jaw = new T.Mesh(new T.SphereGeometry(0.075, 24, 16), M.skin); jaw.position.set(0, -0.05, 0.025); jaw.scale.set(1, 0.9, 1); head.add(jaw);
+    var hair = new T.Mesh(new T.SphereGeometry(0.106, 32, 18, 0, Math.PI * 2, 0, Math.PI * 0.56), M.hair);
+    hair.scale.set(0.93, 1.12, 1.04); hair.rotation.x = -0.32; hair.position.set(0, 0.012, -0.008); head.add(hair);
+    [-1, 1].forEach(function (s) {
+      var eye = new T.Mesh(new T.SphereGeometry(0.012, 12, 8), M.dark); eye.position.set(0.034 * s, 0.012, 0.088); head.add(eye);
+      var brow = new T.Mesh(new T.BoxGeometry(0.03, 0.006, 0.01), M.hair); brow.position.set(0.034 * s, 0.036, 0.092); brow.rotation.z = -0.12 * s; head.add(brow);
+      var ear = new T.Mesh(new T.SphereGeometry(0.022, 10, 8), M.skin); ear.scale.set(0.45, 1, 0.8); ear.position.set(0.09 * s, 0.0, 0.0); head.add(ear);
+    });
+    var nose = new T.Mesh(new T.SphereGeometry(0.016, 14, 10), M.skin); nose.scale.set(0.8, 1.35, 1.1); nose.position.set(0, -0.016, 0.098); head.add(nose);
+    var mouth = new T.Mesh(new T.BoxGeometry(0.032, 0.006, 0.008), M.lip); mouth.position.set(0, -0.052, 0.09); head.add(mouth);
+    /* руки */
+    var self = this;
+    this.arms = [1, -1].map(function (s) {
+      var up = new T.Group(); up.position.set(DIM.sh[0] * s, DIM.sh[1], 0); chest.add(up);
+      up.add(limbMesh(DIM.up, 0.05, 0.045, M.jacket));
+      var lo = new T.Group(); lo.position.y = -DIM.up; up.add(lo);
+      lo.add(limbMesh(DIM.lo, 0.047, 0.04, M.jacket));
+      var cuff = new T.Mesh(new T.CylinderGeometry(0.03, 0.032, 0.03, 10), M.skin); cuff.position.y = -DIM.lo - 0.015; lo.add(cuff);
+      var hand = new T.Mesh(new T.SphereGeometry(0.045, 14, 10), M.skin); hand.scale.set(0.55, 1.15, 0.95); hand.position.y = -DIM.lo - 0.07; lo.add(hand);
+      var th = new T.Mesh(new T.SphereGeometry(0.018, 8, 6), M.skin); th.scale.set(1, 1.7, 1); th.position.set(0, -DIM.lo - 0.05, 0.035); lo.add(th);
+      return { up: up, lo: lo, s: s, hand: [hand, th] };
+    });
+    /* ноги */
+    this.legs = [1, -1].map(function (s) {
+      var th = new T.Group(); th.position.set(DIM.hip[0] * s, DIM.hip[1], 0); hips.add(th);
+      th.add(limbMesh(DIM.th, 0.086, 0.062, M.jeans));
+      var sn = new T.Group(); sn.position.y = -DIM.th; th.add(sn);
+      sn.add(limbMesh(DIM.sn, 0.062, 0.047, M.jeans));
+      var ft = new T.Group(); ft.position.y = -DIM.sn; sn.add(ft);
+      var shoe = new T.Mesh(new T.BoxGeometry(0.1, 0.075, 0.26), M.shoe); shoe.position.set(0, -0.04, 0.055); ft.add(shoe);
+      var toe = new T.Mesh(new T.SphereGeometry(0.05, 12, 8), M.shoe); toe.scale.set(1, 0.75, 1); toe.position.set(0, -0.045, 0.17); ft.add(toe);
+      return { th: th, sn: sn, ft: ft, s: s };
+    });
+    shadowy(root);
+    this.pose = null; this.from = null; this.t = 1; this.dur = 0.7;
+    this.extra = { headYaw: 0, headPitch: 0, bodyYaw: 0 };
+    this._v = [new T.Vector3(), new T.Vector3(), new T.Vector3(), new T.Vector3()];
+    this._q = new T.Quaternion(); this._q2 = new T.Quaternion(); this._m = new T.Matrix4();
+  }
+  var DOWN = null;
+  /* решение двузвенной ИК: S — плечо/бедро, Tg — цель (кисть/лодыжка), P — куда смотрит локоть/колено; всё в координатах родителя */
+  Figure.prototype._ik = function (upper, lower, a, b, Tg, P) {
+    if (!DOWN) DOWN = new T.Vector3(0, -1, 0);
+    var S = upper.position, v = this._v;
+    var ax = v[0].copy(Tg).sub(S), d = ax.length();
+    d = clamp(d, Math.abs(a - b) + 1e-3, (a + b) * 0.9995);
+    ax.normalize();
+    var cosA = clamp((a * a + d * d - b * b) / (2 * a * d), -1, 1), sinA = Math.sqrt(1 - cosA * cosA);
+    var pp = v[1].copy(P).sub(S); pp.addScaledVector(ax, -pp.dot(ax));
+    if (pp.lengthSq() < 1e-8) pp.set(0, 0, 1);
+    pp.normalize();
+    var E = v[2].copy(S).addScaledVector(ax, a * cosA).addScaledVector(pp, a * sinA);
+    var u = v[3].copy(E).sub(S).normalize();
+    upper.quaternion.setFromUnitVectors(DOWN, u);
+    /* нижнее звено — в локальных координатах верхнего */
+    var tgt = v[1].copy(S).addScaledVector(ax, d).sub(E).normalize();
+    this._q.copy(upper.quaternion).invert();
+    tgt.applyQuaternion(this._q);
+    lower.quaternion.setFromUnitVectors(DOWN, tgt);
+  };
+  function lerpArr(a, b, t) { return a.map(function (x, i) { return lerp(x, b[i], t); }); }
+  /* поза в координатах корня (м), модель смотрит в +z, левая сторона — +x */
+  var NEUTRAL = {
+    hips: [0, DIM.hipsY, 0], hipsRot: [0, 0, 0], spine: [0, 0, 0], chest: [0, 0, 0], neck: [0, 0, 0], head: [0, 0, 0], yaw: 0,
+    lH: [0.22, 0.95, 0.02], rH: [-0.22, 0.95, 0.02], lE: [0.4, 1.2, -0.45], rE: [-0.4, 1.2, -0.45],
+    lF: [0.1, DIM.ank, 0.0], rF: [-0.1, DIM.ank, 0.0], lK: [0.12, 0.6, 0.6], rK: [-0.12, 0.6, 0.6], footYaw: [0, 0], heel: [0, 0], pocket: [0, 0]
+  };
+  function fullPose(p) { var o = {}; for (var k in NEUTRAL) o[k] = p[k] != null ? p[k] : NEUTRAL[k]; return o; }
+  Figure.prototype.setPose = function (p, instant, dur) {
+    p = fullPose(p);
+    if (!this.pose || instant) { this.pose = p; this.from = p; this.t = 1; this.apply(p); return; }
+    this.from = this.current || this.pose; this.pose = p; this.t = 0; this.dur = dur || 0.75;
+  };
+  Figure.prototype.blend = function (a, b, t) {
+    var o = {};
+    for (var k in a) o[k] = Array.isArray(a[k]) ? lerpArr(a[k], b[k], t) : lerp(a[k], b[k], t);
+    return o;
+  };
+  Figure.prototype.update = function (dt) {
+    if (this.t >= 1) return false;
+    this.t = Math.min(1, this.t + dt / this.dur);
+    this.current = this.blend(this.from, this.pose, ease(this.t));
+    this.apply(this.current);
+    return this.t < 1;
+  };
+  Figure.prototype.apply = function (p) {
+    this.current = p;
+    var e = this.extra;
+    this.root.rotation.y = (p.yaw + e.bodyYaw) * D2R;
+    this.hips.position.fromArray(p.hips);
+    this.hips.rotation.set(p.hipsRot[0] * D2R, p.hipsRot[1] * D2R, p.hipsRot[2] * D2R);
+    this.spine.rotation.set(p.spine[0] * D2R, p.spine[1] * D2R, p.spine[2] * D2R);
+    this.chest.rotation.set(p.chest[0] * D2R, p.chest[1] * D2R, p.chest[2] * D2R);
+    this.neck.rotation.set(p.neck[0] * D2R, p.neck[1] * D2R, p.neck[2] * D2R, 'YXZ');
+    this.head.rotation.set((p.head[0] + e.headPitch) * D2R, (p.head[1] + e.headYaw) * D2R, p.head[2] * D2R, 'YXZ');
+    this.root.updateMatrixWorld(true);
+    var self = this, tmp = new T.Vector3(), tmp2 = new T.Vector3();
+    function toLocal(obj, arr, out) { out.fromArray(arr); self.root.localToWorld(out); obj.worldToLocal(out); return out; }
+    /* руки — в системе грудной клетки */
+    [[this.arms[0], p.lH, p.lE], [this.arms[1], p.rH, p.rE]].forEach(function (a) {
+      var Tg = toLocal(self.chest, a[1], tmp), P = toLocal(self.chest, a[2], tmp2);
+      self._ik(a[0].up, a[0].lo, DIM.up, DIM.lo, Tg.clone(), P.clone());
+    });
+    /* ноги — в системе таза */
+    [[this.legs[0], p.lF, p.lK, 0], [this.legs[1], p.rF, p.rK, 1]].forEach(function (l) {
+      var Tg = toLocal(self.hips, l[1], tmp), P = toLocal(self.hips, l[2], tmp2);
+      self._ik(l[0].th, l[0].sn, DIM.th, DIM.sn, Tg.clone(), P.clone());
+    });
+    if (this.arms[0].hand) { var hide = p.pocket || [0, 0]; this.arms[0].hand.forEach(function (m) { m.visible = hide[0] < 0.5; }); this.arms[1].hand.forEach(function (m) { m.visible = hide[1] < 0.5; }); }
+    this.root.updateMatrixWorld(true);
+    /* стопы ставим параллельно земле (с поворотом носка и подъёмом пятки) */
+    var rq = new T.Quaternion(); this.root.getWorldQuaternion(rq);
+    this.legs.forEach(function (l, i) {
+      var pq = new T.Quaternion(); l.sn.getWorldQuaternion(pq);
+      var want = rq.clone().multiply(new T.Quaternion().setFromEuler(new T.Euler(-p.heel[i] * D2R, p.footYaw[i] * D2R * l.s, 0, 'YXZ')));
+      l.ft.quaternion.copy(pq.invert().multiply(want));
+    });
+    this.root.updateMatrixWorld(true);
+  };
+  /* контровой «ореол»: френелевская подсветка контура со стороны солнца */
+  Figure.prototype.enableRim = function () {
+    var U = this.rimU = { rimDir: { value: new T.Vector3(0, 0, -1) }, rimColor: { value: new T.Color('#ffd9a0') }, rimK: { value: 0 } };
+    var seen = [];
+    this.root.traverse(function (m) {
+      if (!m.isMesh || seen.indexOf(m.material) >= 0) return;
+      seen.push(m.material);
+      m.material.onBeforeCompile = function (sh) {
+        sh.uniforms.rimDir = U.rimDir; sh.uniforms.rimColor = U.rimColor; sh.uniforms.rimK = U.rimK;
+        sh.fragmentShader = 'uniform vec3 rimDir; uniform vec3 rimColor; uniform float rimK;\n' + sh.fragmentShader.replace('#include <dithering_fragment>',
+          'float frs = pow(1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), 2.6);\n' +
+          'float sideK = smoothstep(-0.1, 0.7, dot(normal, rimDir));\n' +
+          'gl_FragColor.rgb += rimColor * frs * sideK * rimK;\n#include <dithering_fragment>');
+      };
+      m.material.needsUpdate = true;
+    });
+  };
+  /* мировые точки для проверок кадра */
+  Figure.prototype.points = function () {
+    this.root.updateMatrixWorld(true);
+    var w = function (o, x, y, z) { return o.localToWorld(new T.Vector3(x || 0, y || 0, z || 0)); };
+    var h = this.head;
+    return {
+      top: w(h, 0, 0.125, 0), eyes: w(h, 0, 0.012, 0.08), chin: w(h, 0, -0.115, 0.05), nose: w(h, 0, -0.01, 0.12),
+      neck: w(this.neck, 0, 0, 0), chest: w(this.chest, 0, 0.12, 0.1), waist: w(this.hips, 0, 0.08, 0.1), hips: w(this.hips, 0, -0.05, 0),
+      knee: w(this.legs[0].sn, 0, 0, 0), knee2: w(this.legs[1].sn, 0, 0, 0), ankle: w(this.legs[0].ft, 0, 0, 0), foot: w(this.legs[0].ft, 0, -0.08, 0.05),
+      elbow: w(this.arms[0].lo, 0, 0, 0), elbow2: w(this.arms[1].lo, 0, 0, 0), wrist: w(this.arms[0].lo, 0, -DIM.lo, 0),
+      headCenter: w(h, 0, 0, 0), forward: new T.Vector3(0, 0, 1).applyQuaternion(h.getWorldQuaternion(new T.Quaternion()))
+    };
+  };
+  /* силуэт: все материалы — чёрные */
+  Figure.prototype.setSilhouette = function (on) {
+    var self = this;
+    if (!this._sil) this._sil = new T.MeshBasicMaterial({ color: '#111111' });
+    this.root.traverse(function (m) {
+      if (!m.isMesh) return;
+      if (on) { if (!m.userData.mat) m.userData.mat = m.material; m.material = self._sil; }
+      else if (m.userData.mat) m.material = m.userData.mat;
+    });
+  };
+  /* шаг на месте — для движения камеры: phase в радианах */
+  Figure.prototype.walkPose = function (ph) {
+    var s = Math.sin(ph), c = Math.cos(ph), lift = function (x) { return Math.max(0, x); };
+    return fullPose({
+      hips: [0, DIM.hipsY - 0.03 - 0.015 * Math.abs(c), 0], hipsRot: [0, s * 6, 0], chest: [4, -s * 8, 0], head: [-2, s * 4, 0],
+      lF: [0.1, DIM.ank + 0.08 * lift(-c), s * 0.3], rF: [-0.1, DIM.ank + 0.08 * lift(c), -s * 0.3],
+      lK: [0.12, 0.6, 0.9], rK: [-0.12, 0.6, 0.9],
+      lH: [0.22, 0.97, -s * 0.22], rH: [-0.22, 0.97, s * 0.22],
+      lE: [0.35, 1.2, -0.6], rE: [-0.35, 1.2, -0.6], heel: [lift(s) * 25, lift(-s) * 25]
+    });
+  };
+
+  /* ---------- позы ---------- */
+  var POSES = {
+    soldier: { lH: [0.215, 0.94, 0.0], rH: [-0.215, 0.94, 0.0], lF: [0.095, DIM.ank, 0], rF: [-0.095, DIM.ank, 0] },
+    contra: {
+      yaw: 0, hips: [-0.035, DIM.hipsY - 0.01, 0], hipsRot: [0, 6, -5], spine: [0, -4, 3], chest: [0, -4, 3], head: [0, 0, 5],
+      rF: [-0.07, DIM.ank, -0.01], lF: [0.17, DIM.ank, 0.09], lK: [0.4, 0.6, 0.7], footYaw: [20, 6],
+      lH: [0.235, 0.96, 0.07], lE: [0.45, 1.15, -0.4],
+      rH: [-0.16, 1.0, 0.04], rE: [-0.6, 1.25, -0.25]
+    },
+    pockets: {
+      hips: [-0.02, DIM.hipsY - 0.005, 0], hipsRot: [0, 4, -3], chest: [-3, -3, 2], head: [-3, 0, 3],
+      rF: [-0.1, DIM.ank, 0], lF: [0.16, DIM.ank, 0.06], lK: [0.3, 0.6, 0.6], footYaw: [15, 8],
+      lH: [0.125, 0.9, 0.1], lE: [0.5, 1.1, -0.3], rH: [-0.125, 0.9, 0.1], rE: [-0.5, 1.1, -0.3], pocket: [1, 1]
+    },
+    crossed: {
+      hips: [0, DIM.hipsY - 0.005, 0], chest: [-3, 0, 0], head: [-4, 0, 0],
+      lF: [0.15, DIM.ank, 0.02], rF: [-0.15, DIM.ank, 0], footYaw: [12, 12],
+      lH: [-0.08, 1.2, 0.16], lE: [0.26, 1.02, 0.12], rH: [0.08, 1.23, 0.18], rE: [-0.26, 1.02, 0.14]
+    },
+    think: {
+      hips: [0.02, DIM.hipsY - 0.005, 0], hipsRot: [0, -4, 4], chest: [3, 4, -2], neck: [6, 0, 0], head: [4, -8, -6],
+      lF: [0.08, DIM.ank, 0], rF: [-0.16, DIM.ank, 0.08], rK: [-0.4, 0.6, 0.7], footYaw: [6, 20],
+      rH: [-0.03, 1.43, 0.17], rE: [-0.3, 1.1, 0.25], lH: [-0.12, 1.17, 0.17], lE: [0.32, 1.05, 0.15]
+    },
+    walk: {
+      hips: [0, DIM.hipsY - 0.035, 0], hipsRot: [0, -7, 0], chest: [4, 9, 0], head: [-2, -6, 0],
+      lF: [0.1, DIM.ank + 0.01, 0.33], rF: [-0.1, DIM.ank + 0.06, -0.3], rK: [-0.12, 0.6, 0.9], heel: [0, 30],
+      lH: [0.24, 0.98, -0.2], lE: [0.35, 1.2, -0.6], rH: [-0.22, 1.0, 0.22], rE: [-0.35, 1.2, -0.5]
+    },
+    wall: {
+      hips: [0, DIM.hipsY - 0.01, -0.03], spine: [-4, 0, 0], chest: [-3, 0, 0], head: [2, 0, 4],
+      lF: [0.12, DIM.ank, 0.12], rF: [-0.09, 0.42, -0.08], rK: [-0.12, 0.7, 0.7], footYaw: [12, 0],
+      lH: [0.125, 0.9, 0.1], lE: [0.5, 1.1, -0.3], rH: [-0.125, 0.9, 0.1], rE: [-0.5, 1.1, -0.3], pocket: [1, 1]
+    },
+    sit: {
+      hips: [0, 0.58, -0.06], hipsRot: [-6, 0, 0], spine: [16, 0, 0], chest: [8, 0, 0], neck: [-10, 0, 0], head: [-12, 0, 0],
+      lF: [0.16, DIM.ank, 0.36], rF: [-0.15, DIM.ank, 0.34], lK: [0.22, 1.2, 1.2], rK: [-0.22, 1.2, 1.2], footYaw: [8, 8],
+      lH: [0.03, 0.56, 0.38], lE: [0.42, 0.75, 0.25], rH: [-0.03, 0.56, 0.38], rE: [-0.42, 0.75, 0.25]
+    },
+    shoulder: {
+      yaw: 0, hips: [-0.03, DIM.hipsY - 0.01, 0], hipsRot: [0, 0, -4], chest: [0, 18, 2], neck: [0, 25, 0], head: [-3, 38, 4],
+      rF: [-0.08, DIM.ank, 0], lF: [0.16, DIM.ank, -0.06], lK: [0.3, 0.6, 0.6], footYaw: [10, 4],
+      lH: [0.23, 0.96, 0.03], lE: [0.45, 1.15, -0.4], rH: [-0.2, 0.96, 0.06], rE: [-0.45, 1.15, -0.4]
+    }
+  };
+
+  window.MLStudio = {
+    withThree: withThree, Stage: Stage, Figure: Figure, POSES: POSES, DIM: DIM,
+    buildPark: buildPark, makeTree: makeTree, makeLamp: makeLamp, makeBench: makeBench, makeWall: makeWall, makePlaza: makePlaza, makeBuilding: makeBuilding,
+    util: { clamp: clamp, lerp: lerp, smooth: smooth, ease: ease, D2R: D2R, el: el, rng: rng, focalToFov: focalToFov, mat: mat, shadowy: shadowy },
+    injectCSS: function () { injectCSS('mls-css', CSS); }, three: function () { return T; },
+    widgets: {}
+  };
+  function init() {
+    var nodes = document.querySelectorAll('[data-ml-widget^="studio-"]');
+    Array.prototype.forEach.call(nodes, function (n) {
+      if (n.__mls) return;
+      var name = n.getAttribute('data-ml-widget').slice(7), w = window.MLStudio.widgets[name];
+      if (!w) return;
+      n.__mls = true;
+      window.MLStudio.injectCSS();
+      n.innerHTML = '<div class="mls"><div class="mls-view"><div class="mls-load">Загружаю 3D-сцену…</div></div></div>';
+      withThree(function () { n.innerHTML = ''; w(n); }, function () {
+        n.querySelector('.mls-load').textContent = 'Не удалось загрузить 3D-библиотеку. Проверьте интернет и обновите страницу.';
+      });
+    });
+  }
+  window.MLStudio.init = init;
+  /* запуск после того, как подключатся все виджеты (см. конец сборки) */
+})();
+
+/* ---------- Тренажёр «Поставь модель» ---------- */
+(function () {
+  'use strict';
+  var S = window.MLStudio, U = S.util;
+
+  var LIST = [
+    { id: 'soldier', name: 'Солдатик', sub: 'стоит ровно', mark: 'bad', yaw: 0, weight: false, gaps: false,
+      why: 'Корпус «в лоб», руки прижаты, вес на обеих ногах. Фигура выглядит шире и скованно, как на фото на паспорт.',
+      tips: ['Попросите перенести вес на одну ногу.', 'Разверните корпус на 30–45° от камеры.', 'Дайте рукам занятие: карман, ремень сумки, чашка.'] },
+    { id: 'contra', name: 'Вес на ногу', sub: 'контрапост', mark: 'ok', yaw: 28, weight: true, gaps: true,
+      why: 'Вес на одной ноге: бёдра и плечи наклоняются в разные стороны, появляется естественный S-изгиб. Рука на поясе даёт «треугольник» — просвет между рукой и телом.',
+      tips: ['Опорная нога — дальняя от камеры.', 'Свободная нога чуть согнута и выставлена вперёд.', 'Просветы между руками и телом делают фигуру стройнее.'] },
+    { id: 'pockets', name: 'Руки в карманах', sub: 'расслабленно', mark: 'ok', yaw: 22, weight: true, gaps: true,
+      why: 'Простая поза, которая сразу убирает вопрос «куда деть руки». Локти отведены от корпуса — силуэт читается.',
+      tips: ['Кисти в карманах не до конца — большие пальцы снаружи.', 'Плечи опущены, не поднимайте их к ушам.', 'Хорошо работает в паре с шагом или опорой о стену.'] },
+    { id: 'crossed', name: 'Руки скрещены', sub: 'закрытая поза', mark: 'mid', yaw: 18, weight: false, gaps: false,
+      why: 'Читается как уверенность, но и как защита: руки перекрывают корпус. Подходит для делового портрета, в остальном — с осторожностью.',
+      tips: ['Не прижимайте руки слишком сильно — пусть лежат свободно.', 'Добавьте улыбку или поворот головы, чтобы поза не выглядела враждебной.', 'Разверните корпус, чтобы руки не закрывали всю грудь.'] },
+    { id: 'think', name: 'Рука у лица', sub: 'задумчиво', mark: 'ok', yaw: -25, weight: true, gaps: true,
+      why: 'Рука ведёт взгляд зрителя к лицу и задаёт настроение. Вторая рука поддерживает локоть — поза собранная.',
+      tips: ['Рука касается лица легко, не подпирает и не деформирует щёку.', 'Кисть повёрнута ребром к камере, а не ладонью.', 'Хорошо на среднем и крупном плане.'] },
+    { id: 'walk', name: 'Шаг', sub: 'в движении', mark: 'ok', yaw: 40, weight: true, gaps: true,
+      why: 'Движение снимает зажим: человек перестаёт позировать. Видео особенно выигрывает — поза живая и в динамике.',
+      tips: ['Попросите пройти несколько раз туда и обратно, снимайте каждый проход.', 'Идти медленнее обычного — в кадре это выглядит естественно.', 'Камера на уровне груди или пояса.'] },
+    { id: 'wall', name: 'У стены', sub: 'опора', mark: 'ok', yaw: 15, weight: true, gaps: true, prop: 'wall',
+      why: 'Опора даёт телу естественный изгиб и расслабляет. Согнутая нога со стопой на стене — классика уличного портрета.',
+      tips: ['Опирайтесь лопатками, а не всей спиной.', 'Не «утопайте» в стене — оставьте немного воздуха между головой и стеной.', 'Свободные руки — в карманы или скрестить.'] },
+    { id: 'sit', name: 'Сидя', sub: 'на скамейке', mark: 'ok', yaw: 25, weight: true, gaps: true, prop: 'bench',
+      why: 'Наклон вперёд и локти на коленях — поза разговора, вовлечённости. Хорошо для интервью и спокойных сцен.',
+      tips: ['Садитесь на край, а не вглубь скамейки — спина не сутулится.', 'Камера на уровне глаз сидящего, а не сверху.', 'Колени не направляйте прямо в камеру — разверните корпус.'] },
+    { id: 'shoulder', name: 'Через плечо', sub: 'взгляд назад', mark: 'ok', yaw: 145, weight: true, gaps: true,
+      why: 'Корпус развёрнут от камеры, а голова — к ней. Поза создаёт интригу и вытягивает шею, выглядит кинематографично.',
+      tips: ['Поворачивайте плечи, а не только голову — иначе шея «перекручивается».', 'Подбородок к плечу, но не опускайте его.', 'Хорошо работает в контровом свете.'] }
+  ];
+
+  function widget(root) {
+    var u = U.el, T = S.three();
+    var box = u('div', 'mls');
+    box.innerHTML =
+      '<div class="mls-view"><div class="ov">' +
+        '<div class="mls-tag" style="left:2.5%;top:4%" data-v="cam"></div>' +
+        '<div class="mls-tag" style="right:2.5%;top:4%">Тяните кадр, чтобы обойти модель</div>' +
+      '</div></div>' +
+      '<div class="mls-chips" style="grid-template-columns:repeat(auto-fit,minmax(100px,1fr))"></div>' +
+      '<div class="mls-row2">' +
+        '<div class="mls-card"><h4>Настройки</h4>' +
+          '<div class="mls-ctl"><span class="hd"><b>Ракурс камеры</b><output data-o="cam"></output></span><div class="mls-seg" data-seg="cam">' +
+            '<button type="button" data-v="0">Анфас</button><button type="button" data-v="35">3/4</button><button type="button" data-v="90">Профиль</button><button type="button" data-v="-35">3/4 справа</button></div></div>' +
+          '<label class="mls-ctl"><span class="hd"><b>Разворот модели</b><output data-o="yaw"></output></span><input type="range" min="-180" max="180" step="1" data-r="yaw" aria-label="Разворот модели">' +
+            '<span class="hint">0° — лицом к камере. Лучше всего обычно 25–45°.</span></label>' +
+          '<label class="mls-ctl"><span class="hd"><b>Поворот головы</b><output data-o="head"></output></span><input type="range" min="-60" max="60" step="1" data-r="head" aria-label="Поворот головы">' +
+            '<span class="hint">Голову можно повернуть к камере сильнее, чем корпус.</span></label>' +
+          '<div class="mls-tools"><button type="button" class="mls-btn" data-act="sil">Показать силуэт</button><button type="button" class="mls-btn" data-act="best">Лучший ракурс</button></div>' +
+          '<div class="mls-note">Силуэт — проверка, которую делают художники и фотографы: если поза читается чёрным пятном, она читается и в кадре.</div>' +
+        '</div>' +
+        '<div class="mls-col">' +
+          '<div class="mls-card"><h4>Проверка позы</h4><ul class="mls-checks"></ul><div class="mls-sum"></div></div>' +
+          '<div class="mls-card" data-v="about"></div>' +
+        '</div>' +
+      '</div>';
+    root.appendChild(box);
+    var $ = function (s) { return box.querySelector(s); };
+    var view = $('.mls-view');
+    var stage = new S.Stage(view);
+    stage.setSun(125, 38); stage.setDaylight(38);
+    S.buildPark(stage, { pathZ: -3.4 });
+    var plaza = S.makePlaza(2.2); stage.scene.add(plaza);
+    var wall = S.makeWall(3.2, 2.4); wall.position.set(0, 1.2, -0.35); wall.visible = false; stage.scene.add(wall);
+    var bench = S.makeBench(); bench.position.set(0, 0, 0.1); bench.visible = false; stage.scene.add(bench);
+    var fig = new S.Figure(); stage.scene.add(fig.root);
+
+    var st = { pose: 'contra', yaw: 28, head: 0, camAz: 0, camTarget: 0, sil: false };
+    var cam = { az: 0, dist: 3.5, h: 1.2 };
+
+    function placeCamera() {
+      var a = cam.az * U.D2R, d = cam.dist;
+      stage.camera.position.set(Math.sin(a) * d, cam.h, Math.cos(a) * d);
+      stage.camera.lookAt(0, 0.9, 0);
+    }
+    stage.setFocal(35);
+    placeCamera();
+
+    var wrapper = { root: wall, bench: bench };
+    function poseById(id) { for (var i = 0; i < LIST.length; i++) if (LIST[i].id === id) return LIST[i]; }
+    function setPose(id, instant) {
+      var P = poseById(id); st.pose = id; st.yaw = P.yaw; st.head = 0;
+      fig.setPose(S.POSES[id], instant);
+      wall.visible = P.prop === 'wall'; bench.visible = P.prop === 'bench';
+      sync();
+    }
+    stage.animate(function (dt) {
+      var busy = fig.update(dt);
+      /* плавный поворот модели и камеры */
+      var ty = st.yaw, cy = fig.extra.bodyYaw + (fig.current ? fig.current.yaw : 0);
+      var k = 1 - Math.pow(0.0005, dt);
+      fig.extra.bodyYaw += (st.yaw - fig.extra.bodyYaw) * k;
+      fig.extra.headYaw += (st.head - fig.extra.headYaw) * k;
+      if (Math.abs(st.yaw - fig.extra.bodyYaw) > 0.05 || Math.abs(st.head - fig.extra.headYaw) > 0.05) { busy = true; fig.apply(fig.current); }
+      else { fig.extra.bodyYaw = st.yaw; fig.extra.headYaw = st.head; }
+      var dAz = st.camTarget - cam.az;
+      if (Math.abs(dAz) > 0.05) { cam.az += dAz * k; busy = true; } else cam.az = st.camTarget;
+      /* опора вращается вместе с моделью */
+      var a = fig.root.rotation.y;
+      wall.rotation.y = a; wall.position.set(Math.sin(a) * -0.33, 1.2, Math.cos(a) * -0.33);
+      bench.rotation.y = a; bench.position.set(Math.sin(a) * 0.1, 0, Math.cos(a) * 0.1);
+      placeCamera();
+      return busy;
+    });
+
+    /* перетаскивание — обход вокруг модели */
+    var drag = null;
+    view.addEventListener('pointerdown', function (e) { drag = { x: e.clientX, az: st.camTarget }; view.setPointerCapture(e.pointerId); });
+    view.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      st.camTarget = drag.az - (e.clientX - drag.x) / view.clientWidth * 220;
+      cam.az = st.camTarget; stage.invalidate(); syncLite();
+    });
+    ['pointerup', 'pointercancel'].forEach(function (n) { view.addEventListener(n, function () { drag = null; sync(); }); });
+
+    /* фишки поз */
+    var chips = $('.mls-chips');
+    chips.innerHTML = LIST.map(function (p) {
+      var mk = p.mark === 'ok' ? '<span class="mk ok">так хорошо</span>' : p.mark === 'bad' ? '<span class="mk bad">ошибка</span>' : '<span class="mk mid">с осторожностью</span>';
+      return '<button type="button" class="mls-chip" data-id="' + p.id + '"><span class="nm">' + p.name + '</span><span class="sb">' + p.sub + '</span>' + mk + '</button>';
+    }).join('');
+    chips.addEventListener('click', function (e) { var b = e.target.closest('.mls-chip'); if (b) setPose(b.getAttribute('data-id')); });
+
+    var R = { yaw: $('[data-r="yaw"]'), head: $('[data-r="head"]') };
+    R.yaw.addEventListener('input', function () { st.yaw = +R.yaw.value; sync(); stage.invalidate(); });
+    R.head.addEventListener('input', function () { st.head = +R.head.value; sync(); stage.invalidate(); });
+    $('[data-seg="cam"]').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; st.camTarget = +b.getAttribute('data-v'); sync(); stage.invalidate(); });
+    box.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-act]'); if (!b) return;
+      var a = b.getAttribute('data-act');
+      if (a === 'sil') {
+        st.sil = !st.sil; fig.setSilhouette(st.sil);
+        stage.scene.children.forEach(function (o) { if (o !== fig.root) o.visible = st.sil ? false : (o === wall ? poseById(st.pose).prop === 'wall' : o === bench ? poseById(st.pose).prop === 'bench' : true); });
+        stage.scene.background = st.sil ? new T.Color('#efebe4') : null;
+        stage.scene.fog.far = st.sil ? 1e6 : 160;
+      } else if (a === 'best') { var P = poseById(st.pose); st.yaw = P.yaw; st.head = 0; st.camTarget = 0; }
+      sync(); stage.invalidate();
+    });
+
+    function angDiff(a, b) { var d = ((a - b) % 360 + 540) % 360 - 180; return d; }
+    function syncLite() {
+      $('[data-v="cam"]').textContent = 'Камера: ' + camLabel(st.camTarget);
+      $('[data-o="cam"]').textContent = camLabel(st.camTarget);
+    }
+    function camLabel(a) {
+      var d = Math.abs(angDiff(a, 0));
+      return d < 12 ? 'анфас' : d < 60 ? '3/4' : d < 120 ? 'профиль' : 'со спины';
+    }
+    function check(c, t, d) { return '<li class="' + c + '"><span class="ic">' + (c === 'ok' ? '✓' : c === 'info' ? 'i' : '!') + '</span><span><b>' + t + '</b><small>' + d + '</small></span></li>'; }
+    function sync() {
+      var P = poseById(st.pose);
+      box.querySelectorAll('.mls-chip').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-id') === st.pose); });
+      box.querySelectorAll('[data-seg="cam"] button').forEach(function (b) { b.classList.toggle('on', Math.abs(angDiff(+b.getAttribute('data-v'), st.camTarget)) < 1); });
+      R.yaw.value = st.yaw; R.head.value = st.head;
+      $('[data-o="yaw"]').textContent = (st.yaw > 0 ? '+' : '') + Math.round(st.yaw) + '°';
+      $('[data-o="head"]').textContent = (st.head > 0 ? '+' : '') + Math.round(st.head) + '°';
+      $('[data-act="sil"]').classList.toggle('on', st.sil);
+      syncLite();
+
+      /* угол корпуса относительно камеры и куда смотрит лицо */
+      var body = Math.abs(angDiff(st.yaw, st.camTarget));
+      var face = Math.abs(angDiff(st.yaw + st.head + (S.POSES[st.pose].head ? S.POSES[st.pose].head[1] : 0) + (S.POSES[st.pose].neck ? S.POSES[st.pose].neck[1] : 0) + (S.POSES[st.pose].chest ? S.POSES[st.pose].chest[1] : 0), st.camTarget));
+      var out = [];
+      if (body < 12) out.push(check('warn', 'Корпус «в лоб» к камере', 'Фигура выглядит шире и плоско. Разверните модель на 25–45°.'));
+      else if (body <= 60) out.push(check('ok', 'Корпус развёрнут на ' + Math.round(body) + '°', 'Ракурс 3/4 даёт объём и стройнит.'));
+      else if (body <= 120) out.push(check('info', 'Корпус в профиль', 'Чёткий силуэт, но лицо и эмоции читаются хуже.'));
+      else out.push(check(face < 70 ? 'ok' : 'warn', 'Корпус спиной к камере', face < 70 ? 'Лицо повёрнуто к камере — получается поза «через плечо».' : 'Лица не видно. Поверните голову к камере.'));
+      out.push(P.weight ? check('ok', 'Вес на одной ноге', 'Тело расслаблено, появляется естественный изгиб.') : check('warn', 'Вес на обеих ногах', 'Поза выглядит зажатой. Перенесите вес на дальнюю от камеры ногу.'));
+      out.push(P.gaps ? check('ok', 'Руки не прижаты к телу', 'Есть просветы — силуэт читается, фигура стройнее.') : check('warn', 'Руки прижаты к телу', 'Силуэт сливается в одно пятно. Отведите локти, займите руки.'));
+      if (face > 100) out.push(check('warn', 'Лица не видно', 'Поверните голову или модель к камере.'));
+      else if (face <= 45) out.push(check('ok', 'Лицо читается', face < 12 ? 'Взгляд в камеру — контакт со зрителем.' : 'Лицо в 3/4 — объёмно и выразительно.'));
+      else out.push(check('info', 'Лицо в профиль', 'Хорошо для задумчивых и «подсмотренных» кадров.'));
+      var bad = (out.join('').match(/class="(warn|bad)"/g) || []).length;
+      $('.mls-checks').innerHTML = out.join('');
+      var sum = $('.mls-sum');
+      sum.className = 'mls-sum' + (bad ? '' : ' ok');
+      sum.textContent = bad ? 'Есть что улучшить: ' + bad + '. Попробуйте кнопку «Лучший ракурс».' : '✓ Поза работает — можно снимать.';
+      var badge = P.mark === 'ok' ? '<span class="mls-badge ok">так хорошо</span>' : P.mark === 'bad' ? '<span class="mls-badge bad">ошибка</span>' : '<span class="mls-badge mid">с осторожностью</span>';
+      $('[data-v="about"]').innerHTML = '<h4>' + P.name + badge + '</h4><p class="mls-txt">' + P.why + '</p><ul class="mls-tips" style="margin-top:8px">' + P.tips.map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ul>';
+    }
+    setPose(root.getAttribute('data-start') || 'contra', true);
+    fig.extra.bodyYaw = st.yaw; fig.apply(fig.current);
+    stage.invalidate();
+    root.__mlsApi = { stage: stage, fig: fig, st: st, setPose: setPose, sync: sync };
+  }
+  S.widgets.pose = widget;
+})();
+
+/* ---------- Тренажёр «Композиция кадра» ---------- */
+(function () {
+  'use strict';
+  var S = window.MLStudio, U = S.util;
+
+  var SHOTS = { wide: { n: 'Общий', d: 5.6, ty: 0.9 }, mid: { n: 'Средний', d: 2.4, ty: 1.25 }, close: { n: 'Крупный', d: 1.15, ty: 1.5 } };
+  var HEIGHTS = { low: { n: 'Снизу', y: 0.75 }, eye: { n: 'На уровне глаз', y: 1.58 }, high: { n: 'Сверху', y: 2.35 } };
+
+  function widget(root) {
+    var u = U.el, T = S.three();
+    var box = u('div', 'mls');
+    box.innerHTML =
+      '<div class="mls-view"><svg class="ov" viewBox="0 0 1600 900" preserveAspectRatio="none" data-v="ov"></svg>' +
+        '<div class="mls-tag" style="left:2.5%;top:4%" data-v="lbl"></div></div>' +
+      '<div class="mls-row2">' +
+        '<div class="mls-card"><h4>Кадр</h4>' +
+          '<div class="mls-ctl"><span class="hd"><b>Крупность</b><output data-o="shot"></output></span><div class="mls-seg" data-seg="shot">' +
+            '<button type="button" data-v="wide">Общий</button><button type="button" data-v="mid">Средний</button><button type="button" data-v="close">Крупный</button></div></div>' +
+          '<label class="mls-ctl"><span class="hd"><b>Где герой в кадре</b><output data-o="x"></output></span><input type="range" min="-100" max="100" step="1" data-r="x" aria-label="Положение героя по горизонтали">' +
+            '<span class="hint">Тяните, чтобы сдвинуть героя влево или вправо (камера поворачивается).</span></label>' +
+          '<label class="mls-ctl"><span class="hd"><b>Воздух над головой</b><output data-o="y"></output></span><input type="range" min="-8" max="40" step="1" data-r="y" aria-label="Отступ над головой">' +
+            '<span class="hint">Расстояние от макушки до верхнего края кадра.</span></label>' +
+          '<div class="mls-ctl"><span class="hd"><b>Куда смотрит герой</b><output data-o="look"></output></span><div class="mls-seg" data-seg="look">' +
+            '<button type="button" data-v="-1">Влево</button><button type="button" data-v="0">В камеру</button><button type="button" data-v="1">Вправо</button></div></div>' +
+          '<div class="mls-ctl"><span class="hd"><b>Высота камеры</b><output data-o="h"></output></span><div class="mls-seg" data-seg="h">' +
+            '<button type="button" data-v="low">Снизу</button><button type="button" data-v="eye">Уровень глаз</button><button type="button" data-v="high">Сверху</button></div></div>' +
+          '<div class="mls-ctl"><span class="hd"><b>Передний план</b><output data-o="fg"></output></span><div class="mls-seg" data-seg="fg">' +
+            '<button type="button" data-v="none">Нет</button><button type="button" data-v="branch">Ветка</button><button type="button" data-v="ots">Плечо собеседника</button></div></div>' +
+          '<div class="mls-ctl"><span class="hd"><b>Задний план</b><output data-o="bg"></output></span><div class="mls-seg" data-seg="bg">' +
+            '<button type="button" data-v="clean">Чистый</button><button type="button" data-v="post">Столб за героем</button></div></div>' +
+          '<div class="mls-tools"><button type="button" class="mls-btn pr" data-act="fix">Подсказать кадр</button><button type="button" class="mls-btn on" data-act="grid">Сетка третей</button></div>' +
+        '</div>' +
+        '<div class="mls-col"><div class="mls-card"><h4>Разбор кадра</h4><ul class="mls-checks"></ul><div class="mls-sum"></div></div>' +
+          '<div class="mls-card"><h4>Три плана кадра</h4><p class="mls-txt"><b>Передний</b> — то, что ближе героя: ветки, плечо, предметы. Даёт глубину и ощущение присутствия.</p>' +
+          '<p class="mls-txt"><b>Средний</b> — герой и действие.</p><p class="mls-txt"><b>Задний</b> — фон и место действия. Он должен помогать истории, а не спорить с героем.</p></div>' +
+        '</div>' +
+      '</div>';
+    root.appendChild(box);
+    var $ = function (s) { return box.querySelector(s); };
+    var view = $('.mls-view');
+    var stage = new S.Stage(view);
+    stage.setSun(120, 30); stage.setDaylight(30);
+    S.buildPark(stage, { pathZ: -2.6, lamps: [[-7, -9], [7.5, -10]] });
+    stage.scene.add(S.makePlaza(2.2));
+    var fig = new S.Figure(); stage.scene.add(fig.root);
+    fig.setPose(S.POSES.pockets, true);
+
+    /* столб «из головы» */
+    var post = S.makeLamp(); post.visible = false; stage.scene.add(post);
+    /* передний план: ветка и плечо собеседника — крепятся к камере */
+    stage.scene.add(stage.camera);
+    var branch = new T.Group(), R = U.rng(5);
+    var stem = new T.Mesh(new T.CylinderGeometry(0.012, 0.02, 0.9, 6), U.mat('#4a3626')); stem.rotation.z = 1.1; branch.add(stem);
+    for (var i = 0; i < 26; i++) {
+      var lf = new T.Mesh(new T.SphereGeometry(0.05, 8, 6), U.mat(['#3f6b2c', '#4f7d35', '#2f5622'][i % 3]));
+      var t = R() * 0.9 - 0.45; lf.position.set(-Math.sin(1.1) * t + (R() - 0.5) * 0.14, Math.cos(1.1) * t + (R() - 0.5) * 0.14, (R() - 0.5) * 0.08);
+      lf.scale.set(1.4, 0.7, 1); lf.rotation.z = R() * 3; branch.add(lf);
+    }
+    branch.position.set(-0.3, 0.17, -0.7); branch.scale.setScalar(0.55); branch.visible = false; stage.camera.add(branch);
+    var ots = new S.Figure({ colors: { jacket: '#3d4b5e', hair: '#1f1a17' } });
+    ots.setPose(S.POSES.soldier, true);
+    ots.root.visible = false; stage.camera.add(ots.root);
+
+    var st = { shot: 'mid', x: -33, y: 12, look: 1, h: 'eye', fg: 'none', bg: 'clean', grid: true };
+    var shotN = { wide: 'общий', mid: 'средний', close: 'крупный' };
+
+    function frameCamera() {
+      var sh = SHOTS[st.shot], H = HEIGHTS[st.h];
+      var camY = st.h === 'eye' ? U.lerp(1.2, 1.58, st.shot === 'wide' ? 0.3 : 1) : H.y;
+      if (st.shot === 'close' && st.h !== 'eye') camY = st.h === 'low' ? 1.15 : 2.0;
+      var cam = stage.camera;
+      cam.position.set(0, camY, sh.d);
+      stage.setFocal(50);
+      /* подбираем поворот и наклон, чтобы глаза/макушка встали в нужные точки кадра */
+      var yaw = 0, pitch = Math.atan2(sh.ty - camY, sh.d);
+      var P = fig.points();
+      var wantX = 0.5 + st.x / 100 * 0.36, wantTop = st.y / 100;
+      for (var k = 0; k < 4; k++) {
+        cam.rotation.set(pitch, yaw, 0, 'YXZ'); cam.updateMatrixWorld();
+        var e = stage.projectPx(P.eyes), tp = stage.projectPx(P.top);
+        var vf = cam.fov * U.D2R, hf = 2 * Math.atan(Math.tan(vf / 2) * cam.aspect);
+        yaw -= (e.x - wantX) * hf;
+        pitch -= (tp.y - wantTop) * vf;
+      }
+      cam.rotation.set(pitch, yaw, 0, 'YXZ'); cam.updateMatrixWorld();
+      /* столб ровно за головой с точки зрения камеры */
+      var zPost = -7, head = P.headCenter, c = cam.position;
+      var tt = (zPost - c.z) / (head.z - c.z);
+      post.position.set(c.x + (head.x - c.x) * tt - 0.45, 0, zPost);
+      post.visible = st.bg === 'post';
+      branch.visible = st.fg === 'branch';
+      ots.root.visible = st.fg === 'ots';
+      if (st.fg === 'ots') {
+        var side = st.x <= 0 ? 1 : -1;
+        ots.root.position.set(0.3 * side, -1.58, -0.75);
+        ots.root.rotation.set(-pitch, Math.PI - side * 0.35, 0);
+      }
+      stage.invalidate();
+    }
+    function applyLook() {
+      fig.extra.bodyYaw = st.look * 28;
+      fig.extra.headYaw = st.look * 22;
+      fig.apply(fig.current);
+    }
+
+    var ov = $('[data-v="ov"]'), NS = 'http://www.w3.org/2000/svg';
+    function sv(tag, at) { var e = document.createElementNS(NS, tag); for (var k in at) e.setAttribute(k, at[k]); ov.appendChild(e); return e; }
+    function drawOverlay(info) {
+      ov.innerHTML = '';
+      if (st.grid) {
+        [1, 2].forEach(function (i) {
+          sv('line', { x1: 1600 * i / 3, y1: 0, x2: 1600 * i / 3, y2: 900, stroke: 'rgba(255,255,255,.55)', 'stroke-width': 2, 'vector-effect': 'non-scaling-stroke' });
+          sv('line', { x1: 0, y1: 900 * i / 3, x2: 1600, y2: 900 * i / 3, stroke: 'rgba(255,255,255,.55)', 'stroke-width': 2, 'vector-effect': 'non-scaling-stroke' });
+        });
+        [[1, 1], [2, 1], [1, 2], [2, 2]].forEach(function (p) { sv('circle', { cx: 1600 * p[0] / 3, cy: 900 * p[1] / 3, r: 9, fill: 'none', stroke: 'rgba(255,255,255,.7)', 'stroke-width': 2 }); });
+      }
+      var e = info.eyes;
+      sv('circle', { cx: e.x * 1600, cy: e.y * 900, r: 11, fill: info.thirdOk ? '#3ecf7a' : '#f3b23a', stroke: '#111', 'stroke-width': 2 });
+      /* запас по взгляду */
+      if (st.look) {
+        var x2 = e.x * 1600 + st.look * 150;
+        sv('line', { x1: e.x * 1600 + st.look * 20, y1: e.y * 900, x2: x2, y2: e.y * 900, stroke: info.lookOk ? '#3ecf7a' : '#ff5d52', 'stroke-width': 5, 'stroke-linecap': 'round' });
+        sv('path', { d: 'M' + x2 + ' ' + (e.y * 900 - 14) + ' L' + (x2 + st.look * 22) + ' ' + e.y * 900 + ' L' + x2 + ' ' + (e.y * 900 + 14) + 'Z', fill: info.lookOk ? '#3ecf7a' : '#ff5d52' });
+      }
+      if (info.postBad) sv('line', { x1: info.post * 1600, y1: 0, x2: info.post * 1600, y2: info.top.y * 900, stroke: '#ff5d52', 'stroke-width': 6, 'stroke-dasharray': '18 12' });
+      if (info.horBad) sv('line', { x1: 0, y1: info.hor * 900, x2: 1600, y2: info.hor * 900, stroke: '#ff5d52', 'stroke-width': 4, 'stroke-dasharray': '18 12' });
+      var ty = info.top.y * 900;
+      if (info.headroomBad) sv('rect', { x: info.top.x * 1600 - 70, y: 0, width: 140, height: Math.max(4, ty), fill: 'rgba(255,93,82,.28)' });
+    }
+
+    function check(c, t, d) { return '<li class="' + c + '"><span class="ic">' + (c === 'ok' ? '✓' : c === 'info' ? 'i' : '!') + '</span><span><b>' + t + '</b><small>' + d + '</small></span></li>'; }
+    function analyse() {
+      var P = fig.points(), cam = stage.camera;
+      var e = stage.projectPx(P.eyes), top = stage.projectPx(P.top), chin = stage.projectPx(P.chin);
+      /* горизонт: далёкая точка на высоте камеры прямо по направлению взгляда камеры */
+      var dir = new T.Vector3(0, 0, -1).applyQuaternion(cam.quaternion); dir.y = 0; dir.normalize();
+      var horP = stage.projectPx(cam.position.clone().addScaledVector(dir, 300));
+      var postX = post.visible ? stage.projectPx(new T.Vector3(post.position.x, 2.5, post.position.z)).x : -1;
+      var out = [], info = { eyes: e, top: top, hor: horP.y, post: postX };
+      /* треть */
+      var dx3 = Math.min(Math.abs(e.x - 1 / 3), Math.abs(e.x - 2 / 3)), dc = Math.abs(e.x - 0.5);
+      info.thirdOk = dx3 < 0.06;
+      if (info.thirdOk) out.push(check('ok', 'Герой на линии трети', 'Кадр живой и уравновешенный.'));
+      else if (dc < 0.05) out.push(check(st.look ? 'warn' : 'info', 'Герой по центру', st.look ? 'При взгляде в сторону центр выглядит случайно. Сдвиньте героя на линию трети.' : 'Симметрично и статично — так снимают обращение прямо в камеру.'));
+      else out.push(check('warn', 'Герой между третью и центром', 'Положение выглядит случайным. Поставьте глаза на линию трети.'));
+      /* запас по взгляду */
+      if (st.look) {
+        var room = st.look > 0 ? 1 - e.x : e.x;
+        info.lookOk = room > 0.5;
+        out.push(info.lookOk ? check('ok', 'Есть воздух по направлению взгляда', 'Герою есть куда смотреть — кадр не «упирается».') :
+          check('bad', 'Взгляд упирается в край кадра', 'Перед лицом должно быть больше места, чем за затылком. Сдвиньте героя в противоположную сторону.'));
+      }
+      /* воздух над головой */
+      var tp = top.y;
+      var lo = st.shot === 'close' ? -0.06 : 0.03, hi = st.shot === 'wide' ? 0.3 : st.shot === 'close' ? 0.1 : 0.18;
+      info.headroomBad = tp < lo || tp > hi;
+      if (tp < lo) out.push(check('bad', 'Срезана макушка', st.shot === 'close' ? 'На крупном плане можно срезать волосы, но не лоб.' : 'Опустите кадр — голова не должна касаться края.'));
+      else if (tp > hi) out.push(check('warn', 'Слишком много воздуха над головой', 'Герой «проваливается» вниз. Поднимите его так, чтобы глаза были на верхней трети.'));
+      else out.push(check('ok', 'Воздух над головой в норме', st.shot === 'close' ? 'На крупном плане лёгкий срез волос допустим.' : 'Голова не прижата к краю и не тонет.'));
+      /* линия глаз */
+      if (st.shot !== 'wide') {
+        var ok = Math.abs(e.y - 1 / 3) < 0.08;
+        out.push(ok ? check('ok', 'Глаза на верхней трети', 'Взгляд зрителя сразу попадает в лицо.') : check('warn', 'Глаза не на верхней трети', e.y > 1 / 3 ? 'Лицо слишком низко.' : 'Лицо слишком высоко.'));
+      }
+      /* фон */
+      info.postBad = post.visible && Math.abs(postX - top.x) < 0.06;
+      if (info.postBad) out.push(check('bad', 'Столб «растёт из головы»', 'Сместитесь в сторону или измените ракурс, чтобы фон не пересекал голову.'));
+      info.horBad = horP.y > chin.y - 0.005 && horP.y < chin.y + 0.07 && horP.y > 0 && horP.y < 1;
+      if (info.horBad) out.push(check('warn', 'Горизонт режет шею', 'Линия горизонта «отрезает» голову. Поднимите или опустите камеру.'));
+      else if (!info.postBad) out.push(check('ok', 'Фон не спорит с героем', 'Ничего не торчит из головы, горизонт не режет шею.'));
+      /* передний план */
+      if (st.fg === 'branch') out.push(check('info', 'Передний план — ветка', 'Добавляет глубину и ощущение, что мы подсматриваем. На реальной камере ветка будет размыта.'));
+      else if (st.fg === 'ots') out.push(check('info', 'Плечо собеседника', 'Классический кадр диалога «через плечо» — зритель становится участником разговора.'));
+      else out.push(check('info', 'Переднего плана нет', 'Кадр чистый. Ветка или плечо собеседника добавят глубины.'));
+      if (st.h !== 'eye') out.push(check('info', st.h === 'low' ? 'Камера снизу' : 'Камера сверху', st.h === 'low' ? 'Герой выглядит сильнее и значительнее.' : 'Герой выглядит меньше и уязвимее.'));
+      $('.mls-checks').innerHTML = out.join('');
+      var bad = (out.join('').match(/class="(warn|bad)"/g) || []).length;
+      var sum = $('.mls-sum'); sum.className = 'mls-sum' + (bad ? '' : ' ok');
+      sum.textContent = bad ? 'Исправьте: ' + bad + '. Подсказка — кнопка «Подсказать кадр».' : '✓ Кадр собран — так снимают профессионалы.';
+      drawOverlay(info);
+    }
+
+    function sync() {
+      applyLook(); frameCamera();
+      stage.camera.updateMatrixWorld(); fig.root.updateMatrixWorld(true);
+      box.querySelectorAll('[data-seg] button').forEach(function (b) { var k = b.parentNode.getAttribute('data-seg'); b.classList.toggle('on', String(st[k]) === b.getAttribute('data-v')); });
+      $('[data-r="x"]').value = st.x; $('[data-r="y"]').value = st.y;
+      $('[data-o="x"]').textContent = st.x < -5 ? 'левее центра' : st.x > 5 ? 'правее центра' : 'по центру';
+      $('[data-o="y"]').textContent = st.y + '%';
+      $('[data-o="shot"]').textContent = shotN[st.shot];
+      $('[data-o="look"]').textContent = st.look < 0 ? 'влево' : st.look > 0 ? 'вправо' : 'в камеру';
+      $('[data-o="h"]').textContent = HEIGHTS[st.h].n.toLowerCase();
+      $('[data-o="fg"]').textContent = st.fg === 'none' ? 'нет' : st.fg === 'branch' ? 'ветка' : 'плечо';
+      $('[data-o="bg"]').textContent = st.bg === 'clean' ? 'чистый' : 'столб';
+      $('[data-act="grid"]').classList.toggle('on', st.grid);
+      $('[data-v="lbl"]').textContent = SHOTS[st.shot].n + ' план · 50 мм';
+      analyse();
+      stage.invalidate();
+    }
+    box.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-seg] button');
+      if (b) {
+        var k = b.parentNode.getAttribute('data-seg'), v = b.getAttribute('data-v');
+        st[k] = k === 'look' ? +v : v;
+        if (k === 'shot') st.y = v === 'wide' ? 18 : v === 'mid' ? 12 : 2;
+        sync(); return;
+      }
+      var a = e.target.closest('[data-act]'); if (!a) return;
+      if (a.getAttribute('data-act') === 'grid') st.grid = !st.grid;
+      else {
+        st.x = st.look > 0 ? -33 : st.look < 0 ? 33 : -33; if (!st.look) st.look = 1;
+        st.y = st.shot === 'wide' ? 18 : st.shot === 'mid' ? 12 : 2; st.bg = 'clean'; st.h = 'eye';
+        if (st.fg === 'none') st.fg = 'branch';
+      }
+      sync();
+    });
+    $('[data-r="x"]').addEventListener('input', function () { st.x = +this.value; sync(); });
+    $('[data-r="y"]').addEventListener('input', function () { st.y = +this.value; sync(); });
+    /* перетаскивание по кадру двигает героя */
+    var drag = null;
+    view.addEventListener('pointerdown', function (e) { drag = { x: e.clientX, y: e.clientY, sx: st.x, sy: st.y }; view.setPointerCapture(e.pointerId); });
+    view.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      st.x = U.clamp(Math.round(drag.sx + (e.clientX - drag.x) / view.clientWidth * 280), -100, 100);
+      st.y = U.clamp(Math.round(drag.sy + (e.clientY - drag.y) / view.clientHeight * 100), -8, 40);
+      sync();
+    });
+    ['pointerup', 'pointercancel'].forEach(function (n) { view.addEventListener(n, function () { drag = null; }); });
+    stage.onFrame = function () { };
+    var ro = 'ResizeObserver' in window ? new ResizeObserver(function () { sync(); }) : null;
+    if (ro) ro.observe(view);
+    st.x = 40; st.look = 1; st.bg = 'post';
+    sync();
+    root.__mlsApi = { stage: stage, st: st, sync: sync };
+  }
+  S.widgets.compose = widget;
+})();
+
+/* ---------- Тренажёр «Движение камеры» ---------- */
+(function () {
+  'use strict';
+  var S = window.MLStudio, U = S.util;
+
+  /* каждое движение: f(t) → { p: [x,y,z], l: [x,y,z] (куда смотрит), f: фокусное, walk: x героя | null } */
+  var MOVES = [
+    { id: 'pan', name: 'Панорама', sub: 'поворот по горизонтали', view: 'top',
+      how: 'Камера стоит на месте и поворачивается влево или вправо, как голова человека.',
+      feel: 'Открывает пространство или ведёт зрителя за героем. Медленная панорама — спокойствие, быстрая — тревога.',
+      gear: 'Штатив с панорамной головой, гимбал или просто поворот корпусом с телефоном.',
+      mistake: 'Слишком быстрая панорама «рвёт» картинку. Начинайте и заканчивайте движение плавно, на статичном кадре.',
+      f: function (t) { var a = U.lerp(-55, 0, t) * U.D2R; return { p: [0.4, 1.5, 4.2], l: [0.4 + Math.sin(a) * 5, 1.4, 4.2 - Math.cos(a) * 5], f: 35 }; } },
+    { id: 'tilt', name: 'Тилт', sub: 'наклон вверх-вниз', view: 'side',
+      how: 'Камера стоит на месте и наклоняется вверх или вниз.',
+      feel: 'Знакомит с героем «с ног до головы», показывает высоту и масштаб. Тилт вверх — герой выглядит значительнее.',
+      gear: 'Штатив, гимбал или наклон телефона кистью.',
+      mistake: 'Тилт без цели. Он должен вести от детали к важному — например, от обуви к лицу.',
+      f: function (t) { return { p: [0, 1.3, 2.4], l: [0, U.lerp(0.15, 1.55, t), 0], f: 40 }; } },
+    { id: 'in', name: 'Наезд', sub: 'камера приближается', view: 'top',
+      how: 'Камера физически едет к герою: на тележке, слайдере, гимбале или шагом оператора.',
+      feel: 'Усиливает внимание и эмоцию: зритель «подходит» к герою в важный момент.',
+      gear: 'Гимбал или стабилизация в телефоне, плавный шаг. Для коротких наездов — слайдер.',
+      mistake: 'Подменять наезд зумом: перспектива не меняется, и движение выглядит плоским.',
+      f: function (t) { var z = U.lerp(5.2, 1.4, t); return { p: [0, 1.55, z], l: [0, U.lerp(1.15, 1.55, t), 0], f: 35 }; } },
+    { id: 'out', name: 'Отъезд', sub: 'камера удаляется', view: 'top',
+      how: 'Камера отъезжает от героя, постепенно открывая всё больше пространства.',
+      feel: 'Показывает контекст, одиночество, финал сцены. Часто используют в концовках.',
+      gear: 'Гимбал (идти спиной вперёд — с помощником), слайдер, дрон.',
+      mistake: 'Отъезд без нового смысла в кадре. Пространство, которое открывается, должно что-то рассказывать.',
+      f: function (t) { var z = U.lerp(1.4, 7.5, t); return { p: [0, U.lerp(1.55, 1.9, t), z], l: [0, U.lerp(1.55, 1.0, t), 0], f: 35 }; } },
+    { id: 'truck', name: 'Проезд', sub: 'вбок вместе с героем', view: 'top', walk: true,
+      how: 'Камера движется параллельно идущему герою, сохраняя расстояние.',
+      feel: 'Динамика и сопровождение: зритель идёт рядом с героем. Фон «бежит» — ощущение скорости.',
+      gear: 'Гимбал, машина, велосипед, слайдер для коротких проходов.',
+      mistake: 'Камера отстаёт или обгоняет героя — он «плавает» в кадре. Держите одинаковое расстояние и скорость.',
+      f: function (t) { var x = U.lerp(-3, 3, t); return { p: [x + 0.3, 1.45, 3.2], l: [x + 0.3, 1.2, 0], f: 35, walk: x }; } },
+    { id: 'arc', name: 'Облёт', sub: 'по дуге вокруг героя', view: 'top',
+      how: 'Камера движется по дуге вокруг героя, не выпуская его из центра внимания.',
+      feel: 'Подчёркивает значимость момента и объём. Фон вращается за героем — кадр выглядит дорого.',
+      gear: 'Гимбал, плавный шаг по кругу. Держите расстояние до героя одинаковым.',
+      mistake: 'Меняется расстояние до героя — он то растёт, то уменьшается в кадре.',
+      f: function (t) { var a = U.lerp(-60, 60, t) * U.D2R, r = 2.6; return { p: [Math.sin(a) * r, 1.5, Math.cos(a) * r], l: [0, 1.3, 0], f: 35 }; } },
+    { id: 'crane', name: 'Кран', sub: 'подъём вверх', view: 'side',
+      how: 'Камера поднимается вверх (или опускается), продолжая смотреть на героя.',
+      feel: 'Эпичность и масштаб: герой становится частью большого пространства. Часто — начало или конец фильма.',
+      gear: 'Операторский кран, дрон, телескопическая палка; на телефоне — поднять руки над головой плавно.',
+      mistake: 'Подъём рывками. Лучше короткий плавный подъём, чем длинный с тряской.',
+      f: function (t) { var y = U.lerp(0.9, 6.5, t); return { p: [0, y, U.lerp(3.2, 5.5, t)], l: [0, U.lerp(1.2, 0.6, t), 0], f: 30 }; } },
+    { id: 'zoom', name: 'Зум', sub: 'камера стоит, меняется фокусное', view: 'top',
+      how: 'Камера на месте, меняется фокусное расстояние объектива (на телефоне — «приближение»).',
+      feel: 'Резкий акцент или «подсмотренный» взгляд. Фон приближается вместе с героем — перспектива не меняется.',
+      gear: 'Объектив-зум или переключение камер телефона (лучше выбрать нужную заранее).',
+      mistake: 'Цифровой зум на телефоне — теряется качество. И зум не заменяет наезд.',
+      f: function (t) { return { p: [0, 1.55, 6.5], l: [0, U.lerp(1.1, 1.55, t), 0], f: U.lerp(28, 110, t) }; } }
+  ];
+
+  function widget(root) {
+    var u = U.el, T = S.three();
+    var box = u('div', 'mls');
+    box.innerHTML =
+      '<div class="mls-sun-grid">' +
+        '<div class="mls-view"><div class="ov"><div class="mls-tag" style="left:2.5%;top:4%" data-v="lbl"></div>' +
+          '<div class="mls-tag" style="right:2.5%;top:4%" data-v="lens"></div>' +
+          '<div style="position:absolute;left:2.5%;right:2.5%;bottom:4%;height:4px;border-radius:2px;background:rgba(255,255,255,.25)"><div data-v="bar" style="height:100%;width:0;border-radius:2px;background:#fd7e2f"></div></div></div></div>' +
+        '<div class="mls-card mls-map"><h4 data-v="schemeT">Схема</h4><svg viewBox="0 0 300 300" class="mls-svg" style="cursor:default" data-v="svg"></svg>' +
+          '<div class="mls-tools" style="justify-content:center"><button type="button" class="mls-btn pr" data-act="play">Пауза</button></div>' +
+          '<div class="mls-ctl" style="margin-top:10px"><span class="hd"><b>Скорость</b><output data-o="spd"></output></span><div class="mls-seg" data-seg="spd">' +
+            '<button type="button" data-v="0.5">Медленно</button><button type="button" data-v="1">Обычно</button><button type="button" data-v="2">Быстро</button></div></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="mls-chips" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr))"></div>' +
+      '<div class="mls-row2"><div class="mls-card" data-v="about"></div><div class="mls-card" data-v="gear"></div></div>';
+    root.appendChild(box);
+    if (!document.getElementById('mls-sun-css')) {
+      var st0 = document.createElement('style'); st0.id = 'mls-sun-css';
+      st0.textContent = '.mls-sun-grid{display:grid;grid-template-columns:minmax(0,1.9fr) minmax(0,1fr);gap:12px;align-items:start}' +
+        '@media (max-width:820px){.mls-sun-grid{grid-template-columns:minmax(0,1fr)}}' +
+        '.mls-svg{width:100%;max-width:300px;display:block;margin:0 auto 6px;touch-action:none;cursor:grab}' +
+        '.mls-svg text{font:600 11px system-ui,sans-serif;fill:#c9c6c0}';
+      document.head.appendChild(st0);
+    }
+    var $ = function (s) { return box.querySelector(s); };
+    var view = $('.mls-view');
+    var stage = new S.Stage(view);
+    stage.setSun(125, 32); stage.setDaylight(32);
+    var TREES = [[-7, -9, 6], [6.5, -11, 7], [-4, 4, 5], [-8, 1, 6], [8, 2, 5.5], [-13, -16, 8], [12, -19, 9], [-3, -24, 9], [18, -9, 6], [-19, -6, 7]];
+    S.buildPark(stage, { trees: TREES, pathZ: -2.2, lamps: [[-4.5, -5], [4.5, -5]] });
+    stage.scene.add(S.makePlaza(2.2));
+    var bench = S.makeBench(); bench.position.set(-2.2, 0, -1.2); bench.rotation.y = 0.5; stage.scene.add(bench);
+    var fig = new S.Figure(); stage.scene.add(fig.root);
+    fig.setPose(S.POSES.contra, true); fig.extra.bodyYaw = 10; fig.apply(fig.current);
+
+    var st = { m: 0, t: 0, dir: 1, hold: 0, play: true, spd: 1 };
+    var phase = 0;
+    function cur() { return MOVES[st.m]; }
+    function applyT(dt) {
+      var M = cur(), k = U.ease(st.t), c = M.f(k);
+      stage.camera.position.fromArray(c.p);
+      stage.camera.lookAt(c.l[0], c.l[1], c.l[2]);
+      stage.setFocal(c.f);
+      if (M.walk) {
+        phase += (dt || 0) * 7.2 * st.spd * (st.hold > 0 ? 0 : 1);
+        fig.root.position.x = c.walk;
+        fig.extra.bodyYaw = st.dir > 0 ? 90 : -90;
+        fig.apply(fig.walkPose(phase));
+      }
+      $('[data-v="lens"]').textContent = Math.round(c.f) + ' мм';
+      $('[data-v="bar"]').style.width = (st.t * 100) + '%';
+      drawScheme(c);
+    }
+    stage.animate(function (dt) {
+      if (!st.play) return false;
+      if (st.hold > 0) { st.hold -= dt; if (cur().walk) applyT(0); return true; }
+      st.t += st.dir * dt / 4 * st.spd;
+      if (st.t >= 1 || st.t <= 0) {
+        st.t = U.clamp(st.t, 0, 1); st.hold = 0.9;
+        st.dir = cur().walk ? -st.dir : (st.t >= 1 ? -1 : 1);
+        if (!cur().walk && st.t >= 1) st.dir = -1;
+      }
+      applyT(dt);
+      return true;
+    });
+
+    /* схема */
+    var svg = $('[data-v="svg"]'), NS = 'http://www.w3.org/2000/svg';
+    function sv(tag, at, par) { var e = document.createElementNS(NS, tag); for (var k in at) e.setAttribute(k, at[k]); (par || svg).appendChild(e); return e; }
+    var pathCache = null;
+    function drawScheme(c) {
+      var M = cur(), side = M.view === 'side';
+      var sc = side ? 26 : 22, cx = side ? 70 : 150, cy = side ? 250 : 130;
+      function P(x, y, z) { return side ? [cx + z * sc, cy - y * sc] : [cx + x * sc, cy + z * sc]; }
+      if (!pathCache || pathCache.id !== M.id) {
+        svg.innerHTML = '';
+        sv('rect', { x: 0, y: 0, width: 300, height: 300, rx: 14, fill: '#15171a' });
+        if (side) {
+          sv('line', { x1: 0, y1: cy, x2: 300, y2: cy, stroke: '#3a3d43', 'stroke-width': 2 });
+          var tx = sv('text', { x: 12, y: cy + 18 }); tx.textContent = 'вид сбоку';
+        } else {
+          TREES.forEach(function (t) { var q = P(t[0], 0, t[1]); if (q[0] > -20 && q[0] < 320 && q[1] > -20 && q[1] < 320) sv('circle', { cx: q[0], cy: q[1], r: t[2] * 1.6, fill: '#2f4a26', opacity: 0.8 }); });
+          var tx2 = sv('text', { x: 12, y: 290 }); tx2.textContent = 'вид сверху';
+        }
+        var pts = [];
+        for (var i = 0; i <= 40; i++) { var q2 = M.f(U.ease(i / 40)); pts.push(P(q2.p[0], q2.p[1], q2.p[2]).join(',')); }
+        sv('polyline', { points: pts.join(' '), fill: 'none', stroke: '#fd7e2f', 'stroke-width': 3, 'stroke-dasharray': '6 6', opacity: 0.8 });
+        pathCache = { id: M.id, subj: sv('g', {}), fr: sv('path', { fill: 'rgba(253,126,47,.18)', stroke: 'rgba(253,126,47,.7)', 'stroke-width': 1.5 }), cam: sv('g', {}) };
+        if (side) {
+          sv('rect', { x: -5, y: -44, width: 10, height: 44, rx: 4, fill: '#c98a2e' }, pathCache.subj);
+          sv('circle', { cx: 0, cy: -50, r: 6, fill: '#d6a084' }, pathCache.subj);
+        } else {
+          sv('ellipse', { cx: 0, cy: 0, rx: 10, ry: 6, fill: '#c98a2e' }, pathCache.subj);
+          sv('circle', { cx: 0, cy: 0, r: 4.5, fill: '#3b2a20' }, pathCache.subj);
+        }
+        sv('rect', { x: -9, y: -7, width: 18, height: 14, rx: 3, fill: '#fd7e2f', stroke: '#111', 'stroke-width': 1.5 }, pathCache.cam);
+      }
+      var sp = P(fig.root.position.x, 0, fig.root.position.z);
+      pathCache.subj.setAttribute('transform', 'translate(' + sp[0] + ',' + sp[1] + ')');
+      var cp = P(c.p[0], c.p[1], c.p[2]), lp = P(c.l[0], c.l[1], c.l[2]);
+      var ang = Math.atan2(lp[1] - cp[1], lp[0] - cp[0]), half = (side ? U.focalToFov(c.f) : 2 * Math.atan(18 / c.f) / U.D2R) / 2 * U.D2R, L = 300;
+      var a1 = [cp[0] + Math.cos(ang - half) * L, cp[1] + Math.sin(ang - half) * L], a2 = [cp[0] + Math.cos(ang + half) * L, cp[1] + Math.sin(ang + half) * L];
+      pathCache.fr.setAttribute('d', 'M' + cp + ' L' + a1 + ' L' + a2 + 'Z');
+      pathCache.cam.setAttribute('transform', 'translate(' + cp[0] + ',' + cp[1] + ') rotate(' + (ang / U.D2R) + ')');
+    }
+
+    /* выбор движения */
+    var chips = $('.mls-chips');
+    chips.innerHTML = MOVES.map(function (m, i) { return '<button type="button" class="mls-chip" data-i="' + i + '"><span class="nm">' + m.name + '</span><span class="sb">' + m.sub + '</span></button>'; }).join('');
+    chips.addEventListener('click', function (e) { var b = e.target.closest('.mls-chip'); if (b) select(+b.getAttribute('data-i')); });
+    function select(i) {
+      st.m = i; st.t = 0; st.dir = 1; st.hold = 0.5; st.play = true; pathCache = null;
+      if (!cur().walk) { fig.root.position.x = 0; fig.extra.bodyYaw = 10; fig.apply(fig.pose); }
+      sync(); applyT(0); stage.invalidate();
+    }
+    box.addEventListener('click', function (e) {
+      var s = e.target.closest('[data-seg] button');
+      if (s) { st.spd = +s.getAttribute('data-v'); sync(); return; }
+      var a = e.target.closest('[data-act]'); if (!a) return;
+      st.play = !st.play; sync(); stage.invalidate();
+    });
+    function sync() {
+      var M = cur();
+      box.querySelectorAll('.mls-chip').forEach(function (b, i) { b.classList.toggle('on', i === st.m); });
+      box.querySelectorAll('[data-seg="spd"] button').forEach(function (b) { b.classList.toggle('on', +b.getAttribute('data-v') === st.spd); });
+      $('[data-o="spd"]').textContent = st.spd === 0.5 ? 'медленно' : st.spd === 1 ? 'обычно' : 'быстро';
+      $('[data-act="play"]').textContent = st.play ? 'Пауза' : 'Смотреть';
+      $('[data-v="lbl"]').textContent = '🎥 ' + M.name;
+      $('[data-v="schemeT"]').textContent = M.view === 'side' ? 'Схема — вид сбоку' : 'Схема — вид сверху';
+      $('[data-v="about"]').innerHTML = '<h4>' + M.name + '</h4><p class="mls-txt"><b>Как:</b> ' + M.how + '</p><p class="mls-txt"><b>Зачем:</b> ' + M.feel + '</p>';
+      $('[data-v="gear"]').innerHTML = '<h4>Как снять</h4><p class="mls-txt">' + M.gear + '</p><p class="mls-txt"><b>Частая ошибка:</b> ' + M.mistake + '</p>' +
+        (st.spd === 2 ? '<p class="mls-note">Быстрое движение выглядит нервно — используйте его только когда это нужно истории.</p>' : '');
+    }
+    select(0);
+    root.__mlsApi = { stage: stage, st: st, select: select, applyT: applyT };
+  }
+  S.widgets.move = widget;
+})();
+
+/* ---------- Тренажёр «Двигай солнце вокруг модели» ---------- */
+(function () {
+  'use strict';
+  var S = window.MLStudio, U = S.util;
+
+  var SCHEMES = [
+    { max: 25, id: 'front', name: 'Фронтальный свет', color: '#f3d36b',
+      look: 'Лицо освещено ровно, теней почти нет. Картинка плоская, а герой щурится от солнца.',
+      use: 'Когда нужно просто хорошо видеть лицо: документальная съёмка, быстрые интервью.',
+      tips: ['Сместитесь или разверните героя так, чтобы солнце ушло на 30–45° в сторону — появится объём.', 'Если герой щурится, попросите закрыть глаза и открыть их по команде.'] },
+    { max: 65, id: 'rembrandt', name: 'Рисующий свет 45°', color: '#fd9a3f',
+      look: 'Одна сторона лица светлее, тень от носа ложится на щёку. Есть объём, лицо выглядит выразительно.',
+      use: 'Классика портрета и интервью — самый надёжный вариант.',
+      tips: ['Если тень слишком плотная, подсветите теневую сторону отражателем.', 'Следите, чтобы на теневой стороне оставался блик в глазу.'] },
+    { max: 115, id: 'side', name: 'Боковой свет', color: '#e8663c',
+      look: 'Половина лица в свету, половина в тени. Драматично, подчёркивает фактуру кожи и одежды.',
+      use: 'Характерные портреты, напряжённые и драматичные сцены.',
+      tips: ['Для рекламы и «мягких» историй смягчите тень отражателем.', 'Хорошо работает, когда фон тёмный.'] },
+    { max: 155, id: 'kicker', name: 'Контровой-боковой', color: '#c94f8a',
+      look: 'Светится контур волос и плеч, лицо в мягкой тени. Самый «киношный» свет.',
+      use: 'Атмосферные сцены, золотой час, клипы и лайфстайл.',
+      tips: ['Экспонируйте по лицу — небо может пересветиться, это нормально.', 'Отражатель спереди вернёт свет в глаза.'] },
+    { max: 181, id: 'back', name: 'Контровой свет', color: '#8a5cf0',
+      look: 'Солнце за спиной героя: сияющий ореол, лицо в тени. Можно снять силуэт или подсветить лицо.',
+      use: 'Силуэты на закате, романтичные и загадочные кадры.',
+      tips: ['Прикройте объектив ладонью или блендой — иначе блики и «молоко».', 'Хотите видеть лицо — нужен отражатель или вспышка спереди.'] }
+  ];
+  function scheme(az) { var a = Math.abs(az); for (var i = 0; i < SCHEMES.length; i++) if (a < SCHEMES[i].max) return SCHEMES[i]; return SCHEMES[4]; }
+  function elevText(el) {
+    return el < 12 ? { t: 'Низкое солнце', d: 'Утро или вечер: тёплый мягкий свет, длинные тени.' } :
+      el < 45 ? { t: 'Солнце средней высоты', d: 'Чёткий рисунок света и тени, нейтральный цвет.' } :
+      { t: 'Высокое солнце', d: 'Около полудня: тени в глазницах и под носом, тень на земле короткая.' };
+  }
+
+  function widget(root) {
+    var u = U.el, T = S.three();
+    var box = u('div', 'mls');
+    box.innerHTML =
+      '<div class="mls-sun-grid">' +
+        '<div class="mls-view"><div class="ov">' +
+          '<div class="mls-tag" style="left:2.5%;top:4%" data-v="name"></div>' +
+          '<div class="mls-tag" style="right:2.5%;bottom:4%;top:auto" data-v="inset">Вид со стороны</div>' +
+        '</div></div>' +
+        '<div class="mls-card mls-map"><h4>Солнце — сверху <span style="font-weight:500;color:var(--mut)">тяните ☀</span></h4>' +
+          '<svg viewBox="0 0 300 300" class="mls-svg" role="img" aria-label="Положение солнца вокруг модели"></svg>' +
+          '<label class="mls-ctl"><span class="hd"><b>Высота солнца</b><output data-o="el"></output></span><input type="range" min="3" max="75" step="1" data-r="el" aria-label="Высота солнца"><span class="hint" data-h="el"></span></label>' +
+          '<div class="mls-tools"><button type="button" class="mls-btn" data-act="refl">Отражатель</button><button type="button" class="mls-btn" data-act="spin">Обойти по кругу</button></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="mls-chips" style="grid-template-columns:repeat(auto-fit,minmax(96px,1fr))"></div>' +
+      '<div class="mls-row2">' +
+        '<div class="mls-card" data-v="about"></div>' +
+        '<div class="mls-card"><h4>Что видно в кадре</h4><div class="mls-facts" data-v="facts"></div><p class="mls-txt" data-v="elev"></p></div>' +
+      '</div>';
+    root.appendChild(box);
+    S.injectCSS();
+    if (!document.getElementById('mls-sun-css')) {
+      var st0 = document.createElement('style'); st0.id = 'mls-sun-css';
+      st0.textContent = '.mls-sun-grid{display:grid;grid-template-columns:minmax(0,1.9fr) minmax(0,1fr);gap:12px;align-items:start}' +
+        '@media (max-width:820px){.mls-sun-grid{grid-template-columns:minmax(0,1fr)}}' +
+        '.mls-svg{width:100%;max-width:300px;display:block;margin:0 auto 6px;touch-action:none;cursor:grab}' +
+        '.mls-svg text{font:600 11px system-ui,sans-serif;fill:#c9c6c0}';
+      document.head.appendChild(st0);
+    }
+    var $ = function (s) { return box.querySelector(s); };
+    var view = $('.mls-view');
+    var stage = new S.Stage(view);
+    S.buildPark(stage, { pathZ: -4, lamps: [] });
+    stage.scene.add(S.makePlaza(2.6));
+    var sc = stage.sun.shadow.camera; sc.left = -3; sc.right = 3; sc.top = 3; sc.bottom = -3; sc.updateProjectionMatrix();
+    var fig = new S.Figure(); stage.scene.add(fig.root);
+    fig.setPose(S.POSES.contra, true); fig.extra.bodyYaw = 8; fig.apply(fig.current);
+    fig.enableRim();
+
+    /* основная камера — средний план, вставка — общий вид сверху-сбоку */
+    stage.setFocal(50);
+    stage.camera.position.set(0.3, 1.45, 3.5); stage.camera.lookAt(0, 1.18, 0); stage.camera.updateMatrixWorld();
+    var cam2 = new T.PerspectiveCamera(40, 1.35, 0.1, 400);
+    cam2.position.set(-6.5, 6.2, 7.5); cam2.lookAt(0, 0.7, 0);
+    cam2.layers.enable(1);
+    var gizmo = new T.Mesh(new T.SphereGeometry(0.16, 20, 14), new T.MeshBasicMaterial({ color: '#ffd34d', fog: false }));
+    gizmo.layers.set(1); stage.scene.add(gizmo);
+    var beamGeo = new T.BufferGeometry().setFromPoints([new T.Vector3(), new T.Vector3()]);
+    var beam = new T.Line(beamGeo, new T.LineBasicMaterial({ color: '#ffd34d', fog: false, transparent: true, opacity: 0.8 }));
+    beam.layers.set(1); stage.scene.add(beam);
+    var camMark = new T.Mesh(new T.BoxGeometry(0.18, 0.12, 0.22), new T.MeshBasicMaterial({ color: '#fd7e2f' }));
+    camMark.position.copy(stage.camera.position); camMark.lookAt(0, 1.25, 0); camMark.layers.set(1); stage.scene.add(camMark);
+
+    stage.afterRender = function () {
+      var r = stage.renderer, size = r.getSize(new T.Vector2()), w = Math.round(size.x * 0.3), h = Math.round(w / 1.35), m = Math.round(size.x * 0.02);
+      cam2.aspect = w / h; cam2.updateProjectionMatrix();
+      r.setScissorTest(true);
+      r.setViewport(size.x - w - m, m, w, h); r.setScissor(size.x - w - m, m, w, h);
+      r.render(stage.scene, cam2);
+      r.setScissorTest(false); r.setViewport(0, 0, size.x, size.y);
+    };
+    var insetTag = $('[data-v="inset"]');
+    function placeInsetTag() { insetTag.style.right = '2.5%'; insetTag.style.bottom = 'calc(2% + ' + (view.clientWidth * 0.3 / 1.35) + 'px + 4px)'; }
+
+    var st = { az: 50, el: 22, refl: false, spin: false };
+    var target = new T.Vector3(0, 1.0, 0);
+    function applySun() {
+      stage.setSun(st.az, st.el, target);
+      stage.setDaylight(st.el);
+      var d = stage.sunDir;
+      gizmo.position.copy(target).addScaledVector(d, 2.6);
+      beamGeo.setFromPoints([gizmo.position.clone(), target.clone()]);
+      /* контровая подсветка — сильнее, когда солнце за спиной и низко */
+      var back = U.clamp((Math.abs(st.az) - 95) / 70, 0, 1);
+      fig.rimU.rimK.value = back * U.lerp(1.6, 0.5, U.clamp((st.el - 10) / 50, 0, 1));
+      fig.rimU.rimColor.value.copy(stage.sun.color);
+      fig.rimU.rimDir.value.copy(d).transformDirection(stage.camera.matrixWorldInverse);
+      /* отражатель: мягкий свет со стороны камеры */
+      stage.fill.intensity = st.refl ? 0.5 : 0;
+      stage.fill.position.copy(stage.camera.position).setY(1.3); stage.fill.target.position.set(0, 1.2, 0);
+      stage.invalidate();
+    }
+
+    /* карта сверху */
+    var svg = $('.mls-svg'), NS = 'http://www.w3.org/2000/svg', C = 150, RR = 112;
+    function sv(tag, at, parent) { var e = document.createElementNS(NS, tag); for (var k in at) e.setAttribute(k, at[k]); (parent || svg).appendChild(e); return e; }
+    function pt(az, r) { var a = az * U.D2R; return [C + r * Math.sin(a), C + r * Math.cos(a)]; }
+    function arc(a0, a1, r0, r1) {
+      var p0 = pt(a0, r1), p1 = pt(a1, r1), p2 = pt(a1, r0), p3 = pt(a0, r0), large = Math.abs(a1 - a0) > 180 ? 1 : 0;
+      return 'M' + p0 + ' A' + r1 + ' ' + r1 + ' 0 ' + large + ' 0 ' + p1 + ' L' + p2 + ' A' + r0 + ' ' + r0 + ' 0 ' + large + ' 1 ' + p3 + 'Z';
+    }
+    sv('circle', { cx: C, cy: C, r: RR + 22, fill: '#15171a', stroke: '#2d3035' });
+    var bands = [[-25, 25, 0], [25, 65, 1], [-65, -25, 1], [65, 115, 2], [-115, -65, 2], [115, 155, 3], [-155, -115, 3], [155, 205, 4]];
+    var bandEls = bands.map(function (b) { return sv('path', { d: arc(b[0], b[1], RR - 14, RR + 14), fill: SCHEMES[b[2]].color, opacity: 0.22 }); });
+    [[0, 'фронт'], [45, '45°'], [90, 'бок'], [135, '135°'], [180, 'контр']].forEach(function (l) {
+      var p = pt(l[0], RR - 32);
+      var t = sv('text', { x: p[0], y: p[1] + 4, 'text-anchor': 'middle' }); t.textContent = l[1];
+    });
+    var shadowLine = sv('line', { x1: C, y1: C, x2: C, y2: C, stroke: '#000', 'stroke-width': 9, 'stroke-linecap': 'round', opacity: 0.45 });
+    /* модель: плечи и нос */
+    var modelG = sv('g', {});
+    sv('ellipse', { cx: 0, cy: 0, rx: 20, ry: 11, fill: '#c98a2e' }, modelG);
+    sv('circle', { cx: 0, cy: 0, r: 8, fill: '#3b2a20' }, modelG);
+    sv('path', { d: 'M-4 7 L0 15 L4 7Z', fill: '#d6a084' }, modelG);
+    /* камера */
+    var cp = pt(0, RR + 4);
+    var camG = sv('g', { transform: 'translate(' + cp[0] + ',' + (cp[1] - 6) + ')' });
+    sv('rect', { x: -14, y: -2, width: 28, height: 18, rx: 4, fill: '#fd7e2f' }, camG);
+    sv('path', { d: 'M-7 -2 L-4 -10 L4 -10 L7 -2Z', fill: '#fd7e2f' }, camG);
+    var ct = sv('text', { x: C, y: 296, 'text-anchor': 'middle' }); ct.textContent = 'камера';
+    /* солнце */
+    var sunG = sv('g', { style: 'cursor:grab' });
+    sv('circle', { r: 20, fill: '#ffd34d', opacity: 0.25 }, sunG);
+    sv('circle', { r: 12, fill: '#ffd34d', stroke: '#fff3c2', 'stroke-width': 2 }, sunG);
+    function drawMap() {
+      var p = pt(st.az, RR);
+      sunG.setAttribute('transform', 'translate(' + p[0] + ',' + p[1] + ')');
+      var yaw = fig.root.rotation.y / U.D2R;
+      modelG.setAttribute('transform', 'translate(' + C + ',' + C + ') rotate(' + (-yaw) + ')');
+      var len = U.clamp(1.6 / Math.tan(Math.max(4, st.el) * U.D2R), 0.2, 9) * 14;
+      var q = pt(st.az + 180, Math.min(len, RR - 4));
+      shadowLine.setAttribute('x2', q[0]); shadowLine.setAttribute('y2', q[1]);
+      var cur = scheme(st.az);
+      bands.forEach(function (b, i) { bandEls[i].setAttribute('opacity', SCHEMES[b[2]] === cur ? 0.75 : 0.18); });
+    }
+    function fromEvent(e) {
+      var r = svg.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * 300 - C, y = (e.clientY - r.top) / r.height * 300 - C;
+      st.az = Math.round(Math.atan2(x, y) / U.D2R);
+      st.spin = false; update();
+    }
+    var dragging = false;
+    svg.addEventListener('pointerdown', function (e) { dragging = true; svg.setPointerCapture(e.pointerId); fromEvent(e); });
+    svg.addEventListener('pointermove', function (e) { if (dragging) fromEvent(e); });
+    ['pointerup', 'pointercancel'].forEach(function (n) { svg.addEventListener(n, function () { dragging = false; }); });
+
+    /* быстрые схемы */
+    var chips = $('.mls-chips'), PRE = [[0, 'Фронтальный', 'солнце сзади камеры'], [45, 'Рисующий', '45° сбоку'], [90, 'Боковой', '90°'], [135, 'Контровой-боковой', '135°'], [180, 'Контровой', 'солнце за героем']];
+    chips.innerHTML = PRE.map(function (p, i) { return '<button type="button" class="mls-chip" data-i="' + i + '"><span class="nm">' + p[1] + '</span><span class="sb">' + p[2] + '</span></button>'; }).join('');
+    chips.addEventListener('click', function (e) { var b = e.target.closest('.mls-chip'); if (!b) return; tween(PRE[+b.getAttribute('data-i')][0]); });
+    var tw = null;
+    function tween(to) {
+      st.spin = false;
+      var d = ((to - st.az) % 360 + 540) % 360 - 180;
+      tw = { from: st.az, d: d, t: 0 };
+      stage.animate(function (dt) {
+        if (!tw) return false;
+        tw.t = Math.min(1, tw.t + dt / 0.9);
+        st.az = Math.round(tw.from + tw.d * U.ease(tw.t));
+        st.az = ((st.az + 540) % 360) - 180;
+        update(true);
+        if (tw.t >= 1) { tw = null; update(); return false; }
+        return true;
+      });
+    }
+    var elR = $('[data-r="el"]');
+    elR.addEventListener('input', function () { st.el = +elR.value; update(); });
+    box.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-act]'); if (!b) return;
+      var a = b.getAttribute('data-act');
+      if (a === 'refl') st.refl = !st.refl;
+      if (a === 'spin') {
+        st.spin = !st.spin;
+        if (st.spin) stage.animate(function (dt) { if (!st.spin) return false; st.az += dt * 40; if (st.az > 180) st.az -= 360; update(true); return true; });
+      }
+      update();
+    });
+
+    function update(light) {
+      applySun(); drawMap();
+      var cur = scheme(st.az), E = elevText(st.el), a = Math.abs(st.az);
+      $('[data-v="name"]').textContent = '☀ ' + cur.name + (st.el >= 50 ? ' · верхний' : '');
+      $('[data-o="el"]').textContent = st.el + '°';
+      $('[data-h="el"]').textContent = st.el < 12 ? 'Как на рассвете или на закате' : st.el < 45 ? 'Утро или вторая половина дня' : 'Около полудня';
+      $('[data-act="refl"]').classList.toggle('on', st.refl);
+      $('[data-act="spin"]').classList.toggle('on', st.spin);
+      box.querySelectorAll('.mls-chip').forEach(function (b, i) { b.classList.toggle('on', scheme(PRE[i][0]) === cur); });
+      if (light) return;
+      elR.value = st.el;
+      $('[data-v="about"]').innerHTML = '<h4>' + cur.name + '</h4><p class="mls-txt">' + cur.look + '</p><p class="mls-txt"><b>Когда использовать:</b> ' + cur.use + '</p>' +
+        '<ul class="mls-tips" style="margin-top:8px">' + cur.tips.map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ul>';
+      var faceShadow = a < 25 ? 'почти нет' : a < 65 ? 'на дальней щеке' : a < 115 ? 'половина лица' : 'лицо в тени';
+      var vol = a < 25 ? 'плоско' : a < 115 ? 'объёмно' : 'объём по контуру';
+      var rim = a > 115 ? (st.el < 30 ? 'яркий ореол' : 'слабый ореол') : 'нет';
+      var shadowLen = (1 / Math.tan(Math.max(3, st.el) * U.D2R)).toFixed(1).replace('.', ',');
+      $('[data-v="facts"]').innerHTML = '<div><span>Тень на лице</span>' + faceShadow + (st.refl && a > 25 ? ', смягчена отражателем' : '') + '</div><div><span>Объём</span>' + vol + '</div>' +
+        '<div><span>Контур (ореол)</span>' + rim + '</div><div><span>Тень на земле</span>в ' + shadowLen + ' раза длиннее роста</div>';
+      $('[data-v="elev"]').innerHTML = '<b>' + E.t + '.</b> ' + E.d;
+    }
+    placeInsetTag();
+    if ('ResizeObserver' in window) new ResizeObserver(placeInsetTag).observe(view);
+    update();
+    root.__mlsApi = { stage: stage, fig: fig, st: st, update: update, tween: tween };
+  }
+  S.widgets.sun = widget;
+})();
+
+/* ---------- Тренажёр «Крупности» ---------- */
+(function () {
+  'use strict';
+  var S = window.MLStudio, U = S.util;
+
+  /* низ и верх кадра в плоскости героя (м), фокусное, высота камеры */
+  var PLANS = [
+    { id: 'xls', name: 'Сверхобщий', sub: 'человек в пейзаже', b: -2.2, t: 8, f: 24, h: 2.0,
+      what: 'Пространство главнее человека: герой — маленькая фигура в большом мире.',
+      use: 'Начало сцены, смена места действия, ощущение масштаба или одиночества.', feel: 'Эпично, отстранённо.' },
+    { id: 'ls', name: 'Общий', sub: 'в полный рост', b: -0.18, t: 1.98, f: 35, h: 1.5,
+      what: 'Герой виден целиком, с запасом сверху и снизу. Читаются поза, одежда и место.',
+      use: 'Показать, кто и где находится; действие всем телом: идёт, танцует, работает.', feel: 'Нейтрально, информативно.' },
+    { id: 'mls', name: 'Средне-общий', sub: 'по колено', b: 0.64, t: 1.9, f: 50, h: 1.5,
+      what: 'Кадр от середины бедра или чуть выше колена. Видны жесты и часть окружения.',
+      use: 'Диалоги в движении, герой с предметом в руках, вестерны («американский план»).', feel: 'Динамично, по-киношному.' },
+    { id: 'ms', name: 'Средний', sub: 'по пояс', b: 0.98, t: 1.86, f: 50, h: 1.5,
+      what: 'Кадр по пояс. Хорошо читаются жесты рук и мимика.',
+      use: 'Интервью, разговоры, ведущий в кадре — самый ходовой план видео.', feel: 'Естественно, как в живом разговоре.' },
+    { id: 'mcu', name: 'Средне-крупный', sub: 'по грудь', b: 1.2, t: 1.82, f: 50, h: 1.55,
+      what: 'Кадр по грудь. Внимание смещается на лицо, но жесты ещё видны.',
+      use: 'Интервью и эмоциональные моменты разговора.', feel: 'Ближе, доверительно.' },
+    { id: 'cu', name: 'Крупный', sub: 'лицо и плечи', b: 1.36, t: 1.8, f: 85, h: 1.6,
+      what: 'Лицо крупно, чуть видны плечи. Макушку можно немного срезать.',
+      use: 'Эмоции, реакции, важные слова.', feel: 'Интимно, сильная эмоция.' },
+    { id: 'ecu', name: 'Сверхкрупный', sub: 'деталь: глаза', b: 1.555, t: 1.69, f: 100, h: 1.62,
+      what: 'Деталь — глаза, губы, руки. Остальное за кадром.',
+      use: 'Акцент, напряжение, детали, которые важны для истории.', feel: 'Очень сильно, напряжённо.' }
+  ];
+
+  function widget(root) {
+    var u = U.el, T = S.three();
+    var box = u('div', 'mls');
+    box.innerHTML =
+      '<div class="mls-sun-grid">' +
+        '<div class="mls-view"><div class="ov"><div class="mls-tag" style="left:2.5%;top:4%" data-v="lbl"></div><div class="mls-tag" style="right:2.5%;top:4%" data-v="lens"></div>' +
+          '<div class="mls-tag" style="left:2.5%;bottom:4%;top:auto;display:none;background:rgba(200,40,30,.85)" data-v="warn"></div></div></div>' +
+        '<div class="mls-card mls-map"><h4>Где проходит край кадра</h4><svg viewBox="0 0 300 330" class="mls-svg" style="cursor:default" data-v="svg"></svg>' +
+          '<p class="mls-note" style="margin-top:4px">Красные линии — суставы. Резать по ним нельзя: кажется, что человеку «отрезали» ноги или руки.</p></div>' +
+      '</div>' +
+      '<div class="mls-chips" style="grid-template-columns:repeat(7,minmax(0,1fr))"></div>' +
+      '<div class="mls-card" style="margin-top:12px"><label class="mls-ctl"><span class="hd"><b>Плавно меняйте крупность</b><output data-o="s"></output></span>' +
+        '<input type="range" min="0" max="600" step="1" data-r="s" aria-label="Крупность"><span class="hint">Следите, где окажется нижний край кадра.</span></label></div>' +
+      '<div class="mls-row2"><div class="mls-card" data-v="about"></div><div class="mls-card"><h4>Правила крупностей</h4><ul class="mls-tips">' +
+        '<li>Меняйте крупность при монтажной склейке хотя бы на один шаг — иначе получится «скачок».</li>' +
+        '<li>Чем ближе план, тем короче он может быть в монтаже.</li>' +
+        '<li>Не режьте по суставам: щиколотки, колени, локти, запястья, шея.</li>' +
+        '<li>На крупном плане можно срезать макушку, но не подбородок.</li></ul></div></div>';
+    root.appendChild(box);
+    if (!document.getElementById('mls-sun-css')) {
+      var st0 = document.createElement('style'); st0.id = 'mls-sun-css';
+      st0.textContent = '.mls-sun-grid{display:grid;grid-template-columns:minmax(0,1.9fr) minmax(0,1fr);gap:12px;align-items:start}' +
+        '@media (max-width:820px){.mls-sun-grid{grid-template-columns:minmax(0,1fr)}}' +
+        '.mls-svg{width:100%;max-width:300px;display:block;margin:0 auto 6px;touch-action:none;cursor:grab}' +
+        '.mls-svg text{font:600 11px system-ui,sans-serif;fill:#c9c6c0}';
+      document.head.appendChild(st0);
+    }
+    var st1 = document.getElementById('mls-shots-css');
+    if (!st1) {
+      st1 = document.createElement('style'); st1.id = 'mls-shots-css';
+      st1.textContent = '@media (max-width:640px){.mls-shots-chips{grid-template-columns:repeat(4,minmax(0,1fr))!important}}';
+      document.head.appendChild(st1);
+    }
+    var $ = function (s) { return box.querySelector(s); };
+    $('.mls-chips').classList.add('mls-shots-chips');
+    var view = $('.mls-view');
+    var stage = new S.Stage(view);
+    stage.setSun(60, 30); stage.setDaylight(30);
+    S.buildPark(stage, { pathZ: -3 });
+    stage.scene.add(S.makePlaza(2.4));
+    var fig = new S.Figure(); stage.scene.add(fig.root);
+    fig.setPose(S.POSES.pockets, true); fig.extra.bodyYaw = 12; fig.extra.headYaw = -6; fig.apply(fig.current);
+
+    var st = { s: 300, target: 300 };
+    function planAt(s) {
+      var i = Math.min(5, Math.floor(s / 100)), k = U.smooth(s / 100 - i), A = PLANS[i], B = PLANS[i + 1];
+      var spanA = A.t - A.b, spanB = B.t - B.b, span = Math.exp(U.lerp(Math.log(spanA), Math.log(spanB), k));
+      var midA = (A.t + A.b) / 2, midB = (B.t + B.b) / 2, w = (span - spanB) / ((spanA - spanB) || 1);
+      return { b: 0, mid: U.lerp(midB, midA, U.clamp(w, 0, 1)), span: span, f: U.lerp(A.f, B.f, k), h: U.lerp(A.h, B.h, k) };
+    }
+    function place() {
+      var p = planAt(st.s), cam = stage.camera;
+      stage.setFocal(p.f);
+      var vf = cam.fov * U.D2R, d = p.span / (2 * Math.tan(vf / 2));
+      cam.position.set(Math.sin(0.12) * d, p.h, Math.cos(0.12) * d);
+      cam.lookAt(0, p.mid, 0); cam.updateMatrixWorld();
+      $('[data-v="lens"]').textContent = Math.round(p.f) + ' мм · ' + (d < 10 ? d.toFixed(1).replace('.', ',') : Math.round(d)) + ' м';
+      return p;
+    }
+    stage.animate(function (dt) {
+      var dS = st.target - st.s;
+      if (Math.abs(dS) < 0.3) { if (st.s !== st.target) { st.s = st.target; place(); analyse(); } return false; }
+      st.s += dS * (1 - Math.pow(0.002, dt));
+      place(); analyse(true);
+      return true;
+    });
+
+    /* схема тела с краями кадра */
+    var svg = $('[data-v="svg"]'), NS = 'http://www.w3.org/2000/svg';
+    function sv(tag, at, par) { var e = document.createElementNS(NS, tag); for (var k in at) e.setAttribute(k, at[k]); (par || svg).appendChild(e); return e; }
+    var HY = function (y) { return 312 - y * 165; }; /* 1 м = 165 px, земля на 312 */
+    svg.innerHTML = '';
+    sv('rect', { x: 0, y: 0, width: 300, height: 330, rx: 14, fill: '#15171a' });
+    var body = sv('g', {});
+    /* силуэт человека (вид спереди) */
+    function bodyPart(x, y0, y1, w, col) { sv('rect', { x: 150 + x - w / 2, y: HY(y1), width: w, height: HY(y0) - HY(y1), rx: Math.min(w / 2, 10), fill: col }, body); }
+    bodyPart(-12, 0.03, 0.88, 21, '#33435f'); bodyPart(12, 0.03, 0.88, 21, '#33435f');
+    bodyPart(0, 0.82, 1.06, 50, '#33435f');
+    bodyPart(0, 1.0, 1.45, 56, '#c98a2e'); bodyPart(0, 1.0, 1.42, 16, '#ebe6dc');
+    bodyPart(-34, 0.9, 1.43, 14, '#c98a2e'); bodyPart(34, 0.9, 1.43, 14, '#c98a2e');
+    bodyPart(0, 1.42, 1.5, 12, '#d6a084');
+    sv('ellipse', { cx: 150, cy: HY(1.6), rx: 15, ry: 20, fill: '#d6a084' }, body);
+    sv('path', { d: 'M135 ' + HY(1.61) + ' Q150 ' + HY(1.8) + ' 165 ' + HY(1.61) + 'Z', fill: '#3b2a20' }, body);
+    sv('rect', { x: 125, y: HY(0.03) - 6, width: 22, height: 8, rx: 3, fill: '#242326' }, body);
+    sv('rect', { x: 153, y: HY(0.03) - 6, width: 22, height: 8, rx: 3, fill: '#242326' }, body);
+    var JOINTS = [[0.1, 'щиколотки'], [0.5, 'колени'], [0.9, 'запястья'], [1.12, 'локти'], [1.48, 'подбородок / шея']];
+    JOINTS.forEach(function (j) {
+      sv('line', { x1: 96, y1: HY(j[0]), x2: 204, y2: HY(j[0]), stroke: '#ff5d52', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' });
+      var t = sv('text', { x: 210, y: HY(j[0]) + 4 }); t.textContent = j[1]; t.setAttribute('style', 'fill:#ff8d84');
+    });
+    var shadeTop = sv('rect', { x: 0, y: 0, width: 300, height: 0, fill: 'rgba(10,11,13,.78)' });
+    var shadeBot = sv('rect', { x: 0, y: 0, width: 300, height: 0, fill: 'rgba(10,11,13,.78)' });
+    var frameR = sv('rect', { x: 60, y: 0, width: 180, height: 0, fill: 'none', stroke: '#fd7e2f', 'stroke-width': 3, rx: 4 });
+    var smallNote = sv('text', { x: 150, y: 24, 'text-anchor': 'middle' });
+
+    /* где край кадра пересекает плоскость героя */
+    var ray = new T.Raycaster(), plane = new T.Plane(new T.Vector3(0, 0, 1), 0), hit = new T.Vector3();
+    function edgeY(ndcY) {
+      ray.setFromCamera({ x: 0, y: ndcY }, stage.camera);
+      var n = new T.Vector3(); stage.camera.getWorldDirection(n); n.y = 0; n.normalize(); plane.normal.copy(n).negate(); plane.constant = 0;
+      return ray.ray.intersectPlane(plane, hit) ? hit.y : null;
+    }
+    function nearest() { return Math.round(st.s / 100); }
+    function analyse(light) {
+      var bot = edgeY(-1), top = edgeY(1);
+      if (bot == null || top == null) return;
+      var yT = HY(Math.min(top, 1.95)), yB = HY(Math.max(bot, -0.1));
+      shadeTop.setAttribute('height', Math.max(0, yT));
+      shadeBot.setAttribute('y', Math.min(330, yB)); shadeBot.setAttribute('height', Math.max(0, 330 - yB));
+      frameR.setAttribute('y', yT); frameR.setAttribute('height', Math.max(2, yB - yT));
+      var big = top - bot > 4;
+      smallNote.textContent = big ? 'человек занимает ' + Math.round(1.73 / (top - bot) * 100) + '% высоты кадра' : '';
+      /* суставы у нижнего края */
+      var P = fig.points(), cut = null;
+      [[P.ankle, 'щиколотки'], [P.knee, 'колени'], [P.wrist, 'запястья'], [P.elbow, 'локти'], [P.chin, 'подбородок']].forEach(function (j) {
+        if (cut) return;
+        var p = stage.projectPx(j[0]);
+        if (Math.abs(p.y - 1) < 0.035) cut = j[1];
+      });
+      var w = $('[data-v="warn"]');
+      w.style.display = cut ? 'block' : 'none';
+      w.textContent = cut ? '✂ Край кадра режет ' + cut : '';
+      var n = nearest(), Pl = PLANS[n];
+      $('[data-v="lbl"]').textContent = Pl.name + ' план';
+      $('[data-o="s"]').textContent = Pl.name.toLowerCase();
+      box.querySelectorAll('.mls-chip').forEach(function (b, i) { b.classList.toggle('on', i === n); });
+      if (light) return;
+      $('[data-r="s"]').value = Math.round(st.target);
+      $('[data-v="about"]').innerHTML = '<h4>' + Pl.name + ' план <span style="font-weight:500;color:var(--mut)">· ' + Pl.sub + '</span></h4>' +
+        '<p class="mls-txt">' + Pl.what + '</p><div class="mls-facts" style="margin-top:10px"><div><span>Для чего</span>' + Pl.use + '</div><div><span>Ощущение</span>' + Pl.feel + '</div></div>' +
+        (cut ? '<p class="mls-txt" style="color:#ff8d84"><b>Сейчас край кадра режет ' + cut + '.</b> Сделайте план чуть крупнее или чуть общее.</p>' : '');
+    }
+
+    var chips = $('.mls-chips');
+    chips.innerHTML = PLANS.map(function (p, i) { return '<button type="button" class="mls-chip" data-i="' + i + '"><span class="nm">' + p.name + '</span><span class="sb">' + p.sub + '</span></button>'; }).join('');
+    chips.addEventListener('click', function (e) { var b = e.target.closest('.mls-chip'); if (!b) return; st.target = +b.getAttribute('data-i') * 100; stage.invalidate(); });
+    $('[data-r="s"]').addEventListener('input', function () { st.target = +this.value; stage.invalidate(); });
+    place(); analyse();
+    root.__mlsApi = { stage: stage, st: st, place: place, analyse: analyse };
+  }
+  S.widgets.shots = widget;
+})();
+
+(function(){ if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', window.MLStudio.init); else window.MLStudio.init(); })();
+</script>

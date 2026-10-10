@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Тренажёры урока 3</title>
+<style>
+  body { margin: 0; background: #f6f3ee; color: #1c1c1c; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  .page { max-width: 1160px; margin: 0 auto; padding: 32px 16px 48px; }
+  .kicker { color: #fd7e2f; font-weight: 700; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
+  h2 { font-size: clamp(22px, 3vw, 30px); margin: 40px 0 14px; }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="kicker">Тренажёр · поставь модель</div><h2>Поставьте модель в позу</h2>
+    <div data-ml-widget="studio-pose"></div>
+    <div class="kicker">Композиция кадра</div><h2>Соберите кадр</h2>
+    <div data-ml-widget="studio-compose"></div>
+    <div class="kicker">Движение камеры</div><h2>Как двигается камера</h2>
+    <div data-ml-widget="studio-move"></div>
+    <div class="kicker">Тренажёр · двигай солнце вокруг модели</div><h2>Свет зависит от того, где солнце</h2>
+    <div data-ml-widget="studio-sun"></div>
+    <div class="kicker">Крупности</div><h2>От сверхобщего до детали</h2>
+    <div data-ml-widget="studio-shots"></div>
+  </div>
+  <script src="ml-studio.js"></script>
+</body>
+</html>
