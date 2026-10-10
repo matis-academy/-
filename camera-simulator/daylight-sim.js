@@ -724,7 +724,35 @@
     '.dls-side{display:flex;flex-direction:column;gap:12px;min-width:0}',
     '.dls-note{font-size:12px;color:var(--mut);margin-top:10px}',
     '@container (max-width:520px){.dls-histo{display:none}.dls-hud .q{display:none}.dls-meter{width:34%}}',
-    '@media (max-width:820px){.dls-view{position:sticky;top:6px;z-index:5;box-shadow:0 6px 18px rgba(0,0,0,.45)}}',
+    '@media (max-width:820px){.dls-dev{position:sticky;top:6px;z-index:5}.dls:not(.is-ph) .dls-view{box-shadow:0 6px 18px rgba(0,0,0,.45)}}',
+    '.dls:not(.is-ph) .ph-only{display:none!important}.dls.is-ph .cam-only{display:none!important}',
+    '.dls.is-ph:not(.ph-pro) .ph-pro,.dls.ph-pro .ph-auto{display:none}',
+    '.dls-devsw{display:inline-flex;gap:4px;padding:4px;margin:0 0 12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;max-width:100%}',
+    '.dls-devsw button{display:inline-flex;align-items:center;gap:7px;background:transparent;border:0;border-radius:9px;padding:8px 14px;font-size:14px;font-weight:700;color:var(--mut)}',
+    '.dls-devsw button.on{background:var(--acc);color:#1a0f08}',
+    '.dls-dev{position:relative}',
+    '.dls.is-ph .dls-dev{display:grid;grid-template-columns:minmax(0,1fr) 9%;align-items:center;gap:1.4%;padding:1.8% 1.2% 1.8% 2.6%;background:linear-gradient(150deg,#34353a,#0c0c0d 45%,#1d1e21);border-radius:clamp(20px,5vw,48px);box-shadow:inset 0 0 0 2px #45464c,inset 0 0 0 5px #0a0a0b,0 12px 30px rgba(0,0,0,.35)}',
+    '.dls.is-ph .dls-dev::before{content:"";position:absolute;left:1%;top:50%;width:1.1%;aspect-ratio:1;border-radius:50%;background:#16171a;box-shadow:inset 0 0 0 1px #2c2d31;transform:translateY(-50%)}',
+    '.dls.is-ph .dls-view{border-radius:clamp(10px,3vw,30px);cursor:crosshair}',
+    '.dls-phbar{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(6px,2vw,16px);container-type:inline-size;min-width:0}',
+    '.dls-phbar .lb{font:700 11px/1 system-ui,sans-serif;font-size:clamp(6px,15cqw,12px);color:#fff;letter-spacing:.05em}',
+    '.dls-phbar .lb.y{color:#ffd60a}',
+    '.dls-shutter{width:80%;aspect-ratio:1;border-radius:50%;border:3px solid #fff!important;background:transparent;padding:0;display:flex;align-items:center;justify-content:center}',
+    '.dls-shutter::before{content:"";width:80%;height:80%;border-radius:50%;background:#ff3b30;transition:all .2s}',
+    '.dls-shutter.on::before{width:42%;height:42%;border-radius:18%}',
+    '.dls-phud{font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;font-weight:600}',
+    '.dls-phud .pt{position:absolute;top:4%;left:0;right:0;display:flex;justify-content:center;gap:.5em;z-index:1}',
+    '.dls-phud .chip{background:rgba(0,0,0,.45);border-radius:999px;padding:.3em .8em}',
+    '.dls-phud .chip.rc{display:none;background:#ff3b30}.dls-phud.is-rec .chip.rc{display:inline-block}.dls-phud.is-rec .chip.pfp{display:none}',
+    '.dls-phud .badge{position:absolute;top:4%;right:3%;z-index:1;background:#ffd60a;color:#111;border-radius:4px;padding:.25em .5em;font-size:.85em;text-shadow:none}',
+    '.dls-phud .lock{position:absolute;top:13%;left:50%;transform:translateX(-50%);z-index:1;background:#ffd60a;color:#111;border-radius:4px;padding:.25em .6em;font-size:.85em;text-shadow:none;white-space:nowrap}',
+    '.dls-phud .ae{position:absolute;width:9%;aspect-ratio:1;border:1.5px solid #ffd60a;transform:translate(-50%,-50%);box-shadow:0 0 2px rgba(0,0,0,.5)}',
+    '.dls-phud .ae::before{content:"";position:absolute;left:135%;top:-20%;height:140%;width:1.5px;background:rgba(255,214,10,.85)}',
+    '.dls-phud .ae .sun{position:absolute;left:135%;width:1em;height:1em;border-radius:50%;background:#ffd60a;transform:translate(-45%,-50%);box-shadow:0 0 0 .2em rgba(255,214,10,.3)}',
+    '.dls-phud .face{position:absolute;border:1.5px solid rgba(255,214,10,.85);border-radius:4px}',
+    '.dls-phud .pb{position:absolute;bottom:4%;left:0;right:0;z-index:1;display:flex;justify-content:center;flex-wrap:wrap;gap:.35em 1em;padding:0 3%}',
+    '.dls-phud .pb .y{color:#ffd60a}.dls-phud .pb .g{color:rgba(255,255,255,.7);font-weight:500}.dls-phud .pb .w{color:#ff8a80}',
+    '@media (max-width:520px){.dls-devsw{display:flex}.dls-devsw button{flex:1;justify-content:center}}',
     '@media (max-width:520px){.dls{padding:10px;border-radius:14px}.dls-tab .nm{font-size:11.5px}.dls-tab .tm{font-size:10px}.dls-tab .sw{height:16px}.dls-tabs{gap:4px}.dls-card{padding:12px}.dls-meter{min-width:70px}.dls-set span{margin-right:.6em}}'
   ].join('\n');
 
@@ -733,8 +761,54 @@
     var s = document.createElement('style'); s.id = 'dls-css'; s.textContent = CSS; document.head.appendChild(s);
   }
 
+  /* ---------- Телефон ---------- */
+  var PISO = [50, 64, 80, 100, 125, 160, 200, 250, 320, 400, 500, 640, 800, 1000, 1250, 1600, 2000, 2500, 3200];
+  var PND = ND.slice(0, 7);                // насадки ND2…ND64
+  var PFPS = [25, 30, 60];
+  var PH_N = 1.8;                          // диафрагма у телефона постоянная
+  var PH_NOISE = 3.5;                      // маленькая матрица: шум заметнее при том же ISO
+  var PH_DOF = 0.12;                       // глубина резкости телефона ≈ f/15 полного кадра
+  var PH_CINE_R = 18 / 2.8;                // «кинорежим» — программное размытие
+  var AE_TARGET = 0.18 * Math.pow(2, 0.8); // уровень, к которому стремится автоэкспозиция
+  var SPOT_TARGET = 0.26;                  // замер по точке: точка становится чуть светлее среднего серого
+  var PH_REC = {
+    sunrise: { fps: 30, sh: 60, iso: 50, nd: 1, wb: 5600 },
+    morning: { fps: 30, sh: 60, iso: 50, nd: 5, wb: 5600 },
+    noon: { fps: 30, sh: 60, iso: 50, nd: 6, wb: 5600 },
+    sunset: { fps: 30, sh: 60, iso: 50, nd: 3, wb: 5600 },
+    blue: { fps: 30, sh: 60, iso: 400, nd: 0, wb: 4800 }
+  };
+
+  var PH_TIPS = {
+    sunrise: [
+      'Телефон любит «вытягивать» тени и делать из рассвета день — уменьшите экспокоррекцию на −0,3…−0,7.',
+      'Зафиксируйте экспозицию тапом по небу рядом с солнцем, чтобы яркость не «прыгала» во время съёмки.',
+      'Если есть ручной режим — поставьте баланс белого 5600K, иначе автоматика сотрёт розовые тона.'
+    ],
+    morning: [
+      'Днём телефон ставит очень короткую выдержку (1/1000 и короче) — движение становится дёрганым.',
+      'Решение: ND-насадка на объектив и выдержка 1/50 в ручном режиме.',
+      'Боковой утренний свет красиво рисует лицо — поверните героя боком к солнцу.'
+    ],
+    noon: [
+      'Самое тяжёлое время для телефона: без ND-насадки выдержка уходит в 1/4000.',
+      'Маленькая матрица не вытянет одновременно яркое небо и тени — по возможности уведите героя в тень.',
+      'Протрите объектив: в контровом свете любой отпечаток пальца даёт «молоко» на кадре.'
+    ],
+    sunset: [
+      'Тапните по небу — телефон затемнит кадр и сохранит цвет заката. Тап по лицу спасёт лицо, но выбьет небо.',
+      'Автобаланс телефона приглушает тёплые тона. В ручном режиме ставьте 5600K.',
+      'Солнце в кадре даёт блики: прикройте объектив ладонью сверху, как блендой.'
+    ],
+    blue: [
+      'Телефон пытается «сделать ночь днём»: кадр становится серым и шумным. Уменьшите экспокоррекцию на −1…−2.',
+      'Не снимайте 60 к/с ночью: выдержка короче — телефону придётся сильнее поднять ISO.',
+      'Держите телефон двумя руками или поставьте на штатив — света мало.'
+    ]
+  };
+
   /* ---------- Виджет ---------- */
-  function fmtSh(d) { return '1/' + d; }
+  function fmtSh(d) { return '1/' + Math.round(d); }
   function fmtF(n) { return 'f/' + (n % 1 ? n.toFixed(1) : n); }
   function idxOf(arr, v) {
     var best = 0, bd = Infinity;
@@ -742,50 +816,75 @@
     return best;
   }
   function fmtEV(v) { return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1).replace('.', ','); }
+  function plural(n) { return n === 1 ? 'пункт' : n < 5 ? 'пункта' : 'пунктов'; }
+
+  var ICON_CAM = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.6"/></svg>';
+  var ICON_PH = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>';
 
   function mount(root) {
     if (root.__dls) return; root.__dls = true;
     injectCSS();
-    var start = parseInt(root.getAttribute('data-start') || '3', 10);
-    if (!(start >= 0 && start < TIMES.length)) start = 3;
+    var start = parseInt(root.getAttribute('data-start') || '0', 10);
+    if (!(start >= 0 && start < TIMES.length)) start = 0;
+    var modeAttr = root.getAttribute('data-mode');
+    var fixedDev = modeAttr === 'camera' || modeAttr === 'phone' ? modeAttr : null;
 
     var tabsHTML = TIMES.map(function (T, i) {
       return '<button type="button" class="dls-tab" data-i="' + i + '"><span class="sw" style="background:linear-gradient(180deg,' +
         T.sky[0] + ',' + T.sky[2] + ' 70%,' + T.sky[3] + ')"></span><span class="nm">' + T.name + '</span><span class="tm">≈ ' + T.clock + '</span></button>';
     }).join('');
 
-    function slider(id, label, max) {
+    function slider(id, label, min, max, step) {
       return '<label class="dls-row"><span class="hd"><b>' + label + '</b><output data-o="' + id + '"></output></span>' +
-        '<input type="range" min="0" max="' + max + '" step="1" data-r="' + id + '" aria-label="' + label + '"><span class="hint" data-h="' + id + '"></span></label>';
+        '<input type="range" min="' + min + '" max="' + max + '" step="' + (step || 1) + '" data-r="' + id + '" aria-label="' + label + '"><span class="hint" data-h="' + id + '"></span></label>';
+    }
+    function seg(id, label, items) {
+      return '<div class="dls-row"><span class="hd"><b>' + label + '</b><output data-o="' + id + '"></output></span><div class="dls-seg" data-seg="' + id + '">' +
+        items.map(function (it) { return '<button type="button" data-v="' + it[0] + '">' + it[1] + '</button>'; }).join('') +
+        '</div><span class="hint" data-h="' + id + '"></span></div>';
     }
 
     var el = document.createElement('div');
     el.className = 'dls';
     el.innerHTML =
-      '<div class="dls-view">' +
-        '<canvas width="' + W + '" height="' + H + '" class="dls-main-c" aria-label="Кадр с камеры"></canvas>' +
-        '<canvas width="' + W + '" height="' + H + '" class="dls-fade"></canvas>' +
-        '<div class="dls-grid"></div>' +
-        '<div class="dls-hud">' +
-          '<div class="dls-af" style="left:' + ((CX - 22) / W * 100) + '%;top:' + (143 / H * 100) + '%;width:' + (44 / W * 100) + '%;height:' + (48 / H * 100) + '%"></div>' +
-          '<div class="t"><span class="dls-rec"><i></i><span class="st">STBY</span>&nbsp;<span class="tc">00:00:00:00</span></span>' +
-          '<span><span class="fp">25p</span><span class="q"> · 4K</span> · <span class="ck"></span><span class="dls-bat"></span></span></div>' +
-          '<div class="b"><div class="dls-set"></div>' +
-            '<div class="dls-meter"><div class="mk"></div><div class="ln"></div><div class="sc"><b>−3</b><b>2</b><b>1</b><b>0</b><b>1</b><b>2</b><b>+3</b></div></div>' +
-            '<canvas class="dls-histo" width="128" height="56"></canvas>' +
+      (fixedDev ? '' : '<div class="dls-devsw" role="tablist" aria-label="Чем снимаем">' +
+        '<button type="button" data-dev="camera">' + ICON_CAM + 'Камера</button><button type="button" data-dev="phone">' + ICON_PH + 'Телефон</button></div>') +
+      '<div class="dls-dev">' +
+        '<div class="dls-view">' +
+          '<canvas width="' + W + '" height="' + H + '" class="dls-main-c" aria-label="Кадр"></canvas>' +
+          '<canvas width="' + W + '" height="' + H + '" class="dls-fade"></canvas>' +
+          '<div class="dls-grid"></div>' +
+          /* монитор камеры */
+          '<div class="dls-hud cam-only">' +
+            '<div class="dls-af" style="left:' + ((CX - 22) / W * 100) + '%;top:' + (143 / H * 100) + '%;width:' + (44 / W * 100) + '%;height:' + (48 / H * 100) + '%"></div>' +
+            '<div class="t"><span class="dls-rec"><i></i><span class="st">STBY</span>&nbsp;<span class="tc">00:00:00:00</span></span>' +
+            '<span><span class="fp">25p</span><span class="q"> · 4K</span> · <span class="ck"></span><span class="dls-bat"></span></span></div>' +
+            '<div class="b"><div class="dls-set"></div>' +
+              '<div class="dls-meter"><div class="mk"></div><div class="ln"></div><div class="sc"><b>−3</b><b>2</b><b>1</b><b>0</b><b>1</b><b>2</b><b>+3</b></div></div>' +
+              '<canvas class="dls-histo" width="128" height="56"></canvas>' +
+            '</div>' +
+          '</div>' +
+          /* экран телефона */
+          '<div class="dls-hud dls-phud ph-only">' +
+            '<div class="pt"><span class="chip pfp">4K · 30</span><span class="chip rc">00:00</span></div>' +
+            '<span class="badge">PRO</span>' +
+            '<div class="lock">ЗАМОК AE/AF</div>' +
+            '<div class="face" style="left:' + ((CX - 20) / W * 100) + '%;top:' + (146 / H * 100) + '%;width:' + (40 / W * 100) + '%;height:' + (44 / H * 100) + '%"></div>' +
+            '<div class="ae"><i class="sun"></i></div>' +
+            '<div class="pb"></div>' +
           '</div>' +
         '</div>' +
+        '<div class="dls-phbar ph-only"><span class="lb y">ВИДЕО</span><button type="button" class="dls-shutter" data-act="record" aria-label="Запись"></button><span class="lb pm">АВТО</span></div>' +
       '</div>' +
       '<div class="dls-tabs" role="tablist" aria-label="Время суток">' + tabsHTML + '</div>' +
       '<div class="dls-main">' +
-        '<div class="dls-card dls-ctrl"><h4>Настройки камеры</h4>' +
-          '<div class="dls-row"><span class="hd"><b>Частота кадров</b><output data-o="fps"></output></span><div class="dls-seg" data-seg="fps">' +
-            FPS.map(function (f) { return '<button type="button" data-v="' + f + '">' + f + ' к/с</button>'; }).join('') +
-          '</div><span class="hint" data-h="fps"></span></div>' +
-          slider('sh', 'Выдержка', SH.length - 1) +
-          slider('f', 'Диафрагма', FN.length - 1) +
-          slider('iso', 'ISO', ISO.length - 1) +
-          slider('nd', 'ND-фильтр', ND.length - 1) +
+        /* настройки камеры */
+        '<div class="dls-card dls-ctrl cam-only"><h4>Настройки камеры</h4>' +
+          seg('fps', 'Частота кадров', FPS.map(function (f) { return [f, f + ' к/с']; })) +
+          slider('sh', 'Выдержка', 0, SH.length - 1) +
+          slider('f', 'Диафрагма', 0, FN.length - 1) +
+          slider('iso', 'ISO', 0, ISO.length - 1) +
+          slider('nd', 'ND-фильтр', 0, ND.length - 1) +
           '<div class="dls-row"><span class="hd"><b>Баланс белого</b><output data-o="wb"></output></span>' +
             '<input type="range" min="2500" max="10000" step="100" data-r="wb" aria-label="Баланс белого">' +
             '<div class="dls-seg" data-seg="wb"><button type="button" data-v="auto">Авто</button><button type="button" data-v="3200">Лампа 3200K</button>' +
@@ -798,6 +897,33 @@
           '</div>' +
           '<div class="dls-note">Велосипедист проезжает каждые несколько секунд — следите, как выдержка меняет движение. 50 и 100 к/с показаны как замедление на монтаже 25p.</div>' +
         '</div>' +
+        /* настройки телефона */
+        '<div class="dls-card dls-ctrl ph-only"><h4>Настройки телефона</h4>' +
+          seg('pmode', 'Режим съёмки', [['auto', 'Авто'], ['pro', 'Ручной (PRO)']]) +
+          seg('pfps', 'Частота кадров', PFPS.map(function (f) { return [f, f + ' к/с']; })) +
+          '<div class="ph-auto">' +
+            slider('pcomp', 'Экспокоррекция', -20, 20) +
+            '<div class="dls-row"><span class="hd"><b>Замер экспозиции</b><output data-o="ptap"></output></span>' +
+              '<div class="dls-seg"><button type="button" data-act="untap">По всему кадру</button><button type="button" data-act="tapface">По лицу</button><button type="button" data-act="tapsky">По небу</button></div>' +
+              '<span class="hint">Или тапните по любому месту кадра — как в камере телефона.</span></div>' +
+          '</div>' +
+          '<div class="ph-pro">' +
+            slider('psh', 'Выдержка', 0, SH.length - 1) +
+            slider('piso', 'ISO', 0, PISO.length - 1) +
+            '<div class="dls-row"><span class="hd"><b>Баланс белого</b><output data-o="pwb"></output></span>' +
+              '<input type="range" min="2500" max="10000" step="100" data-r="pwb" aria-label="Баланс белого">' +
+              '<div class="dls-seg" data-seg="pwb"><button type="button" data-v="auto">Авто</button><button type="button" data-v="3200">3200K</button>' +
+              '<button type="button" data-v="5600">5600K</button><button type="button" data-v="6500">6500K</button></div></div>' +
+          '</div>' +
+          slider('pnd', 'ND-насадка', 0, PND.length - 1) +
+          '<div class="dls-tools">' +
+            '<button type="button" class="dls-btn pr" data-act="rec">Подсказать настройки</button>' +
+            '<button type="button" class="dls-btn" data-act="cine">Кинорежим</button>' +
+            '<button type="button" class="dls-btn" data-act="grid">Сетка</button>' +
+            '<button type="button" class="dls-btn rec" data-act="record">● REC</button>' +
+          '</div>' +
+          '<div class="dls-note">Диафрагма у телефона постоянная (f/1.8), поэтому яркостью управляют только выдержка, ISO и ND-насадка. Ручной режим видео есть не во всех телефонах — его дают приложения вроде Blackmagic Camera.</div>' +
+        '</div>' +
         '<div class="dls-side">' +
           '<div class="dls-card"><h4>Оценка кадра</h4><ul class="dls-checks"></ul><div class="dls-sum"></div></div>' +
           '<div class="dls-card dls-info"></div>' +
@@ -807,22 +933,29 @@
     root.appendChild(el);
 
     var $ = function (s) { return el.querySelector(s); };
+    var $$ = function (s) { return el.querySelectorAll(s); };
     var cv = $('.dls-main-c'), ctx = cv.getContext('2d'), fade = $('.dls-fade'), fctx = fade.getContext('2d');
     var hc = $('.dls-histo'), hctx = hc.getContext('2d');
     var img = ctx.createImageData(W, H);
 
-    var st = { t: start, fps: 25, sh: 3, f: 4, iso: 0, nd: 0, wb: 5600, awb: false, zebra: false, grid: false, rec: false };
+    var st = { dev: fixedDev || 'camera', t: start, fps: 25, sh: 3, f: 4, iso: 0, nd: 0, wb: 5600, awb: false, zebra: false, grid: false, rec: false };
+    var ph = { mode: 'auto', fps: 30, comp: 0, tap: null, sh: 4, iso: 0, nd: 0, wb: 5600, awb: true, cine: false };
     function applyRec() {
-      var r = TIMES[st.t].rec;
+      var T = TIMES[st.t], r = T.rec;
       st.fps = r.fps; st.sh = SH.indexOf(r.sh); st.f = idxOf(FN, r.f); st.iso = idxOf(ISO, r.iso);
       st.nd = ND.findIndex(function (n) { return n.s === r.nd; }); st.wb = r.wb; st.awb = false;
+    }
+    function applyPhoneRec() {
+      var r = PH_REC[TIMES[st.t].id];
+      ph.mode = 'pro'; ph.fps = r.fps; ph.sh = SH.indexOf(r.sh); ph.iso = PISO.indexOf(r.iso);
+      ph.nd = PND.findIndex(function (n) { return n.s === r.nd; }); ph.wb = r.wb; ph.awb = false; ph.tap = null;
     }
     applyRec();
 
     /* --- кэш сцены --- */
-    var scene = null, cache = { key: '' }, F = new Float32Array(W * H * 3);
+    var scene = null, cache = { key: '', avg: 0.2 }, F = new Float32Array(W * H * 3);
     var bgCache = new Float32Array(W * H * 3), fullCache = new Float32Array(W * H * 3);
-    var spBlur = null, simT = 0, frameNo = 0, tcFrames = 0, ev = {};
+    var spBlur = null, simT = 0, frameNo = 0, tcFrames = 0, ev = { rbg: 6, vk: 0.1 };
 
     function buildScene() {
       var T = TIMES[st.t], p = paintScene(T), s = paintSubject(T);
@@ -833,10 +966,10 @@
 
     /* фон с нужной глубиной резкости + боке фонарей + герой */
     function buildCache() {
-      var N = FN[st.f], key = st.t + ':' + N;
+      var rbg = ev.rbg, key = st.t + ':' + rbg.toFixed(3);
       if (cache.key === key) return;
       cache.key = key;
-      var rbg = 18 / N, L = scene.levels, maxL = LEVELS.length - 1;
+      var L = scene.levels, maxL = LEVELS.length - 1;
       for (var y = 0; y < H; y++) {
         var rr = rbg * DEPTH[y], i = 0;
         while (i < maxL - 1 && LEVELS[i + 1] < rr) i++;
@@ -866,27 +999,64 @@
         } else { fullCache[q] = bgCache[q]; fullCache[q + 1] = bgCache[q + 1]; fullCache[q + 2] = bgCache[q + 2]; }
       }
       spBlur = gaussBlur(scene.sprite, SPW, SPH, rbg * 0.5 * 0.55, 4);
+      /* центровзвешенная средняя яркость сцены — для экспонометра и автоэкспозиции */
+      var s2 = 0, ws = 0;
+      for (y = 4; y < H; y += 6) for (var x = 3; x < W; x += 6) {
+        var jj = (y * W + x) * 3, l = Math.min(40, 0.2126 * fullCache[jj] + 0.7152 * fullCache[jj + 1] + 0.0722 * fullCache[jj + 2]);
+        var dx = x / W - 0.5, dy = y / H - 0.5, wt = 1 + 2 * Math.exp(-(dx * dx + dy * dy) / 0.05);
+        s2 += l * wt; ws += wt;
+      }
+      cache.avg = s2 / ws;
+    }
+    /* средняя яркость в точке замера (тап) */
+    function spotMean(px, py) {
+      var s = 0, n = 0, r = 16;
+      for (var y = Math.max(0, Math.round(py - r)); y < Math.min(H, py + r); y += 2)
+        for (var x = Math.max(0, Math.round(px - r)); x < Math.min(W, px + r); x += 2) {
+          var j = (y * W + x) * 3; s += Math.log(Math.max(1e-4, 0.2126 * fullCache[j] + 0.7152 * fullCache[j + 1] + 0.0722 * fullCache[j + 2])); n++;
+        }
+      return Math.exp(s / Math.max(1, n)); /* среднее геометрическое: блики меньше сбивают замер */
     }
 
-    /* --- экспозиция --- */
+    /* --- экспозиция: камера или телефон --- */
     function compute() {
-      var T = TIMES[st.t], N = FN[st.f], den = SH[st.sh], iso = ISO[st.iso], nd = ND[st.nd].s;
-      var evCam = Math.log2(N * N * den) - Math.log2(iso / 100) + nd;
+      var T = TIMES[st.t];
+      if (st.dev === 'camera') {
+        ev.N = FN[st.f]; ev.rbg = 18 / ev.N; ev.vk = 0.08 + 0.3 * clamp((4 - ev.N) / 2.2, 0, 1);
+      } else {
+        ev.N = PH_N; ev.rbg = ph.cine ? PH_CINE_R : 18 / PH_N * PH_DOF; ev.vk = 0.07;
+      }
+      buildCache();
+      if (st.dev === 'camera') {
+        ev.den = SH[st.sh]; ev.iso = ISO[st.iso]; ev.nd = ND[st.nd].s; ev.fps = st.fps; ev.noise = 1; ev.auto = false;
+        ev.K = st.awb ? T.awb : st.wb; ev.awb = st.awb;
+      } else {
+        ev.fps = ph.fps; ev.nd = PND[ph.nd].s; ev.noise = PH_NOISE;
+        ev.awb = ph.mode === 'auto' || ph.awb;
+        ev.K = ev.awb ? Math.round((5600 + (T.awb - 5600) * 0.6) / 100) * 100 : ph.wb;
+        if (ph.mode === 'pro') { ev.den = SH[ph.sh]; ev.iso = PISO[ph.iso]; ev.auto = false; }
+        else {
+          /* автоэкспозиция телефона: сначала минимальное ISO и короткая выдержка, ISO растёт только когда выдержка упёрлась в 1/fps */
+          var m = ph.tap ? spotMean(ph.tap.x, ph.tap.y) : cache.avg;
+          var G = (ph.tap ? SPOT_TARGET : AE_TARGET) * Math.pow(2, ph.comp / 10) / Math.max(m, 1e-5);
+          var x = T.ev - Math.log2(G) - Math.log2(PH_N * PH_N) - ev.nd; /* = log2(1/t) − log2(ISO/100) */
+          var iso = 50, den = Math.pow(2, x + Math.log2(iso / 100));
+          if (den > 8000) den = 8000;
+          if (den < ev.fps) { den = ev.fps; iso = clamp(100 * Math.pow(2, Math.log2(den) - x), 50, 3200); }
+          ev.den = den; ev.iso = iso; ev.auto = true;
+        }
+      }
+      var evCam = Math.log2(ev.N * ev.N * ev.den) - Math.log2(ev.iso / 100) + ev.nd;
       ev.delta = T.ev - evCam;
       ev.gain = Math.pow(2, ev.delta);
-      ev.K = st.awb ? T.awb : st.wb;
       ev.wb = wbGains(ev.K);
-      ev.vk = 0.08 + 0.3 * clamp((4 - N) / 2.2, 0, 1);
-      /* экспонометр (центровзвешенный) и доля пересвета */
-      var sum = 0, wsum = 0, clip = 0, cnt = 0;
-      for (var y = 4; y < H; y += 6) for (var x = 3; x < W; x += 6) {
-        var p = y * W + x, j = p * 3, v = (1 - ev.vk * RR[p]) * ev.gain;
-        var r = fullCache[j] * v, g = fullCache[j + 1] * v, b = fullCache[j + 2] * v;
-        var l = Math.min(0.2126 * r + 0.7152 * g + 0.0722 * b, 40), dx = x / W - 0.5, dy = y / H - 0.5, w = 1 + 2 * Math.exp(-(dx * dx + dy * dy) / 0.05);
-        sum += l * w; wsum += w; cnt++;
-        if (Math.max(r, g, b) >= CLIP) clip++;
+      ev.meter = Math.log2(Math.max(1e-5, cache.avg * ev.gain) / AE_TARGET);
+      var clip = 0, cnt = 0;
+      for (var y = 4; y < H; y += 6) for (var xx = 3; xx < W; xx += 6) {
+        var j = (y * W + xx) * 3;
+        if (Math.max(fullCache[j], fullCache[j + 1], fullCache[j + 2]) * ev.gain >= CLIP) clip++;
+        cnt++;
       }
-      ev.meter = Math.log2(Math.max(1e-5, sum / wsum) / 0.18) - 0.8; /* калибровка «матричного» замера */
       ev.clip = clip / cnt;
     }
 
@@ -896,10 +1066,10 @@
       buildCache();
       F.set(fullCache);
       /* велосипедист со смазом движения */
-      var speed = 330, period = (W + 300) / speed + 1.2, slow = st.fps / 25;
+      var speed = 330, period = (W + 300) / speed + 1.2, slow = ev.fps >= 50 ? ev.fps / 25 : 1;
       var tt = (simT / slow) % period, px = -150 + speed * tt;
       if (px < W + 10) {
-        var blur = speed * (1 / SH[st.sh]);
+        var blur = speed / ev.den;
         var n = Math.max(1, Math.min(40, Math.ceil(blur / 1.1)));
         var x0 = Math.round(px - blur), bw = SPW + Math.ceil(blur) + 1, sy0 = ROAD - 91 - SPOY + 6;
         var acc = new Float32Array(bw * SPH * 4), sp = spBlur, inv = 1 / n;
@@ -926,8 +1096,8 @@
       }
       /* проявка: экспозиция → шум сенсора → клиппинг → баланс белого → кривая → sRGB */
       var gn = ev.gain, wr = ev.wb[0], wg = ev.wb[1], wbb = ev.wb[2], vk = ev.vk, FL = scene.flare;
-      var ig = ISO[st.iso] / 100, na = NOISE_A * ig, nb2 = (NOISE_B * ig) * (NOISE_B * ig);
-      var noff = (Math.random() * NZN) | 0, out = img.data, zeb = st.zebra, ph = (frameNo >> 1) & 7;
+      var ig = ev.iso / 100 * ev.noise, na = NOISE_A * ig, nb2 = (NOISE_B * ig) * (NOISE_B * ig);
+      var noff = (Math.random() * NZN) | 0, out = img.data, zeb = st.zebra && st.dev === 'camera', ph8 = (frameNo >> 1) & 7;
       hist.fill(0);
       for (var y = 0, i = 0; y < H; y++) {
         for (var x = 0; x < W; x++, i++) {
@@ -946,12 +1116,12 @@
           var r8 = OETF[R_ <= 0 ? 0 : (R_ * 4095) | 0], g8 = OETF[G_ <= 0 ? 0 : (G_ * 4095) | 0], b8 = OETF[B_ <= 0 ? 0 : (B_ * 4095) | 0];
           var y8 = (54 * r8 + 183 * g8 + 19 * b8) >> 8;
           if (!(x & 1) && !(y & 1)) hist[y8 >> 2]++;
-          if (zeb && y8 >= 242 && ((x + y + ph) & 7) < 3) { r8 = g8 = b8 = 20; }
+          if (zeb && y8 >= 242 && ((x + y + ph8) & 7) < 3) { r8 = g8 = b8 = 20; }
           out[o] = r8; out[o + 1] = g8; out[o + 2] = b8; out[o + 3] = 255;
         }
       }
       ctx.putImageData(img, 0, 0);
-      drawHisto();
+      if (st.dev === 'camera') drawHisto();
     }
 
     function drawHisto() {
@@ -970,40 +1140,51 @@
     /* --- оценка --- */
     function check(cls, title, detail) { return { c: cls, t: title, d: detail || '' }; }
     function evaluate() {
-      var T = TIMES[st.t], items = [], d = ev.delta, fps = st.fps, den = SH[st.sh], iso = ISO[st.iso], N = FN[st.f];
+      var T = TIMES[st.t], items = [], d = ev.delta, fps = ev.fps, den = ev.den, iso = Math.round(ev.iso), N = ev.N;
+      var phone = st.dev === 'phone', auto = ev.auto;
       /* экспозиция */
       if (d > T.expTol[1]) {
-        items.push(check(d > 1.5 ? 'bad' : 'warn', 'Пересвет: ' + fmtEV(d) + ' EV',
-          (T.id === 'noon' || T.id === 'morning' ? 'Света много — поставьте ND-фильтр или закройте диафрагму. ' : 'Закройте диафрагму, снизьте ISO или добавьте ND. ') +
-          'Выдержку для этого лучше не укорачивать.'));
+        var hintO = !phone ? (T.id === 'noon' || T.id === 'morning' ? 'Света много — поставьте ND-фильтр или закройте диафрагму. ' : 'Закройте диафрагму, снизьте ISO или добавьте ND. ') + 'Выдержку для этого лучше не укорачивать.' :
+          auto ? (den >= 7999 ? 'Даже 1/8000 не спасает — нужна ND-насадка.' : 'Уменьшите экспокоррекцию (солнышко вниз) или тапните по самому яркому месту кадра.') :
+          (iso > 50 ? 'Снизьте ISO. ' : '') + 'Диафрагма у телефона не меняется — поставьте ND-насадку посильнее. Выдержку лучше не укорачивать.';
+        items.push(check(d > 1.5 ? 'bad' : 'warn', (phone && auto ? 'Телефон пересветил кадр: ' : 'Пересвет: ') + fmtEV(d) + ' EV', hintO));
       } else if (d < T.expTol[0]) {
-        items.push(check(d < -1.5 ? 'bad' : 'warn', 'Недосвет: ' + fmtEV(d) + ' EV',
-          ND[st.nd].s ? 'Сначала уберите или ослабьте ND-фильтр.' : N > 2.8 ? 'Откройте диафрагму, затем при необходимости поднимите ISO.' : 'Диафрагма уже открыта — поднимите ISO.'));
+        var hintU = !phone ? (ev.nd ? 'Сначала уберите или ослабьте ND-фильтр.' : N > 2.8 ? 'Откройте диафрагму, затем при необходимости поднимите ISO.' : 'Диафрагма уже открыта — поднимите ISO.') :
+          auto ? (iso >= 3199 ? 'Света мало даже для максимального ISO телефона.' : 'Увеличьте экспокоррекцию или тапните по тёмному месту кадра.') :
+          (ev.nd ? 'Уберите или ослабьте ND-насадку.' : 'Поднимите ISO.');
+        items.push(check(d < -1.5 ? 'bad' : 'warn', (phone && auto ? 'Телефон недоэкспонировал кадр: ' : 'Недосвет: ') + fmtEV(d) + ' EV', hintU));
       } else {
         items.push(check('ok', 'Экспозиция в норме', ev.clip > 0.16 ? 'Но ' + Math.round(ev.clip * 100) + '% кадра в пересвете — следите за небом.' :
-          T.id === 'blue' ? 'Ночь и должна выглядеть тёмной — экспонометр может показывать «−».' :
+          T.id === 'blue' ? 'Ночь и должна выглядеть тёмной' + (phone ? '.' : ' — экспонометр может показывать «−».') :
           T.id === 'sunset' || T.id === 'sunrise' ? 'Небо сохранено, лицо в контровом свете чуть темнее — так и задумано.' : ''));
       }
       /* правило 180° */
-      var ratio = 2 * fps / den;
-      var norm = '1/' + (fps * 2);
+      var ratio = 2 * fps / den, norm = '1/' + (fps * 2);
       if (ratio > 1.3) items.push(check('warn', 'Выдержка длиннее нормы', 'Движение сильно смазано. Для ' + fps + ' к/с ставьте ' + norm + '.'));
       else if (ratio >= 0.74) items.push(check('ok', 'Правило 180° соблюдено', fmtSh(den) + ' при ' + fps + ' к/с — движение плавное и естественное.'));
-      else if (ratio >= 0.4) items.push(check('warn', 'Выдержка короче нормы', 'Движение становится чуть «дёрганым». Для ' + fps + ' к/с — ' + norm + ', а лишний свет гасите ND.'));
-      else items.push(check('bad', 'Эффект стробоскопа', 'Велосипедист движется рывками, без естественного смаза. Верните ' + norm + ' и поставьте ND-фильтр.'));
+      else if (phone && auto) items.push(check(ratio < 0.4 ? 'bad' : 'warn', 'Телефон выбрал выдержку ' + fmtSh(den),
+        'Движение ' + (ratio < 0.4 ? 'рывками' : 'чуть дёрганое') + ' — так снимает большинство телефонов днём. Нужна ' + norm + ': ручной режим + ND-насадка.'));
+      else if (ratio >= 0.4) items.push(check('warn', 'Выдержка короче нормы', 'Движение становится чуть «дёрганым». Для ' + fps + ' к/с — ' + norm + ', а лишний свет гасите ' + (phone ? 'ND-насадкой.' : 'ND.')));
+      else items.push(check('bad', 'Эффект стробоскопа', 'Велосипедист движется рывками, без естественного смаза. Верните ' + norm + ' и поставьте ND-' + (phone ? 'насадку.' : 'фильтр.')));
       /* шум */
-      if (iso <= 800) items.push(check('ok', 'Шум незаметен', 'ISO ' + iso + (iso <= 200 ? ' — максимальное качество.' : '.')));
-      else if (iso <= 3200) items.push(check('warn', 'Заметный шум в тенях', 'ISO ' + iso + '. ' + (N > 2.8 ? 'Сначала откройте диафрагму, потом поднимайте ISO.' : 'Для синего часа это допустимо, но выше лучше не поднимать.')));
-      else items.push(check('bad', 'Сильный цифровой шум', 'ISO ' + iso + ' — картинка «зернит» и теряет детали.' + (d > 0.5 ? ' К тому же кадр пересвечен — ISO можно смело снижать.' : '')));
+      var okIso = phone ? 400 : 800, warnIso = phone ? 1250 : 3200;
+      var why = phone ? ' У телефона маленькая матрица — шум появляется раньше, чем у камеры.' : '';
+      if (iso <= okIso) items.push(check('ok', 'Шум незаметен', 'ISO ' + iso + (iso <= (phone ? 64 : 200) ? ' — максимальное качество.' : '.')));
+      else if (iso <= warnIso) items.push(check('warn', 'Заметный шум в тенях', 'ISO ' + iso + '.' + why + (phone ? '' : N > 2.8 ? ' Сначала откройте диафрагму, потом поднимайте ISO.' : ' Для синего часа это допустимо, но выше лучше не поднимать.')));
+      else items.push(check('bad', 'Сильный цифровой шум', 'ISO ' + iso + ' — картинка «зернит» и теряет детали.' + why + (d > 0.5 ? ' К тому же кадр пересвечен — ISO можно смело снижать.' : '')));
       /* баланс белого */
       var K = ev.K;
-      if (st.awb && (T.id === 'sunset' || T.id === 'sunrise' || T.id === 'blue')) {
-        items.push(check('warn', 'Автобаланс «съел» атмосферу', T.id === 'blue' ? 'Автоматика сделала синий час серым. Поставьте 4000–5000K вручную.' : 'Тёплый свет стал серым. Поставьте 5600K вручную.'));
+      if (ev.awb && (T.id === 'sunset' || T.id === 'sunrise' || T.id === 'blue') && (K < T.wbOK[0] || K > T.wbOK[1])) {
+        items.push(check('warn', 'Автобаланс «съел» атмосферу', (T.id === 'blue' ? 'Автоматика сделала синий час серым. Поставьте 4000–5000K вручную.' : 'Тёплый свет стал бледнее. Поставьте 5600K вручную.') +
+          (phone && ph.mode === 'auto' ? ' В авто-режиме телефона это не настроить — нужен ручной режим.' : '')));
       } else if (K < T.wbOK[0]) items.push(check(K < T.wbOK[0] - 1200 ? 'bad' : 'warn', 'Слишком холодно', K + 'K — кадр синеет. ' + (T.id === 'blue' ? 'Немного синевы — это красиво, но лицо стало мертвенным.' : 'Для этого света — ' + T.wbOK[0] + '–' + T.wbOK[1] + 'K.')));
       else if (K > T.wbOK[1]) items.push(check(K > T.wbOK[1] + 1200 ? 'bad' : 'warn', 'Слишком тепло', K + 'K — кадр желтит. Для этого света — ' + T.wbOK[0] + '–' + T.wbOK[1] + 'K.'));
-      else items.push(check('ok', 'Цвет передан верно', (st.awb ? 'Авто: ' : '') + K + 'K' + (T.id === 'sunset' ? ' — тёплый закат сохранён.' : T.id === 'blue' ? ' — синее небо и тёплые фонари.' : '.')));
+      else items.push(check('ok', 'Цвет передан верно', (ev.awb ? 'Авто: ' : '') + K + 'K' + (T.id === 'sunset' ? ' — тёплый закат сохранён.' : T.id === 'blue' ? ' — синее небо и тёплые фонари.' : '.')));
       /* глубина резкости (справочно) */
-      items.push(check('info', N <= 2.8 ? 'Фон сильно размыт' : N <= 5.6 ? 'Фон слегка размыт' : 'Фон почти резкий',
+      if (phone) items.push(check('info', ph.cine ? 'Фон размыт программно' : 'Фон почти резкий', ph.cine ?
+        'Кинорежим имитирует размытие. Присмотритесь к краям волос и плеч — на реальных телефонах там бывают ошибки.' :
+        'Маленькая матрица телефона почти не размывает фон. Отделить героя от фона поможет кинорежим или большее расстояние до фона.'));
+      else items.push(check('info', N <= 2.8 ? 'Фон сильно размыт' : N <= 5.6 ? 'Фон слегка размыт' : 'Фон почти резкий',
         fmtF(N) + (N <= 2.8 ? ' — герой отделён от фона, фонари превращаются в «боке».' : N <= 5.6 ? ' — фон читается, но не спорит с героем.' : ' — всё в резкости, фон может отвлекать от героя.')));
 
       var bad = items.filter(function (x) { return x.c === 'bad' || x.c === 'warn'; }).length;
@@ -1013,48 +1194,78 @@
       }).join('');
       var sum = $('.dls-sum');
       sum.className = 'dls-sum' + (bad ? '' : ' ok');
-      sum.textContent = bad ? 'Исправьте: ' + bad + ' ' + (bad === 1 ? 'пункт' : bad < 5 ? 'пункта' : 'пунктов') + '. Подсказка — кнопка «Подсказать настройки».' : '✓ Кадр готов — так снимают профессионалы.';
+      sum.textContent = bad ? 'Исправьте: ' + bad + ' ' + plural(bad) + '. Подсказка — кнопка «Подсказать настройки».' : '✓ Кадр готов — так снимают профессионалы.';
     }
 
     function renderInfo() {
-      var T = TIMES[st.t], I = T.info;
-      $('.dls-info').innerHTML = '<h4>Свет: ' + T.name.toLowerCase() + '</h4><div class="dls-facts">' +
+      var T = TIMES[st.t], I = T.info, tips = st.dev === 'phone' ? PH_TIPS[T.id] : I.tips;
+      $('.dls-info').innerHTML = '<h4>Свет: ' + T.name.toLowerCase() + (st.dev === 'phone' ? ' · советы для телефона' : '') + '</h4><div class="dls-facts">' +
         '<div><span>Характер света</span>' + I.light + '</div><div><span>Цветовая температура</span>' + I.temp + '</div>' +
         '<div><span>Яркость сцены</span>' + I.ev + '</div><div><span>Тени</span>' + I.shadow + '</div></div>' +
-        '<ul class="dls-tips">' + I.tips.map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ul>' +
+        '<ul class="dls-tips">' + tips.map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ul>' +
         '<div class="dls-task"><b>Задание:</b> ' + I.task + '</div>';
     }
 
     /* --- синхронизация интерфейса --- */
     var inputs = {};
-    ['sh', 'f', 'iso', 'nd', 'wb'].forEach(function (k) { inputs[k] = el.querySelector('[data-r="' + k + '"]'); });
-    function minSh() { for (var i = 0; i < SH.length; i++) if (SH[i] >= st.fps) return i; return 0; }
+    $$('[data-r]').forEach(function (inp) { inputs[inp.getAttribute('data-r')] = inp; });
+    function minIdx(fps) { for (var i = 0; i < SH.length; i++) if (SH[i] >= fps) return i; return 0; }
+    function out(k, v) { var o = el.querySelector('[data-o="' + k + '"]'); if (o) o.textContent = v; }
+    function hint(k, v) { var o = el.querySelector('[data-h="' + k + '"]'); if (o) o.textContent = v; }
+    function segOn(k, fn) { $$('[data-seg="' + k + '"] button').forEach(function (b) { b.classList.toggle('on', fn(b.getAttribute('data-v'))); }); }
+    function ndLabel(n) { return n.s ? n.n + ' (−' + n.s + ' EV)' : 'нет'; }
+
     function sync() {
-      var T = TIMES[st.t], ms = minSh();
+      var T = TIMES[st.t], isPh = st.dev === 'phone';
+      el.classList.toggle('is-ph', isPh);
+      el.classList.toggle('ph-pro', ph.mode === 'pro');
+      $$('.dls-devsw button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-dev') === st.dev); });
+
+      /* камера */
+      var ms = minIdx(st.fps);
       if (st.sh < ms) st.sh = ms;
       inputs.sh.min = ms;
       inputs.sh.value = st.sh; inputs.f.value = st.f; inputs.iso.value = st.iso; inputs.nd.value = st.nd; inputs.wb.value = st.awb ? T.awb : st.wb;
-      var o = function (k, v) { el.querySelector('[data-o="' + k + '"]').textContent = v; };
-      var h = function (k, v) { el.querySelector('[data-h="' + k + '"]').textContent = v; };
-      o('fps', st.fps + ' к/с'); o('sh', fmtSh(SH[st.sh])); o('f', fmtF(FN[st.f])); o('iso', ISO[st.iso]);
-      o('nd', ND[st.nd].s ? ND[st.nd].n + ' (−' + ND[st.nd].s + ' EV)' : 'нет'); o('wb', st.awb ? 'Авто (' + T.awb + 'K)' : st.wb + 'K');
-      h('fps', st.fps === 25 ? 'Стандарт для кино и YouTube.' : 'Замедление ×' + (st.fps / 25) + ' на монтаже 25p. Нужно больше света.');
-      h('sh', 'Норма по правилу 180° для ' + st.fps + ' к/с — 1/' + (st.fps * 2) + '. Короче — движение «дёргается», длиннее нельзя.');
-      h('f', 'Меньше число — больше света и сильнее размыт фон.');
-      h('iso', 'Усиление сигнала: светлее, но больше шума.');
-      h('nd', 'Тёмное «стекло» на объектив: убирает свет, не меняя выдержку и диафрагму.');
-      el.querySelectorAll('[data-seg="fps"] button').forEach(function (b) { b.classList.toggle('on', +b.getAttribute('data-v') === st.fps); });
-      el.querySelectorAll('[data-seg="wb"] button').forEach(function (b) {
-        var v = b.getAttribute('data-v'); b.classList.toggle('on', v === 'auto' ? st.awb : (!st.awb && +v === st.wb));
-      });
-      el.querySelectorAll('.dls-tab').forEach(function (b, i) { b.classList.toggle('on', i === st.t); b.setAttribute('aria-selected', i === st.t); });
-      $('[data-act="zebra"]').classList.toggle('on', st.zebra);
-      $('[data-act="grid"]').classList.toggle('on', st.grid);
-      $('[data-act="record"]').classList.toggle('on', st.rec);
+      out('fps', st.fps + ' к/с'); out('sh', fmtSh(SH[st.sh])); out('f', fmtF(FN[st.f])); out('iso', ISO[st.iso]);
+      out('nd', ndLabel(ND[st.nd])); out('wb', st.awb ? 'Авто (' + T.awb + 'K)' : st.wb + 'K');
+      hint('fps', st.fps === 25 ? 'Стандарт для кино и YouTube.' : 'Замедление ×' + (st.fps / 25) + ' на монтаже 25p. Нужно больше света.');
+      hint('sh', 'Норма по правилу 180° для ' + st.fps + ' к/с — 1/' + (st.fps * 2) + '. Короче — движение «дёргается», длиннее нельзя.');
+      hint('f', 'Меньше число — больше света и сильнее размыт фон.');
+      hint('iso', 'Усиление сигнала: светлее, но больше шума.');
+      hint('nd', 'Тёмное «стекло» на объектив: убирает свет, не меняя выдержку и диафрагму.');
+      segOn('fps', function (v) { return +v === st.fps; });
+      segOn('wb', function (v) { return v === 'auto' ? st.awb : (!st.awb && +v === st.wb); });
+
+      /* телефон */
+      var pms = minIdx(ph.fps);
+      if (ph.sh < pms) ph.sh = pms;
+      inputs.psh.min = pms;
+      inputs.psh.value = ph.sh; inputs.piso.value = ph.iso; inputs.pnd.value = ph.nd; inputs.pcomp.value = ph.comp; inputs.pwb.value = ph.awb ? 5600 : ph.wb;
+      segOn('pmode', function (v) { return v === ph.mode; });
+      segOn('pfps', function (v) { return +v === ph.fps; });
+      segOn('pwb', function (v) { return v === 'auto' ? ph.awb : (!ph.awb && +v === ph.wb); });
+      out('pmode', ph.mode === 'auto' ? 'Авто' : 'PRO');
+      out('pfps', ph.fps + ' к/с'); out('psh', fmtSh(SH[ph.sh])); out('piso', PISO[ph.iso]); out('pnd', ndLabel(PND[ph.nd]));
+      out('pcomp', (ph.comp ? fmtEV(ph.comp / 10) : '0') + ' EV');
+      out('ptap', ph.tap ? (ph.tap.name || 'по точке') : 'по всему кадру');
+      hint('pmode', ph.mode === 'auto' ? 'Телефон сам выбирает выдержку и ISO. Вы управляете только яркостью и точкой замера.' : 'Всё вручную: выдержка, ISO и баланс белого. Так снимают в приложениях с ручным режимом.');
+      hint('pfps', ph.fps === 30 ? 'Стандарт большинства телефонов.' : ph.fps === 25 ? 'Удобно, если монтаж в 25p вместе с камерой.' : 'Замедление ×2,4 на монтаже 25p. Нужно больше света.');
+      hint('pcomp', 'Светлее или темнее, чем решил телефон. В камере телефона — «солнышко» рядом с рамкой фокуса.');
+      hint('psh', 'Норма по правилу 180° для ' + ph.fps + ' к/с — 1/' + (ph.fps * 2) + '.');
+      hint('piso', 'У телефона базовое ISO ниже, чем у камеры, но шум появляется раньше.');
+      hint('pnd', 'Насадка-светофильтр на объектив телефона: позволяет держать 1/50 днём.');
+      $$('[data-act="cine"]').forEach(function (b) { b.classList.toggle('on', ph.cine); });
+
+      $$('.dls-tab').forEach(function (b, i) { b.classList.toggle('on', i === st.t); b.setAttribute('aria-selected', i === st.t); });
+      $$('[data-act="zebra"]').forEach(function (b) { b.classList.toggle('on', st.zebra); });
+      $$('[data-act="grid"]').forEach(function (b) { b.classList.toggle('on', st.grid); });
+      $$('[data-act="record"]').forEach(function (b) { b.classList.toggle('on', st.rec); });
       $('.dls-grid').classList.toggle('on', st.grid);
-      /* HUD */
+
       compute();
-      var ratio = 2 * st.fps / SH[st.sh];
+
+      /* HUD камеры */
+      var ratio = 2 * ev.fps / ev.den;
       $('.dls-set').innerHTML = '<span' + (ratio < 0.74 || ratio > 1.3 ? ' class="warn"' : '') + '>' + fmtSh(SH[st.sh]) + '</span><span>' + fmtF(FN[st.f]).replace('f/', 'F') +
         '</span><span' + (ISO[st.iso] > 3200 ? ' class="warn"' : '') + '>ISO ' + ISO[st.iso] + '</span>' + (ND[st.nd].s ? '<span>' + ND[st.nd].n + '</span>' : '') +
         '<span>' + (st.awb ? 'AWB' : st.wb + 'K') + '</span>';
@@ -1063,6 +1274,28 @@
       $('.fp').textContent = st.fps + 'p';
       $('.ck').textContent = T.clock;
       var rc = $('.dls-rec'); rc.classList.toggle('on', st.rec); rc.querySelector('.st').textContent = st.rec ? 'REC' : 'STBY';
+
+      /* экран телефона */
+      var pr = ph.mode === 'pro';
+      $('.pfp').textContent = '4K · ' + ph.fps;
+      $('.dls-phud').classList.toggle('is-rec', st.rec);
+      $('.dls-phud .badge').style.display = pr ? 'block' : 'none';
+      $('.dls-phbar .pm').textContent = pr ? 'PRO' : 'АВТО';
+      $('.dls-phbar .pm').classList.toggle('y', pr);
+      var tap = !pr && ph.tap;
+      $('.dls-phud .lock').style.display = tap ? 'block' : 'none';
+      var ae = $('.dls-phud .ae');
+      ae.style.display = tap ? 'block' : 'none';
+      if (tap) {
+        ae.style.left = (ph.tap.x / W * 100) + '%'; ae.style.top = (ph.tap.y / H * 100) + '%';
+        ae.querySelector('.sun').style.top = (50 - ph.comp / 20 * 70) + '%';
+      }
+      $('.dls-phud .face').style.display = tap ? 'none' : 'block';
+      var bad180 = ratio < 0.74 || ratio > 1.3;
+      $('.dls-phud .pb').innerHTML = pr ?
+        '<span class="y">ISO ' + PISO[ph.iso] + '</span><span class="y' + (bad180 ? ' w' : '') + '">' + fmtSh(ev.den) + '</span><span class="y">' + (ph.awb ? 'AWB' : ph.wb + 'K') + '</span>' + (ev.nd ? '<span class="y">' + PND[ph.nd].n + '</span>' : '') :
+        '<span class="g">телефон выбрал:</span><span class="' + (bad180 ? 'w' : '') + '">' + fmtSh(ev.den) + '</span><span>ISO ' + Math.round(ev.iso) + '</span>' + (ph.comp ? '<span class="y">☀ ' + fmtEV(ph.comp / 10) + '</span>' : '');
+
       evaluate();
     }
 
@@ -1070,40 +1303,66 @@
       if (i === st.t) return;
       fctx.drawImage(cv, 0, 0);
       fade.style.transition = 'none'; fade.style.opacity = '1';
-      st.t = i; sync0();
+      st.t = i;
+      $$('.dls-tab').forEach(function (b, k) { b.classList.toggle('on', k === st.t); });
       setTimeout(function () {
         buildScene(); sync(); renderInfo(); render();
         void fade.offsetWidth;
         fade.style.transition = 'opacity .6s ease'; fade.style.opacity = '0';
       }, 30);
     }
-    function sync0() { el.querySelectorAll('.dls-tab').forEach(function (b, k) { b.classList.toggle('on', k === st.t); }); }
 
-    el.querySelector('.dls-tabs').addEventListener('click', function (e) {
+    /* --- события --- */
+    function upd() { sync(); dirty = true; }
+    $('.dls-tabs').addEventListener('click', function (e) {
       var b = e.target.closest('.dls-tab'); if (b) setTime(+b.getAttribute('data-i'));
     });
-    ['sh', 'f', 'iso', 'nd'].forEach(function (k) {
-      inputs[k].addEventListener('input', function () { st[k] = +inputs[k].value; sync(); dirty = true; });
-    });
-    inputs.wb.addEventListener('input', function () { st.wb = +inputs.wb.value; st.awb = false; sync(); dirty = true; });
-    el.querySelector('[data-seg="fps"]').addEventListener('click', function (e) {
+    var sw = $('.dls-devsw');
+    if (sw) sw.addEventListener('click', function (e) {
       var b = e.target.closest('button'); if (!b) return;
-      st.fps = +b.getAttribute('data-v'); sync(); dirty = true;
+      st.dev = b.getAttribute('data-dev'); renderInfo(); upd();
     });
-    el.querySelector('[data-seg="wb"]').addEventListener('click', function (e) {
-      var b = e.target.closest('button'); if (!b) return;
-      var v = b.getAttribute('data-v');
-      if (v === 'auto') st.awb = true; else { st.awb = false; st.wb = +v; }
-      sync(); dirty = true;
+    ['sh', 'f', 'iso', 'nd'].forEach(function (k) { inputs[k].addEventListener('input', function () { st[k] = +inputs[k].value; upd(); }); });
+    inputs.wb.addEventListener('input', function () { st.wb = +inputs.wb.value; st.awb = false; upd(); });
+    inputs.psh.addEventListener('input', function () { ph.sh = +inputs.psh.value; upd(); });
+    inputs.piso.addEventListener('input', function () { ph.iso = +inputs.piso.value; upd(); });
+    inputs.pnd.addEventListener('input', function () { ph.nd = +inputs.pnd.value; upd(); });
+    inputs.pcomp.addEventListener('input', function () { ph.comp = +inputs.pcomp.value; upd(); });
+    inputs.pwb.addEventListener('input', function () { ph.wb = +inputs.pwb.value; ph.awb = false; upd(); });
+    el.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-seg] button');
+      if (b) {
+        var k = b.parentNode.getAttribute('data-seg'), v = b.getAttribute('data-v');
+        if (k === 'fps') st.fps = +v;
+        else if (k === 'wb') { if (v === 'auto') st.awb = true; else { st.awb = false; st.wb = +v; } }
+        else if (k === 'pmode') ph.mode = v;
+        else if (k === 'pfps') ph.fps = +v;
+        else if (k === 'pwb') { if (v === 'auto') ph.awb = true; else { ph.awb = false; ph.wb = +v; } }
+        upd(); return;
+      }
+      var a = e.target.closest('[data-act]');
+      if (!a) return;
+      var act = a.getAttribute('data-act');
+      if (act === 'rec') { if (st.dev === 'camera') applyRec(); else applyPhoneRec(); }
+      else if (act === 'zebra') st.zebra = !st.zebra;
+      else if (act === 'grid') st.grid = !st.grid;
+      else if (act === 'cine') ph.cine = !ph.cine;
+      else if (act === 'record') { st.rec = !st.rec; if (st.rec) tcFrames = 0; }
+      else if (act === 'untap') { ph.tap = null; ph.comp = 0; }
+      else if (act === 'tapface') { ph.tap = { x: CX, y: 168, name: 'по лицу' }; ph.comp = 0; }
+      else if (act === 'tapsky') {
+        var S = TIMES[st.t].sun;
+        ph.tap = S.vis ? { x: S.x + (S.x > W / 2 ? -60 : 60), y: S.y - 50, name: 'по небу' } : { x: 600, y: 90, name: 'по небу' };
+        ph.comp = 0;
+      }
+      upd();
     });
-    el.querySelector('.dls-tools').addEventListener('click', function (e) {
-      var b = e.target.closest('button'); if (!b) return;
-      var a = b.getAttribute('data-act');
-      if (a === 'rec') applyRec();
-      else if (a === 'zebra') st.zebra = !st.zebra;
-      else if (a === 'grid') st.grid = !st.grid;
-      else if (a === 'record') { st.rec = !st.rec; if (st.rec) tcFrames = 0; }
-      sync(); dirty = true;
+    /* тап по кадру — замер экспозиции, как в камере телефона */
+    $('.dls-view').addEventListener('click', function (e) {
+      if (st.dev !== 'phone' || ph.mode !== 'auto') return;
+      var r = this.getBoundingClientRect();
+      ph.tap = { x: clamp((e.clientX - r.left) / r.width * W, 10, W - 10), y: clamp((e.clientY - r.top) / r.height * H, 10, H - 10) };
+      ph.comp = 0; upd();
     });
 
     /* --- цикл: 25 кадров/с на «таймлайне», пауза вне экрана --- */
@@ -1111,6 +1370,7 @@
     if ('IntersectionObserver' in window) {
       new IntersectionObserver(function (en) { visible = en[0].isIntersecting; }).observe(el);
     }
+    function pad(n) { return (n < 10 ? '0' : '') + n; }
     function tick(now) {
       requestAnimationFrame(tick);
       if (!last) last = now;
@@ -1123,8 +1383,9 @@
         dirty = false;
         render();
         if (st.rec) {
-          var f = tcFrames, ss = Math.floor(f / 25), pad = function (n) { return (n < 10 ? '0' : '') + n; };
+          var f = tcFrames, ss = Math.floor(f / 25);
           $('.tc').textContent = pad(Math.floor(ss / 3600)) + ':' + pad(Math.floor(ss / 60) % 60) + ':' + pad(ss % 60) + ':' + pad(f % 25);
+          $('.dls-phud .rc').textContent = pad(Math.floor(ss / 60)) + ':' + pad(ss % 60);
         }
       }
     }
@@ -1132,7 +1393,7 @@
     buildScene(); sync(); renderInfo(); render();
     requestAnimationFrame(tick);
 
-    root.__dlsApi = { st: st, ev: ev, sync: sync, render: render, setTime: setTime, applyRec: applyRec, TIMES: TIMES };
+    root.__dlsApi = { spotMean: spotMean, st: st, ph: ph, ev: ev, sync: sync, render: render, setTime: setTime, applyRec: applyRec, applyPhoneRec: applyPhoneRec, renderInfo: renderInfo, TIMES: TIMES };
   }
 
   function init() {
