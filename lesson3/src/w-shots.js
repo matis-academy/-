@@ -171,6 +171,7 @@
     $('[data-r="s"]').addEventListener('input', function () { st.target = +this.value; stage.invalidate(); });
     place(); analyse();
     root.__mlsApi = { stage: stage, st: st, fig: fig, place: place, analyse: analyse };
+    S.attachModel(root, stage, fig, function (m) { fig = m; root.__mlsApi.fig = m; place(); analyse(); });
   }
   S.widgets.shots = widget;
 })();

@@ -195,6 +195,7 @@
     }
     select(0);
     root.__mlsApi = { stage: stage, st: st, select: select, applyT: applyT };
+    S.attachModel(root, stage, fig, function (m) { fig = m; root.__mlsApi.fig = m; applyT(0); });
   }
   S.widgets.move = widget;
 })();

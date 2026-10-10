@@ -224,6 +224,7 @@
     if ('ResizeObserver' in window) new ResizeObserver(placeInsetTag).observe(view);
     update();
     root.__mlsApi = { stage: stage, fig: fig, st: st, update: update, tween: tween };
+    S.attachModel(root, stage, fig, function (m) { fig = m; fig.enableRim(); root.__mlsApi.fig = m; update(); });
   }
   S.widgets.sun = widget;
 })();

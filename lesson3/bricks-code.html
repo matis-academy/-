@@ -817,6 +817,96 @@
     });
   };
 
+  /* ---------- готовая 3D-модель (glTF со скелетом Mixamo) ---------- */
+  var LOADER_URLS = {
+    GLTFLoader: 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js',
+    SkeletonUtils: 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js'
+  };
+  function loadScript(src) {
+    return new Promise(function (res, rej) { var s = document.createElement('script'); s.src = src; s.async = true; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+  }
+  var modelCache = {};
+  function loadModel(url) {
+    if (!modelCache[url]) {
+      var need = Object.keys(LOADER_URLS).filter(function (k) { return !T[k]; });
+      modelCache[url] = Promise.all(need.map(function (k) { return loadScript(LOADER_URLS[k]); })).then(function () {
+        return new Promise(function (res, rej) { new T.GLTFLoader().load(url, res, null, rej); });
+      });
+    }
+    return modelCache[url];
+  }
+  function modelUrlFor(node) { return (node && node.getAttribute('data-model')) || window.ML_STUDIO_MODEL || null; }
+
+  function ModelFig(g) {
+    var self = this;
+    var scene = T.SkeletonUtils.clone(g.scene);
+    this.root = new T.Group(); this.root.add(scene);
+    scene.traverse(function (m) { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false; } });
+    this.bones = {};
+    scene.traverse(function (o) { if (o.isBone) self.bones[o.name.replace(/^mixamorig:?/, '')] = o; });
+    this.clips = {}; g.animations.forEach(function (a) { self.clips[a.name] = a; });
+    this.mixer = new T.AnimationMixer(scene);
+    this.aIdle = this.mixer.clipAction(this.clips.idle); this.aWalk = this.mixer.clipAction(this.clips.walk);
+    this.aIdle.play(); this.aWalk.play(); this.aWalk.weight = 0;
+    this.idleT = 0.7;
+    this.extra = { headYaw: 0, headPitch: 0, bodyYaw: 0 };
+    this.mixer.setTime(this.idleT); this.root.updateMatrixWorld(true);
+    var top = this.bones.HeadTop_End.getWorldPosition(new T.Vector3()).y;
+    scene.scale.multiplyScalar(1.66 / top);
+    this.pose = { mode: 'idle' }; this.current = this.pose;
+    this.apply(this.pose);
+  }
+  ModelFig.prototype.setPose = function () { this.apply(this.pose); };
+  ModelFig.prototype.update = function () { return false; };
+  ModelFig.prototype.walkPose = function (ph) {
+    var d = this.clips.walk.duration;
+    return { mode: 'walk', t: (((ph / (2 * Math.PI)) % 1) + 1) % 1 * d };
+  };
+  ModelFig.prototype.apply = function (p) {
+    p = p && p.mode ? p : this.pose;
+    this.current = p;
+    var walk = p.mode === 'walk';
+    this.aIdle.weight = walk ? 0 : 1; this.aWalk.weight = walk ? 1 : 0;
+    this.mixer.setTime(walk ? p.t : this.idleT);
+    this.root.rotation.y = this.extra.bodyYaw * D2R;
+    this.root.updateMatrixWorld(true);
+    if (this.extra.headYaw || this.extra.headPitch) {
+      var h = this.bones.Head, pq = h.parent.getWorldQuaternion(new T.Quaternion());
+      var turn = new T.Quaternion().setFromEuler(new T.Euler(this.extra.headPitch * D2R, this.extra.headYaw * D2R, 0, 'YXZ'));
+      var bodyQ = this.root.getWorldQuaternion(new T.Quaternion());
+      turn = bodyQ.clone().multiply(turn).multiply(bodyQ.clone().invert());
+      h.quaternion.premultiply(pq.clone().invert().multiply(turn).multiply(pq));
+      this.root.updateMatrixWorld(true);
+    }
+  };
+  ModelFig.prototype.points = function () {
+    this.root.updateMatrixWorld(true);
+    var b = this.bones, w = function (o) { return o.getWorldPosition(new T.Vector3()); };
+    var head = w(b.Head), top = w(b.HeadTop_End), fwd = new T.Vector3(0, 0, 1).applyQuaternion(this.root.quaternion);
+    var hc = head.clone().lerp(top, 0.4);
+    return {
+      top: top, eyes: hc.clone().addScaledVector(fwd, 0.08), chin: head.clone().addScaledVector(fwd, 0.07).add(new T.Vector3(0, -0.025, 0)),
+      nose: hc.clone().addScaledVector(fwd, 0.11), neck: w(b.Neck), chest: w(b.Spine2), waist: w(b.Spine), hips: w(b.Hips),
+      knee: w(b.LeftLeg), knee2: w(b.RightLeg), ankle: w(b.LeftFoot), foot: w(b.LeftToeBase),
+      elbow: w(b.LeftForeArm), elbow2: w(b.RightForeArm), wrist: w(b.LeftHand), headCenter: hc, forward: fwd
+    };
+  };
+  /* подменяет нарисованную фигуру готовой моделью, когда та загрузится */
+  function attachModel(host, stage, fig, swap) {
+    var url = modelUrlFor(host);
+    if (!url) return;
+    loadModel(url).then(function (g) {
+      var m = new ModelFig(g);
+      m.extra.bodyYaw = fig.extra.bodyYaw; m.extra.headYaw = fig.extra.headYaw;
+      var parent = fig.root.parent;
+      m.root.position.copy(fig.root.position);
+      parent.add(m.root); parent.remove(fig.root);
+      m.apply(m.pose);
+      swap(m);
+      stage.invalidate();
+    }).catch(function (e) { if (window.console) console.warn('MLStudio: модель не загрузилась, остаётся встроенная фигура', e); });
+  }
+
   /* ---------- позы ---------- */
   var POSES = {
     soldier: { lH: [0.215, 0.94, 0.0], rH: [-0.215, 0.94, 0.0], lF: [0.095, DIM.ank, 0], rF: [-0.095, DIM.ank, 0] },
@@ -863,8 +953,9 @@
     }
   };
 
+  ModelFig.prototype.enableRim = function () { return Figure.prototype.enableRim.call(this); };
   window.MLStudio = {
-    withThree: withThree, Stage: Stage, Figure: Figure, POSES: POSES, DIM: DIM,
+    withThree: withThree, Stage: Stage, Figure: Figure, ModelFig: ModelFig, attachModel: attachModel, loadModel: loadModel, POSES: POSES, DIM: DIM,
     buildPark: buildPark, buildPiazza: buildPiazza, makeTree: makeTree, makeLamp: makeLamp, makeBench: makeBench, makeWall: makeWall, makePlaza: makePlaza, makeBuilding: makeBuilding,
     util: { clamp: clamp, lerp: lerp, smooth: smooth, ease: ease, D2R: D2R, el: el, rng: rng, focalToFov: focalToFov, mat: mat, shadowy: shadowy },
     injectCSS: function () { injectCSS('mls-css', CSS); }, three: function () { return T; },
@@ -1515,6 +1606,7 @@
     }
     select(0);
     root.__mlsApi = { stage: stage, st: st, select: select, applyT: applyT };
+    S.attachModel(root, stage, fig, function (m) { fig = m; root.__mlsApi.fig = m; applyT(0); });
   }
   S.widgets.move = widget;
 })();
@@ -1745,6 +1837,7 @@
     if ('ResizeObserver' in window) new ResizeObserver(placeInsetTag).observe(view);
     update();
     root.__mlsApi = { stage: stage, fig: fig, st: st, update: update, tween: tween };
+    S.attachModel(root, stage, fig, function (m) { fig = m; fig.enableRim(); root.__mlsApi.fig = m; update(); });
   }
   S.widgets.sun = widget;
 })();
@@ -1922,6 +2015,7 @@
     $('[data-r="s"]').addEventListener('input', function () { st.target = +this.value; stage.invalidate(); });
     place(); analyse();
     root.__mlsApi = { stage: stage, st: st, fig: fig, place: place, analyse: analyse };
+    S.attachModel(root, stage, fig, function (m) { fig = m; root.__mlsApi.fig = m; place(); analyse(); });
   }
   S.widgets.shots = widget;
 })();
