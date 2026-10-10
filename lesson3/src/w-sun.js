@@ -65,8 +65,7 @@
     var $ = function (s) { return box.querySelector(s); };
     var view = $('.mls-view');
     var stage = new S.Stage(view);
-    S.buildPark(stage, { pathZ: -4, lamps: [] });
-    stage.scene.add(S.makePlaza(2.6));
+    S.buildPiazza(stage);
     var sc = stage.sun.shadow.camera; sc.left = -3; sc.right = 3; sc.top = 3; sc.bottom = -3; sc.updateProjectionMatrix();
     var fig = new S.Figure(); stage.scene.add(fig.root);
     fig.setPose(S.POSES.contra, true); fig.extra.bodyYaw = 8; fig.apply(fig.current);
@@ -74,7 +73,7 @@
 
     /* основная камера — средний план, вставка — общий вид сверху-сбоку */
     stage.setFocal(50);
-    stage.camera.position.set(0.3, 1.45, 3.5); stage.camera.lookAt(0, 1.18, 0); stage.camera.updateMatrixWorld();
+    stage.camera.position.set(0.3, 1.4, 3.4); stage.camera.lookAt(0, 1.13, 0); stage.camera.updateMatrixWorld();
     var cam2 = new T.PerspectiveCamera(40, 1.35, 0.1, 400);
     cam2.position.set(-6.5, 6.2, 7.5); cam2.lookAt(0, 0.7, 0);
     cam2.layers.enable(1);

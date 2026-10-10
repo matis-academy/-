@@ -168,7 +168,7 @@
     var r = this.renderer = new T.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     r.outputEncoding = T.sRGBEncoding;
-    r.toneMapping = T.ACESFilmicToneMapping;
+    r.toneMapping = T.LinearToneMapping;
     r.toneMappingExposure = 0.95;
     r.shadowMap.enabled = true;
     r.shadowMap.type = T.PCFSoftShadowMap;
@@ -253,13 +253,13 @@
     var k = smooth(clamp((el - 2) / 40, 0, 1));
     var warm = new T.Color('#ff9a4a'), noon = new T.Color('#fff6ea');
     this.sun.color.copy(warm).lerp(noon, k);
-    this.sun.intensity = lerp(2.1, 2.5, k) * (el < 0 ? 0 : clamp(el / 4, 0.15, 1));
+    this.sun.intensity = lerp(1.15, 1.3, k) * (el < 0 ? 0 : clamp(el / 4, 0.15, 1));
     this.skyU.top.value.set('#33508f').lerp(new T.Color('#3f7fd6'), k);
     this.skyU.hor.value.set('#f2b38a').lerp(new T.Color('#cfe0ee'), k);
     this.skyU.glow.value.set('#ffb070').lerp(new T.Color('#fff2d0'), k);
     this.skyU.glowK.value = lerp(1.6, 0.8, k);
     this.hemi.color.set('#9fb0d8').lerp(new T.Color('#cfe3ff'), k);
-    this.hemi.intensity = lerp(0.26, 0.32, k);
+    this.hemi.intensity = lerp(0.36, 0.42, k);
     this.scene.fog.color.copy(this.skyU.hor.value);
     this.invalidate();
   };
@@ -351,9 +351,230 @@
     return g;
   }
 
-  /* ---------- манекен ---------- */
-  var COL = { skin: '#d6a084', hair: '#3b2a20', jacket: '#c98a2e', tee: '#ebe6dc', jeans: '#33435f', shoe: '#242326' };
-  var DIM = { hipsY: 0.95, spine: 0.11, chest: 0.2, sh: [0.165, 0.185], neck: 0.235, head: 0.112, hip: [0.085, -0.045], up: 0.29, lo: 0.26, th: 0.42, sn: 0.42, ank: 0.075 };
+  /* ---------- итальянская пьяцца ---------- */
+  var FACADES = ['#dba566', '#cf7f5c', '#e9c6a6', '#eedcbb', '#e5b85c', '#d99a80', '#e8cf9a'];
+  function shade(hex, k) { var c = new T.Color(hex); c.multiplyScalar(k); return '#' + c.getHexString(); }
+  function plasterTex(col, seed) {
+    return canvasTex(256, 256, function (g, w, h) {
+      g.fillStyle = col; g.fillRect(0, 0, w, h);
+      var R = rng(seed || 7);
+      for (var i = 0; i < 90; i++) {
+        g.fillStyle = (R() < 0.5 ? 'rgba(90,60,40,' : 'rgba(255,245,230,') + (0.03 + R() * 0.05) + ')';
+        g.beginPath(); g.ellipse(R() * w, R() * h, 10 + R() * 50, 6 + R() * 30, R() * 3, 0, 6.283); g.fill();
+      }
+      for (i = 0; i < 2500; i++) { g.fillStyle = 'rgba(0,0,0,' + R() * 0.05 + ')'; g.fillRect(R() * w, R() * h, 1.5, 1.5); }
+    });
+  }
+  /* фасад: ставни, арки на первом этаже, балконы, карниз */
+  function facadeTex(col, bays, floors, seed, arcade) {
+    var bw = 64, fh = 84, W = bays * bw, H = floors * fh + 26;
+    return canvasTex(W, H, function (g) {
+      var R = rng(seed);
+      g.fillStyle = col; g.fillRect(0, 0, W, H);
+      for (var i = 0; i < bays * floors * 3; i++) {
+        g.fillStyle = (R() < 0.55 ? 'rgba(90,60,40,' : 'rgba(255,245,230,') + (0.03 + R() * 0.06) + ')';
+        g.beginPath(); g.ellipse(R() * W, R() * H, 8 + R() * 40, 5 + R() * 25, R() * 3, 0, 6.283); g.fill();
+      }
+      var stone = '#e8dcc4', shutter = ['#5d7a52', '#4f6b62', '#6f8a5a'][Math.floor(R() * 3)];
+      /* карниз и межэтажные тяги */
+      g.fillStyle = shade(col, 0.82); g.fillRect(0, 0, W, 10);
+      g.fillStyle = stone; g.fillRect(0, 10, W, 8);
+      for (var f = 1; f < floors; f++) { g.fillStyle = 'rgba(255,250,240,.45)'; g.fillRect(0, 26 + f * fh - 4, W, 4); }
+      for (f = 0; f < floors; f++) {
+        var y0 = 26 + f * fh, ground = f === floors - 1;
+        for (var b = 0; b < bays; b++) {
+          var x0 = b * bw;
+          if (ground) {
+            /* арки / двери первого этажа */
+            var aw = arcade ? 46 : 30, ah = arcade ? 70 : 58, ax = x0 + (bw - aw) / 2, ay = y0 + fh - ah;
+            g.fillStyle = stone; g.beginPath(); g.moveTo(ax - 5, y0 + fh); g.lineTo(ax - 5, ay + aw / 2); g.arc(ax + aw / 2, ay + aw / 2, aw / 2 + 5, Math.PI, 0); g.lineTo(ax + aw + 5, y0 + fh); g.fill();
+            g.fillStyle = arcade ? '#3b2c24' : (R() < 0.5 ? '#5a3a28' : '#2f3a3e');
+            g.beginPath(); g.moveTo(ax, y0 + fh); g.lineTo(ax, ay + aw / 2); g.arc(ax + aw / 2, ay + aw / 2, aw / 2, Math.PI, 0); g.lineTo(ax + aw, y0 + fh); g.fill();
+            if (!arcade && R() < 0.5) { g.fillStyle = 'rgba(255,220,160,.35)'; g.fillRect(ax + 4, ay + aw / 2, aw - 8, ah - aw / 2 - 6); }
+          } else {
+            var ww = 20, wh = 44, wx = x0 + (bw - ww) / 2, wy = y0 + 18;
+            var open = R() < 0.35;
+            g.fillStyle = stone; g.fillRect(wx - 4, wy - 5, ww + 8, wh + 10);
+            g.fillStyle = '#2d2a2c'; g.fillRect(wx, wy, ww, wh);
+            g.fillStyle = 'rgba(160,190,210,.25)'; g.fillRect(wx + 2, wy + 2, ww / 2 - 3, wh / 2);
+            g.fillStyle = shutter;
+            if (open) { g.fillRect(wx - 15, wy, 11, wh); g.fillRect(wx + ww + 4, wy, 11, wh); }
+            else { g.fillRect(wx, wy, ww / 2 - 1, wh); g.fillRect(wx + ww / 2 + 1, wy, ww / 2 - 1, wh); }
+            g.fillStyle = 'rgba(0,0,0,.18)';
+            for (var sl = 0; sl < wh; sl += 4) { if (open) { g.fillRect(wx - 15, wy + sl, 11, 1); g.fillRect(wx + ww + 4, wy + sl, 11, 1); } else g.fillRect(wx, wy + sl, ww, 1); }
+            if (f === floors - 2 && (b % 2 === 1 || R() < 0.3)) {
+              g.fillStyle = stone; g.fillRect(wx - 10, wy + wh + 2, ww + 20, 4);
+              g.strokeStyle = '#2b2522'; g.lineWidth = 1.5;
+              for (var bx = wx - 9; bx <= wx + ww + 9; bx += 4) { g.beginPath(); g.moveTo(bx, wy + wh + 2); g.lineTo(bx, wy + wh - 16); g.stroke(); }
+              g.beginPath(); g.moveTo(wx - 10, wy + wh - 16); g.lineTo(wx + ww + 10, wy + wh - 16); g.stroke();
+              if (R() < 0.7) { g.fillStyle = ['#d24b5a', '#e88a3a', '#f0d0e0', '#c43c48'][Math.floor(R() * 4)]; for (var fl = 0; fl < 9; fl++) { g.beginPath(); g.arc(wx - 8 + R() * (ww + 16), wy + wh - 4 + R() * 5, 2.4, 0, 6.283); g.fill(); } g.fillStyle = '#4f7a3a'; g.fillRect(wx - 9, wy + wh - 1, ww + 18, 3); }
+            }
+          }
+        }
+      }
+    });
+  }
+  function tileTex() {
+    return canvasTex(256, 256, function (g, w, h) {
+      g.fillStyle = '#b4583b'; g.fillRect(0, 0, w, h);
+      var R = rng(12);
+      for (var y = 0; y < h; y += 16) for (var x = (y / 16 % 2) * 8; x < w; x += 16) {
+        g.fillStyle = 'rgb(' + (160 + R() * 40 | 0) + ',' + (75 + R() * 25 | 0) + ',' + (50 + R() * 15 | 0) + ')';
+        g.fillRect(x, y, 14, 14); g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(x, y + 12, 14, 2);
+      }
+    }, 1);
+  }
+  function pavingTex() {
+    return canvasTex(512, 512, function (g, w, h) {
+      g.fillStyle = '#a99b86'; g.fillRect(0, 0, w, h);
+      var R = rng(31), rowH = 32;
+      for (var y = 0; y < h; y += rowH) {
+        var x = -R() * 60;
+        while (x < w) {
+          var sw = 44 + R() * 50, v = 188 + R() * 34;
+          g.fillStyle = 'rgb(' + (v | 0) + ',' + (v - 9 | 0) + ',' + (v - 24 | 0) + ')';
+          g.fillRect(x + 2, y + 2, sw - 4, rowH - 4);
+          for (var k = 0; k < 6; k++) { g.fillStyle = 'rgba(80,60,40,' + R() * 0.08 + ')'; g.fillRect(x + R() * sw, y + R() * rowH, 6 + R() * 10, 3); }
+          x += sw;
+        }
+      }
+    }, 10);
+  }
+  function makeHouse(w, h, d, col, seed, arcade) {
+    var g = new T.Group();
+    var bays = Math.max(2, Math.round(w / 2.6)), floors = Math.max(2, Math.round(h / 3.4));
+    var side = new T.MeshStandardMaterial({ map: plasterTex(col, seed), roughness: 0.95 });
+    var front = new T.MeshStandardMaterial({ map: facadeTex(col, bays, floors, seed, arcade), roughness: 0.92 });
+    var box = new T.Mesh(new T.BoxGeometry(w, h, d), [side, side, side, side, front, side]);
+    box.position.y = h / 2; box.receiveShadow = true; g.add(box);
+    var roofM = new T.MeshStandardMaterial({ map: tileTex(), roughness: 0.85 });
+    roofM.map.repeat.set(w / 3, d / 3);
+    var eave = new T.Mesh(new T.BoxGeometry(w + 0.5, 0.18, d + 0.7), U_mat(shade(col, 0.75)));
+    eave.position.set(0, h + 0.09, 0.1); g.add(eave);
+    var sh = new T.Shape(), rd = (d + 0.7) / 2, rh = d * 0.22;
+    sh.moveTo(-rd, 0); sh.lineTo(rd, 0); sh.lineTo(0, rh); sh.lineTo(-rd, 0);
+    var rg = new T.ExtrudeGeometry(sh, { depth: w + 0.5, bevelEnabled: false });
+    rg.translate(0, 0, -(w + 0.5) / 2);
+    var roof = new T.Mesh(rg, roofM); roof.rotation.y = Math.PI / 2; roof.position.set(0, h + 0.18, 0.1);
+    g.add(roof);
+    return g;
+  }
+  function U_mat(c) { return mat(c, { roughness: 0.9 }); }
+  function makeCampanile() {
+    var g = new T.Group(), col = '#c98a5c', H = 26;
+    var shaft = new T.Mesh(new T.BoxGeometry(4.2, H, 4.2), new T.MeshStandardMaterial({ map: plasterTex(col, 41), roughness: 0.95 }));
+    shaft.position.y = H / 2; g.add(shaft);
+    var bel = canvasTex(128, 128, function (c2) {
+      c2.fillStyle = col; c2.fillRect(0, 0, 128, 128);
+      c2.fillStyle = '#ead9bd'; c2.fillRect(0, 0, 128, 12); c2.fillRect(0, 116, 128, 12);
+      c2.fillStyle = '#2a201c'; c2.beginPath(); c2.moveTo(34, 112); c2.lineTo(34, 52); c2.arc(64, 52, 30, Math.PI, 0); c2.lineTo(94, 112); c2.fill();
+      c2.fillStyle = '#7a5a2a'; c2.beginPath(); c2.arc(64, 62, 13, 0, Math.PI * 2); c2.fill();
+    });
+    var belfry = new T.Mesh(new T.BoxGeometry(4.6, 5, 4.6), new T.MeshStandardMaterial({ map: bel, roughness: 0.9 }));
+    belfry.position.y = H + 2.5; g.add(belfry);
+    var cap = new T.Mesh(new T.BoxGeometry(5, 0.4, 5), U_mat('#ead9bd')); cap.position.y = H + 5.2; g.add(cap);
+    var spire = new T.Mesh(new T.ConeGeometry(3.3, 5.5, 4), new T.MeshStandardMaterial({ map: tileTex(), roughness: 0.85 }));
+    spire.rotation.y = Math.PI / 4; spire.position.y = H + 8.1; g.add(spire);
+    return g;
+  }
+  function makeCypress(h, seed) {
+    var R = rng(seed || 1), r = h * (0.075 + R() * 0.02);
+    var m = lathe([[0.001, 0], [r * 0.7, h * 0.04], [r, h * 0.3], [r * 0.85, h * 0.6], [r * 0.45, h * 0.85], [0.001, h]], 10, 0, 0, mat(['#2e472a', '#344f2d', '#29402a'][Math.floor(R() * 3)], { roughness: 1 }));
+    return m;
+  }
+  function makePot(lemon, seed) {
+    var g = new T.Group(), R = rng(seed || 2);
+    var pot = new T.Mesh(new T.CylinderGeometry(0.34, 0.24, 0.55, 16), U_mat('#b8613f')); pot.position.y = 0.275; g.add(pot);
+    var rim = new T.Mesh(new T.TorusGeometry(0.34, 0.04, 8, 20), U_mat('#a5553a')); rim.rotation.x = Math.PI / 2; rim.position.y = 0.55; g.add(rim);
+    var trunk = new T.Mesh(new T.CylinderGeometry(0.03, 0.04, 0.7, 6), U_mat('#5a4330')); trunk.position.y = 0.9; g.add(trunk);
+    var crown = new T.Mesh(new T.IcosahedronGeometry(0.48, 1), U_mat(lemon ? '#3f6a2c' : '#7d8f62')); crown.position.y = 1.45; g.add(crown);
+    if (lemon) for (var i = 0; i < 9; i++) {
+      var a = R() * 6.28, e = (R() - 0.3) * 1.2, l = new T.Mesh(new T.SphereGeometry(0.055, 8, 6), mat('#f2cf3a', { roughness: 0.5 }));
+      l.scale.y = 1.25; l.position.set(Math.cos(a) * Math.cos(e) * 0.46, 1.45 + Math.sin(e) * 0.4, Math.sin(a) * Math.cos(e) * 0.46); g.add(l);
+    }
+    return shadowy(g);
+  }
+  function makeFountain() {
+    var g = new T.Group(), st = U_mat('#e3d6bd');
+    var basin = lathe([[1.9, 0], [1.95, 0.45], [1.75, 0.5], [1.7, 0.12], [0.001, 0.12]], 40, 0, 0, st); g.add(basin);
+    var water = new T.Mesh(new T.CircleGeometry(1.72, 40), new T.MeshStandardMaterial({ color: '#5f9aa0', roughness: 0.08, metalness: 0.3, transparent: true, opacity: 0.85 }));
+    water.rotation.x = -Math.PI / 2; water.position.y = 0.38; g.add(water);
+    var col = new T.Mesh(new T.CylinderGeometry(0.18, 0.28, 1.6, 16), st); col.position.y = 0.9; g.add(col);
+    var bowl = lathe([[0.001, 1.6], [0.8, 1.72], [0.85, 1.85], [0.75, 1.82], [0.001, 1.75]], 32, 0, 0, st); g.add(bowl);
+    var top = new T.Mesh(new T.SphereGeometry(0.16, 16, 12), st); top.position.y = 2.05; g.add(top);
+    return shadowy(g);
+  }
+  function makeCafe() {
+    var g = new T.Group();
+    var pole = new T.Mesh(new T.CylinderGeometry(0.025, 0.025, 2.3, 8), U_mat('#3a3330')); pole.position.y = 1.15; g.add(pole);
+    var umb = new T.Mesh(new T.ConeGeometry(1.25, 0.45, 8, 1, true), mat('#f1e6d2', { roughness: 0.9, side: T.DoubleSide })); umb.position.y = 2.35; g.add(umb);
+    var table = new T.Mesh(new T.CylinderGeometry(0.38, 0.38, 0.03, 20), U_mat('#ece6dc')); table.position.y = 0.74; g.add(table);
+    [-1, 1].forEach(function (s) {
+      var ch = new T.Group();
+      var seat = new T.Mesh(new T.BoxGeometry(0.42, 0.04, 0.42), U_mat('#2f4a3a')); seat.position.y = 0.46; ch.add(seat);
+      var backr = new T.Mesh(new T.BoxGeometry(0.42, 0.42, 0.04), U_mat('#2f4a3a')); backr.position.set(0, 0.68, -0.2); ch.add(backr);
+      ch.position.set(s * 0.65, 0, 0); ch.rotation.y = -s * Math.PI / 2; g.add(ch);
+    });
+    return shadowy(g);
+  }
+  /* пьяцца: дома по трём сторонам, колокольня, фонтан, кипарисы и тосканские холмы */
+  function buildPiazza(stage, o) {
+    o = o || {};
+    var sc = stage.scene, g = new T.Group(), plan = { boxes: [], dots: [] };
+    stage.ground.material.map = canvasTex(256, 256, function (c2, w, h) {
+      c2.fillStyle = '#9da46a'; c2.fillRect(0, 0, w, h);
+      var R = rng(5); for (var i = 0; i < 400; i++) { c2.fillStyle = 'rgba(' + (R() < 0.5 ? '200,180,110' : '90,110,60') + ',.18)'; c2.fillRect(R() * w, R() * h, 3 + R() * 10, 2); }
+    }, 80);
+    stage.ground.material.needsUpdate = true;
+    var pave = new T.Mesh(new T.PlaneGeometry(26, 40), new T.MeshStandardMaterial({ map: pavingTex(), roughness: 0.92 }));
+    pave.material.map.repeat.set(5, 8);
+    pave.rotation.x = -Math.PI / 2; pave.position.set(-1, 0.005, -4); pave.receiveShadow = true; g.add(pave);
+    var ci = 0;
+    function row(list) {
+      list.forEach(function (b) {
+        var h = makeHouse(b.w, b.h, b.d || 8, FACADES[ci++ % FACADES.length], 100 + ci, b.arc);
+        h.position.set(b.x, 0, b.z); h.rotation.y = b.r || 0; g.add(h);
+        plan.boxes.push({ x: b.x, z: b.z, w: b.w, d: b.d || 8, r: b.r || 0 });
+      });
+    }
+    /* задняя сторона (фасадами к нам) */
+    row([{ x: -14.5, z: -18, w: 7, h: 13 }, { x: -8, z: -18.5, w: 6, h: 11, arc: true }, { x: -2, z: -18, w: 6, h: 14, arc: true }, { x: 4, z: -18.5, w: 6, h: 12 }, { x: 13, z: -18, w: 7, h: 11 }]);
+    var camp = makeCampanile(); camp.position.set(9, 0, -20); g.add(camp); plan.boxes.push({ x: 9, z: -20, w: 4.2, d: 4.2, r: 0, tower: true });
+    /* левая сторона (фасадами вправо) */
+    row([{ x: -15, z: -10, w: 8, h: 12, r: Math.PI / 2 }, { x: -15.5, z: -2, w: 8, h: 10, r: Math.PI / 2, arc: true }, { x: -15, z: 6, w: 8, h: 13, r: Math.PI / 2 }, { x: -15.5, z: 14, w: 8, h: 11, r: Math.PI / 2 }]);
+    /* правая сторона (фасадами влево) — короче, за ней вид на холмы */
+    row([{ x: 15, z: -10, w: 8, h: 11, r: -Math.PI / 2 }, { x: 15.5, z: -2.5, w: 7, h: 12, r: -Math.PI / 2, arc: true }]);
+    /* сторона за камерой */
+    row([{ x: -8, z: 22, w: 9, h: 12, r: Math.PI }, { x: 2, z: 22.5, w: 8, h: 11, r: Math.PI }]);
+    /* фонтан, кафе, лимоны */
+    var fo = makeFountain(); fo.position.set(o.fountain ? o.fountain[0] : -5, 0, o.fountain ? o.fountain[1] : -8); g.add(fo); plan.dots.push({ x: fo.position.x, z: fo.position.z, r: 1.9, c: '#8fb7bd' });
+    [[-9.5, -12], [-9.8, -9.6], [6.5, -12.6]].forEach(function (p) { var cf = makeCafe(); cf.position.set(p[0], 0, p[1]); g.add(cf); plan.dots.push({ x: p[0], z: p[1], r: 1.2, c: '#e8dcc6' }); });
+    [[-10.6, -4.5, 1], [-10.6, 0.5, 0], [-10.6, 5, 1], [10.6, -6, 1], [10.6, -1, 0], [-3.5, -13.4, 1], [1.5, -13.4, 1]].forEach(function (p, i) {
+      var pt = makePot(!!p[2], i + 4); pt.position.set(p[0], 0, p[1]); g.add(pt); plan.dots.push({ x: p[0], z: p[1], r: 0.5, c: '#4f7a35' });
+    });
+    /* кипарисы: у правого края площади и на холмах */
+    [[12.5, 5, 10], [14.5, 8.5, 12], [12, 12, 9], [18, 4, 11], [21, 10, 13], [24, 1, 10]].forEach(function (p, i) { var cy = makeCypress(p[2], i + 1); cy.position.set(p[0], 0, p[1]); g.add(cy); plan.dots.push({ x: p[0], z: p[1], r: 0.8, c: '#2e472a' }); });
+    var balM = U_mat('#e3d6bd');
+    var rail = new T.Mesh(new T.BoxGeometry(0.3, 0.12, 17), balM); rail.position.set(11, 0.95, 9); g.add(rail);
+    var base = new T.Mesh(new T.BoxGeometry(0.35, 0.18, 17), balM); base.position.set(11, 0.09, 9); g.add(base);
+    var bal = new T.InstancedMesh(new T.CylinderGeometry(0.07, 0.09, 0.78, 8), balM, 40), mtx = new T.Matrix4();
+    for (var bi = 0; bi < 40; bi++) { mtx.makeTranslation(11, 0.57, 0.7 + bi * 0.42); bal.setMatrixAt(bi, mtx); }
+    g.add(bal); plan.boxes.push({ x: 11, z: 9, w: 0.35, d: 17, r: 0, wall: true });
+    /* холмы Тосканы */
+    [[60, -170, 90, '#9aa76a'], [-60, -190, 110, '#8e9c62'], [150, -120, 80, '#a6ad72'], [0, -230, 140, '#93a066'], [140, 40, 70, '#a1a96c']].forEach(function (hl) {
+      var m = new T.Mesh(new T.SphereGeometry(hl[2], 32, 16), mat(hl[3], { roughness: 1 })); m.scale.y = 0.14; m.position.set(hl[0], -2, hl[1]); g.add(m);
+    });
+    var R2 = rng(77);
+    for (var k = 0; k < 40; k++) { var cy2 = makeCypress(9 + R2() * 6, k + 20); var a = -0.4 + R2() * 1.9, rr = 70 + R2() * 90; cy2.position.set(Math.sin(a) * rr + 20, 0, -Math.cos(a) * rr + 20); g.add(cy2); }
+    sc.add(g);
+    stage.hemi.groundColor.set('#a08a68');
+    stage.piazza = plan;
+    return g;
+  }
+
+  /* ---------- модель: девушка в летнем платье ---------- */
+  var COL = { skin: '#d9a283', hair: '#4a2a1b', dress: '#b8433a', shoe: '#c49a6c', lip: '#c2606a', gold: '#d8b25a' };
+  var DIM = { hipsY: 0.92, spine: 0.1, chest: 0.19, sh: [0.138, 0.148], neck: 0.215, head: 0.108, hip: [0.08, -0.04], up: 0.27, lo: 0.24, th: 0.41, sn: 0.41, ank: 0.068 };
 
   function lathe(pts, segs, phiStart, phiLen, m) {
     var v = pts.map(function (p) { return new T.Vector2(p[0], p[1]); });
@@ -363,69 +584,98 @@
   }
   function limbMesh(len, r1, r2, m) {
     var g = new T.Group();
-    var c = new T.Mesh(new T.CylinderGeometry(r2, r1, len, 14), m); c.position.y = -len / 2; g.add(c);
-    var s = new T.Mesh(new T.SphereGeometry(r1, 14, 10), m); g.add(s);
-    var e = new T.Mesh(new T.SphereGeometry(r2, 14, 10), m); e.position.y = -len; g.add(e);
+    var c = new T.Mesh(new T.CylinderGeometry(r2, r1, len, 16), m); c.position.y = -len / 2; g.add(c);
+    var s = new T.Mesh(new T.SphereGeometry(r1, 16, 12), m); g.add(s);
+    var e = new T.Mesh(new T.SphereGeometry(r2, 16, 12), m); e.position.y = -len; g.add(e);
     return g;
+  }
+  function ell(r, sx, sy, sz, m, x, y, z) {
+    var e = new T.Mesh(new T.SphereGeometry(r, 24, 16), m); e.scale.set(sx, sy, sz); e.position.set(x || 0, y || 0, z || 0); return e;
   }
 
   function Figure(opt) {
     opt = opt || {};
     var c = Object.assign({}, COL, opt.colors || {});
     var M = this.mats = {
-      skin: mat(c.skin, { roughness: 0.62 }), hair: mat(c.hair, { roughness: 0.75 }), jacket: mat(c.jacket, { roughness: 0.8 }),
-      tee: mat(c.tee, { roughness: 0.85 }), jeans: mat(c.jeans, { roughness: 0.9 }), shoe: mat(c.shoe, { roughness: 0.6 }),
-      dark: mat('#1d1512', { roughness: 0.4 }), lip: mat('#a8645a', { roughness: 0.6 })
+      skin: mat(c.skin, { roughness: 0.55 }), hair: mat(c.hair, { roughness: 0.55 }), dress: mat(c.dress, { roughness: 0.78 }),
+      shoe: mat(c.shoe, { roughness: 0.6 }), white: mat('#f4efe9', { roughness: 0.3 }), iris: mat('#3a2418', { roughness: 0.25 }),
+      dark: mat('#1c120d', { roughness: 0.5 }), lip: mat(c.lip, { roughness: 0.45 }), gold: mat(c.gold, { roughness: 0.3, metalness: 0.8 })
     };
-    this.mats.jacket.side = T.DoubleSide;
+    M.dress.side = T.DoubleSide; M.hair.side = T.DoubleSide;
     var root = this.root = new T.Group();
     var hips = this.hips = new T.Group(); hips.position.y = DIM.hipsY; root.add(hips);
-    /* таз */
-    var pel = lathe([[0, -0.125], [0.135, -0.115], [0.172, -0.04], [0.165, 0.04], [0.15, 0.11], [0, 0.11]], 24, 0, 0, M.jeans);
-    pel.scale.z = 0.74; hips.add(pel);
+    /* юбка с мягкими складками по подолу */
+    var skirt = lathe([[0.112, 0.1], [0.126, 0.05], [0.158, -0.04], [0.198, -0.16], [0.24, -0.3], [0.275, -0.42], [0.28, -0.445]], 56, 0, 0, M.dress);
+    var pos = skirt.geometry.attributes.position;
+    for (var i = 0; i < pos.count; i++) {
+      var x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i), k = Math.max(0, -y) / 0.445, ph = Math.atan2(x, z);
+      var f = 1 + 0.05 * k * k * Math.sin(ph * 7) + 0.015 * k * Math.sin(ph * 13 + 1);
+      pos.setX(i, x * f); pos.setZ(i, z * f * 0.82);
+    }
+    skirt.geometry.computeVertexNormals();
+    hips.add(skirt);
+    var belt = new T.Mesh(new T.TorusGeometry(0.117, 0.007, 8, 40), M.gold); belt.rotation.x = Math.PI / 2; belt.scale.y = 0.82; belt.position.y = 0.095; hips.add(belt);
     var spine = this.spine = new T.Group(); spine.position.y = DIM.spine; hips.add(spine);
     var chest = this.chest = new T.Group(); chest.position.y = DIM.chest; spine.add(chest);
-    /* торс: футболка + куртка с распахнутой полой */
-    var torsoPts = [[0.001, -0.31], [0.148, -0.3], [0.15, -0.2], [0.154, -0.08], [0.17, 0.04], [0.188, 0.13], [0.182, 0.19], [0.13, 0.225], [0.055, 0.24], [0.001, 0.24]];
-    var tee = lathe(torsoPts, 28, 0, 0, M.tee); tee.scale.z = 0.62; chest.add(tee);
-    var jk = lathe(torsoPts.map(function (p) { return [p[0] * 1.06 + 0.004, p[1] - 0.004]; }), 28, Math.PI * 0.12, Math.PI * 1.76, M.jacket);
-    jk.scale.z = 0.66; chest.add(jk);
+    /* тело и лиф платья */
+    var body = lathe([[0.001, -0.2], [0.114, -0.195], [0.12, -0.08], [0.135, 0.02], [0.148, 0.1], [0.14, 0.15], [0.1, 0.185], [0.05, 0.2], [0.001, 0.2]], 32, 0, 0, M.skin);
+    body.scale.z = 0.6; chest.add(body);
+    var bod = lathe([[0.117, -0.2], [0.124, -0.11], [0.13, -0.04], [0.146, 0.04], [0.15, 0.09], [0.144, 0.115]], 32, 0, 0, M.dress);
+    bod.scale.z = 0.66; chest.add(bod);
+    [-1, 1].forEach(function (s) {
+      var strap = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3([new T.Vector3(0.07 * s, 0.1, 0.075), new T.Vector3(0.09 * s, 0.17, 0.03), new T.Vector3(0.09 * s, 0.17, -0.03), new T.Vector3(0.075 * s, 0.1, -0.075)]), 12, 0.009, 6), M.dress);
+      chest.add(strap);
+    });
     /* шея и голова */
     var neck = this.neck = new T.Group(); neck.position.y = DIM.neck; chest.add(neck);
-    var nk = new T.Mesh(new T.CylinderGeometry(0.048, 0.055, 0.1, 12), M.skin); nk.position.y = 0.03; neck.add(nk);
+    var nk = new T.Mesh(new T.CylinderGeometry(0.039, 0.046, 0.12, 16), M.skin); nk.position.y = 0.02; neck.add(nk);
     var head = this.head = new T.Group(); head.position.y = DIM.head; neck.add(head);
-    var hd = new T.Mesh(new T.SphereGeometry(0.1, 32, 24), M.skin); hd.scale.set(0.9, 1.12, 1.0); head.add(hd);
-    var jaw = new T.Mesh(new T.SphereGeometry(0.075, 24, 16), M.skin); jaw.position.set(0, -0.05, 0.025); jaw.scale.set(1, 0.9, 1); head.add(jaw);
-    var hair = new T.Mesh(new T.SphereGeometry(0.106, 32, 18, 0, Math.PI * 2, 0, Math.PI * 0.56), M.hair);
-    hair.scale.set(0.93, 1.12, 1.04); hair.rotation.x = -0.32; hair.position.set(0, 0.012, -0.008); head.add(hair);
+    head.add(ell(0.092, 0.86, 1.08, 0.94, M.skin));
+    head.add(ell(0.06, 0.95, 0.85, 0.9, M.skin, 0, -0.048, 0.022));
     [-1, 1].forEach(function (s) {
-      var eye = new T.Mesh(new T.SphereGeometry(0.012, 12, 8), M.dark); eye.position.set(0.034 * s, 0.012, 0.088); head.add(eye);
-      var brow = new T.Mesh(new T.BoxGeometry(0.03, 0.006, 0.01), M.hair); brow.position.set(0.034 * s, 0.036, 0.092); brow.rotation.z = -0.12 * s; head.add(brow);
-      var ear = new T.Mesh(new T.SphereGeometry(0.022, 10, 8), M.skin); ear.scale.set(0.45, 1, 0.8); ear.position.set(0.09 * s, 0.0, 0.0); head.add(ear);
+      head.add(ell(0.0128, 1, 0.78, 0.7, M.white, 0.03 * s, 0.01, 0.075));
+      head.add(ell(0.0085, 1, 1, 0.6, M.iris, 0.03 * s, 0.009, 0.0818));
+      var lid = new T.Mesh(new T.TorusGeometry(0.0135, 0.0032, 6, 14, Math.PI), M.dark);
+      lid.position.set(0.03 * s, 0.0105, 0.0795); lid.rotation.x = -0.25; lid.scale.y = 0.6; head.add(lid);
+      var brow = new T.Mesh(new T.TorusGeometry(0.02, 0.0024, 6, 14, Math.PI * 0.55), M.hair);
+      brow.position.set(0.031 * s, 0.022, 0.08); brow.rotation.set(-0.2, 0, Math.PI * 0.22 + (s > 0 ? 0 : 0.2)); brow.scale.y = 0.45; head.add(brow);
+      head.add(ell(0.0045, 1, 1, 1, M.gold, 0.079 * s, -0.045, 0.005));
     });
-    var nose = new T.Mesh(new T.SphereGeometry(0.016, 14, 10), M.skin); nose.scale.set(0.8, 1.35, 1.1); nose.position.set(0, -0.016, 0.098); head.add(nose);
-    var mouth = new T.Mesh(new T.BoxGeometry(0.032, 0.006, 0.008), M.lip); mouth.position.set(0, -0.052, 0.09); head.add(mouth);
+    head.add(ell(0.0095, 0.85, 1.7, 1.05, M.skin, 0, -0.016, 0.084));
+    head.add(ell(0.017, 1, 0.38, 0.5, M.lip, 0, -0.043, 0.079));
+    head.add(ell(0.015, 1, 0.45, 0.55, M.lip, 0, -0.051, 0.077));
+    /* волосы: объём сверху, по бокам, длинные пряди за спиной и у лица */
+    var cap = new T.Mesh(new T.SphereGeometry(0.1, 32, 18, 0, Math.PI * 2, 0, Math.PI * 0.6), M.hair);
+    cap.scale.set(0.95, 1.07, 1.06); cap.rotation.x = -0.72; cap.position.set(0, 0.012, -0.006); head.add(cap);
+    [-1, 1].forEach(function (s) {
+      head.add(ell(0.1, 0.26, 1.0, 0.62, M.hair, 0.074 * s, -0.035, -0.03));
+      var str = ell(0.1, 0.13, 1.25, 0.24, M.hair, 0.071 * s, -0.11, 0.012); str.rotation.z = 0.1 * s; head.add(str);
+    });
+    var back = lathe([[0.096, 0.05], [0.106, -0.03], [0.104, -0.13], [0.096, -0.24], [0.075, -0.33], [0.04, -0.385], [0.001, -0.4]], 32, 0, 0, M.hair);
+    back.scale.set(1, 1, 0.5); back.position.set(0, -0.005, -0.05); head.add(back);
     /* руки */
-    var self = this;
     this.arms = [1, -1].map(function (s) {
       var up = new T.Group(); up.position.set(DIM.sh[0] * s, DIM.sh[1], 0); chest.add(up);
-      up.add(limbMesh(DIM.up, 0.05, 0.045, M.jacket));
+      up.add(limbMesh(DIM.up, 0.039, 0.033, M.skin));
       var lo = new T.Group(); lo.position.y = -DIM.up; up.add(lo);
-      lo.add(limbMesh(DIM.lo, 0.047, 0.04, M.jacket));
-      var cuff = new T.Mesh(new T.CylinderGeometry(0.03, 0.032, 0.03, 10), M.skin); cuff.position.y = -DIM.lo - 0.015; lo.add(cuff);
-      var hand = new T.Mesh(new T.SphereGeometry(0.045, 14, 10), M.skin); hand.scale.set(0.55, 1.15, 0.95); hand.position.y = -DIM.lo - 0.07; lo.add(hand);
-      var th = new T.Mesh(new T.SphereGeometry(0.018, 8, 6), M.skin); th.scale.set(1, 1.7, 1); th.position.set(0, -DIM.lo - 0.05, 0.035); lo.add(th);
+      lo.add(limbMesh(DIM.lo, 0.034, 0.026, M.skin));
+      var hand = ell(0.036, 0.55, 1.2, 0.95, M.skin, 0, -DIM.lo - 0.055, 0);
+      lo.add(hand);
+      var th = ell(0.014, 1, 1.8, 1, M.skin, 0, -DIM.lo - 0.04, 0.028); lo.add(th);
+      if (s > 0) { var br = new T.Mesh(new T.TorusGeometry(0.031, 0.004, 6, 20), M.gold); br.rotation.x = Math.PI / 2; br.position.y = -DIM.lo + 0.02; lo.add(br); }
       return { up: up, lo: lo, s: s, hand: [hand, th] };
     });
     /* ноги */
     this.legs = [1, -1].map(function (s) {
       var th = new T.Group(); th.position.set(DIM.hip[0] * s, DIM.hip[1], 0); hips.add(th);
-      th.add(limbMesh(DIM.th, 0.086, 0.062, M.jeans));
+      th.add(limbMesh(DIM.th, 0.072, 0.05, M.skin));
       var sn = new T.Group(); sn.position.y = -DIM.th; th.add(sn);
-      sn.add(limbMesh(DIM.sn, 0.062, 0.047, M.jeans));
+      sn.add(limbMesh(DIM.sn, 0.05, 0.032, M.skin));
+      var calf = ell(0.05, 0.95, 1.9, 1, M.skin, 0, -0.13, -0.008); sn.add(calf);
       var ft = new T.Group(); ft.position.y = -DIM.sn; sn.add(ft);
-      var shoe = new T.Mesh(new T.BoxGeometry(0.1, 0.075, 0.26), M.shoe); shoe.position.set(0, -0.04, 0.055); ft.add(shoe);
-      var toe = new T.Mesh(new T.SphereGeometry(0.05, 12, 8), M.shoe); toe.scale.set(1, 0.75, 1); toe.position.set(0, -0.045, 0.17); ft.add(toe);
+      var shoe = new T.Mesh(new T.BoxGeometry(0.07, 0.035, 0.2), M.shoe); shoe.position.set(0, -0.052, 0.05); ft.add(shoe);
+      ft.add(ell(0.036, 1, 0.55, 1, M.shoe, 0, -0.052, 0.145));
+      ft.add(ell(0.03, 1, 0.9, 1.6, M.skin, 0, -0.03, 0.05));
       return { th: th, sn: sn, ft: ft, s: s };
     });
     shadowy(root);
@@ -537,7 +787,7 @@
     var w = function (o, x, y, z) { return o.localToWorld(new T.Vector3(x || 0, y || 0, z || 0)); };
     var h = this.head;
     return {
-      top: w(h, 0, 0.125, 0), eyes: w(h, 0, 0.012, 0.08), chin: w(h, 0, -0.115, 0.05), nose: w(h, 0, -0.01, 0.12),
+      top: w(h, 0, 0.118, 0), eyes: w(h, 0, 0.012, 0.075), chin: w(h, 0, -0.1, 0.045), nose: w(h, 0, -0.01, 0.12),
       neck: w(this.neck, 0, 0, 0), chest: w(this.chest, 0, 0.12, 0.1), waist: w(this.hips, 0, 0.08, 0.1), hips: w(this.hips, 0, -0.05, 0),
       knee: w(this.legs[0].sn, 0, 0, 0), knee2: w(this.legs[1].sn, 0, 0, 0), ankle: w(this.legs[0].ft, 0, 0, 0), foot: w(this.legs[0].ft, 0, -0.08, 0.05),
       elbow: w(this.arms[0].lo, 0, 0, 0), elbow2: w(this.arms[1].lo, 0, 0, 0), wrist: w(this.arms[0].lo, 0, -DIM.lo, 0),
@@ -571,7 +821,7 @@
     soldier: { lH: [0.215, 0.94, 0.0], rH: [-0.215, 0.94, 0.0], lF: [0.095, DIM.ank, 0], rF: [-0.095, DIM.ank, 0] },
     contra: {
       yaw: 0, hips: [-0.035, DIM.hipsY - 0.01, 0], hipsRot: [0, 6, -5], spine: [0, -4, 3], chest: [0, -4, 3], head: [0, 0, 5],
-      rF: [-0.07, DIM.ank, -0.01], lF: [0.17, DIM.ank, 0.09], lK: [0.4, 0.6, 0.7], footYaw: [20, 6],
+      rF: [-0.06, DIM.ank, -0.01], lF: [0.11, DIM.ank, 0.1], lK: [0.1, 0.6, 0.8], footYaw: [20, 6],
       lH: [0.235, 0.96, 0.07], lE: [0.45, 1.15, -0.4],
       rH: [-0.16, 1.0, 0.04], rE: [-0.6, 1.25, -0.25]
     },
@@ -614,7 +864,7 @@
 
   window.MLStudio = {
     withThree: withThree, Stage: Stage, Figure: Figure, POSES: POSES, DIM: DIM,
-    buildPark: buildPark, makeTree: makeTree, makeLamp: makeLamp, makeBench: makeBench, makeWall: makeWall, makePlaza: makePlaza, makeBuilding: makeBuilding,
+    buildPark: buildPark, buildPiazza: buildPiazza, makeTree: makeTree, makeLamp: makeLamp, makeBench: makeBench, makeWall: makeWall, makePlaza: makePlaza, makeBuilding: makeBuilding,
     util: { clamp: clamp, lerp: lerp, smooth: smooth, ease: ease, D2R: D2R, el: el, rng: rng, focalToFov: focalToFov, mat: mat, shadowy: shadowy },
     injectCSS: function () { injectCSS('mls-css', CSS); }, three: function () { return T; },
     widgets: {}
@@ -1153,10 +1403,8 @@
     var view = $('.mls-view');
     var stage = new S.Stage(view);
     stage.setSun(125, 32); stage.setDaylight(32);
-    var TREES = [[-7, -9, 6], [6.5, -11, 7], [-4, 4, 5], [-8, 1, 6], [8, 2, 5.5], [-13, -16, 8], [12, -19, 9], [-3, -24, 9], [18, -9, 6], [-19, -6, 7]];
-    S.buildPark(stage, { trees: TREES, pathZ: -2.2, lamps: [[-4.5, -5], [4.5, -5]] });
-    stage.scene.add(S.makePlaza(2.2));
-    var bench = S.makeBench(); bench.position.set(-2.2, 0, -1.2); bench.rotation.y = 0.5; stage.scene.add(bench);
+    S.buildPiazza(stage);
+    var PLAN = stage.piazza;
     var fig = new S.Figure(); stage.scene.add(fig.root);
     fig.setPose(S.POSES.contra, true); fig.extra.bodyYaw = 10; fig.apply(fig.current);
 
@@ -1206,7 +1454,13 @@
           sv('line', { x1: 0, y1: cy, x2: 300, y2: cy, stroke: '#3a3d43', 'stroke-width': 2 });
           var tx = sv('text', { x: 12, y: cy + 18 }); tx.textContent = 'вид сбоку';
         } else {
-          TREES.forEach(function (t) { var q = P(t[0], 0, t[1]); if (q[0] > -20 && q[0] < 320 && q[1] > -20 && q[1] < 320) sv('circle', { cx: q[0], cy: q[1], r: t[2] * 1.6, fill: '#2f4a26', opacity: 0.8 }); });
+          sv('rect', { x: P(-12, 0, -16)[0], y: P(-12, 0, -16)[1], width: 24 * sc, height: 30 * sc, fill: '#2a2620' });
+          PLAN.boxes.forEach(function (b) {
+            var q = P(b.x, 0, b.z);
+            sv('rect', { x: -b.w / 2 * sc, y: -b.d / 2 * sc, width: b.w * sc, height: b.d * sc, rx: 2, fill: b.tower ? '#b07a52' : b.wall ? '#cbbd9f' : '#c9935f', opacity: 0.85,
+              transform: 'translate(' + q[0] + ',' + q[1] + ') rotate(' + (-b.r / U.D2R) + ')' });
+          });
+          PLAN.dots.forEach(function (d) { var q = P(d.x, 0, d.z); sv('circle', { cx: q[0], cy: q[1], r: Math.max(2.5, d.r * sc), fill: d.c, opacity: 0.9 }); });
           var tx2 = sv('text', { x: 12, y: 290 }); tx2.textContent = 'вид сверху';
         }
         var pts = [];
@@ -1331,8 +1585,7 @@
     var $ = function (s) { return box.querySelector(s); };
     var view = $('.mls-view');
     var stage = new S.Stage(view);
-    S.buildPark(stage, { pathZ: -4, lamps: [] });
-    stage.scene.add(S.makePlaza(2.6));
+    S.buildPiazza(stage);
     var sc = stage.sun.shadow.camera; sc.left = -3; sc.right = 3; sc.top = 3; sc.bottom = -3; sc.updateProjectionMatrix();
     var fig = new S.Figure(); stage.scene.add(fig.root);
     fig.setPose(S.POSES.contra, true); fig.extra.bodyYaw = 8; fig.apply(fig.current);
@@ -1340,7 +1593,7 @@
 
     /* основная камера — средний план, вставка — общий вид сверху-сбоку */
     stage.setFocal(50);
-    stage.camera.position.set(0.3, 1.45, 3.5); stage.camera.lookAt(0, 1.18, 0); stage.camera.updateMatrixWorld();
+    stage.camera.position.set(0.3, 1.4, 3.4); stage.camera.lookAt(0, 1.13, 0); stage.camera.updateMatrixWorld();
     var cam2 = new T.PerspectiveCamera(40, 1.35, 0.1, 400);
     cam2.position.set(-6.5, 6.2, 7.5); cam2.lookAt(0, 0.7, 0);
     cam2.layers.enable(1);
@@ -1505,22 +1758,22 @@
     { id: 'xls', name: 'Сверхобщий', sub: 'человек в пейзаже', b: -2.2, t: 8, f: 24, h: 2.0,
       what: 'Пространство главнее человека: герой — маленькая фигура в большом мире.',
       use: 'Начало сцены, смена места действия, ощущение масштаба или одиночества.', feel: 'Эпично, отстранённо.' },
-    { id: 'ls', name: 'Общий', sub: 'в полный рост', b: -0.18, t: 1.98, f: 35, h: 1.5,
+    { id: 'ls', name: 'Общий', sub: 'в полный рост', b: -0.18, t: 1.9, f: 35, h: 1.45,
       what: 'Герой виден целиком, с запасом сверху и снизу. Читаются поза, одежда и место.',
       use: 'Показать, кто и где находится; действие всем телом: идёт, танцует, работает.', feel: 'Нейтрально, информативно.' },
-    { id: 'mls', name: 'Средне-общий', sub: 'по колено', b: 0.64, t: 1.9, f: 50, h: 1.5,
+    { id: 'mls', name: 'Средне-общий', sub: 'по колено', b: 0.6, t: 1.82, f: 50, h: 1.45,
       what: 'Кадр от середины бедра или чуть выше колена. Видны жесты и часть окружения.',
       use: 'Диалоги в движении, герой с предметом в руках, вестерны («американский план»).', feel: 'Динамично, по-киношному.' },
-    { id: 'ms', name: 'Средний', sub: 'по пояс', b: 0.98, t: 1.86, f: 50, h: 1.5,
+    { id: 'ms', name: 'Средний', sub: 'по пояс', b: 0.93, t: 1.78, f: 50, h: 1.45,
       what: 'Кадр по пояс. Хорошо читаются жесты рук и мимика.',
       use: 'Интервью, разговоры, ведущий в кадре — самый ходовой план видео.', feel: 'Естественно, как в живом разговоре.' },
-    { id: 'mcu', name: 'Средне-крупный', sub: 'по грудь', b: 1.2, t: 1.82, f: 50, h: 1.55,
+    { id: 'mcu', name: 'Средне-крупный', sub: 'по грудь', b: 1.15, t: 1.74, f: 50, h: 1.5,
       what: 'Кадр по грудь. Внимание смещается на лицо, но жесты ещё видны.',
       use: 'Интервью и эмоциональные моменты разговора.', feel: 'Ближе, доверительно.' },
-    { id: 'cu', name: 'Крупный', sub: 'лицо и плечи', b: 1.36, t: 1.8, f: 85, h: 1.6,
+    { id: 'cu', name: 'Крупный', sub: 'лицо и плечи', b: 1.3, t: 1.73, f: 85, h: 1.55,
       what: 'Лицо крупно, чуть видны плечи. Макушку можно немного срезать.',
       use: 'Эмоции, реакции, важные слова.', feel: 'Интимно, сильная эмоция.' },
-    { id: 'ecu', name: 'Сверхкрупный', sub: 'деталь: глаза', b: 1.555, t: 1.69, f: 100, h: 1.62,
+    { id: 'ecu', name: 'Сверхкрупный', sub: 'деталь: глаза', b: 1.49, t: 1.61, f: 100, h: 1.55,
       what: 'Деталь — глаза, губы, руки. Остальное за кадром.',
       use: 'Акцент, напряжение, детали, которые важны для истории.', feel: 'Очень сильно, напряжённо.' }
   ];
@@ -1563,10 +1816,9 @@
     var view = $('.mls-view');
     var stage = new S.Stage(view);
     stage.setSun(60, 30); stage.setDaylight(30);
-    S.buildPark(stage, { pathZ: -3 });
-    stage.scene.add(S.makePlaza(2.4));
+    S.buildPiazza(stage);
     var fig = new S.Figure(); stage.scene.add(fig.root);
-    fig.setPose(S.POSES.pockets, true); fig.extra.bodyYaw = 12; fig.extra.headYaw = -6; fig.apply(fig.current);
+    fig.setPose(S.POSES.contra, true); fig.extra.bodyYaw = 18; fig.extra.headYaw = -10; fig.apply(fig.current);
 
     var st = { s: 300, target: 300 };
     function planAt(s) {
@@ -1601,16 +1853,21 @@
     var body = sv('g', {});
     /* силуэт человека (вид спереди) */
     function bodyPart(x, y0, y1, w, col) { sv('rect', { x: 150 + x - w / 2, y: HY(y1), width: w, height: HY(y0) - HY(y1), rx: Math.min(w / 2, 10), fill: col }, body); }
-    bodyPart(-12, 0.03, 0.88, 21, '#33435f'); bodyPart(12, 0.03, 0.88, 21, '#33435f');
-    bodyPart(0, 0.82, 1.06, 50, '#33435f');
-    bodyPart(0, 1.0, 1.45, 56, '#c98a2e'); bodyPart(0, 1.0, 1.42, 16, '#ebe6dc');
-    bodyPart(-34, 0.9, 1.43, 14, '#c98a2e'); bodyPart(34, 0.9, 1.43, 14, '#c98a2e');
-    bodyPart(0, 1.42, 1.5, 12, '#d6a084');
-    sv('ellipse', { cx: 150, cy: HY(1.6), rx: 15, ry: 20, fill: '#d6a084' }, body);
-    sv('path', { d: 'M135 ' + HY(1.61) + ' Q150 ' + HY(1.8) + ' 165 ' + HY(1.61) + 'Z', fill: '#3b2a20' }, body);
-    sv('rect', { x: 125, y: HY(0.03) - 6, width: 22, height: 8, rx: 3, fill: '#242326' }, body);
-    sv('rect', { x: 153, y: HY(0.03) - 6, width: 22, height: 8, rx: 3, fill: '#242326' }, body);
-    var JOINTS = [[0.1, 'щиколотки'], [0.5, 'колени'], [0.9, 'запястья'], [1.12, 'локти'], [1.48, 'подбородок / шея']];
+    var SK = '#e2b196', DR = '#b8433a', HR = '#4a2a1b';
+    sv('path', { d: 'M128 ' + HY(1.6) + ' Q124 ' + HY(1.38) + ' 132 ' + HY(1.26) + ' L168 ' + HY(1.26) + ' Q176 ' + HY(1.38) + ' 172 ' + HY(1.6) + 'Z', fill: HR }, body);
+    bodyPart(-10, 0.04, 0.52, 13, SK); bodyPart(10, 0.04, 0.52, 13, SK);
+    bodyPart(-30, 0.87, 1.38, 9, SK); bodyPart(30, 0.87, 1.38, 9, SK);
+    sv('ellipse', { cx: 120, cy: HY(0.85), rx: 5, ry: 8, fill: SK }, body); sv('ellipse', { cx: 180, cy: HY(0.85), rx: 5, ry: 8, fill: SK }, body);
+    sv('path', { d: 'M132 ' + HY(1.03) + ' L168 ' + HY(1.03) + ' L193 ' + HY(0.48) + ' Q181 ' + HY(0.455) + ' 171 ' + HY(0.48) + ' Q160 ' + HY(0.455) + ' 150 ' + HY(0.48) + ' Q140 ' + HY(0.455) + ' 129 ' + HY(0.48) + ' Q119 ' + HY(0.455) + ' 107 ' + HY(0.48) + 'Z', fill: DR }, body);
+    sv('path', { d: 'M126 ' + HY(1.31) + ' Q150 ' + HY(1.29) + ' 174 ' + HY(1.31) + ' L168 ' + HY(1.02) + ' L132 ' + HY(1.02) + 'Z', fill: DR }, body);
+    sv('path', { d: 'M126 ' + HY(1.31) + ' Q150 ' + HY(1.29) + ' 174 ' + HY(1.31) + ' Q178 ' + HY(1.38) + ' 170 ' + HY(1.39) + ' L130 ' + HY(1.39) + ' Q122 ' + HY(1.38) + ' 126 ' + HY(1.31) + 'Z', fill: SK }, body);
+    sv('rect', { x: 130, y: HY(1.033), width: 40, height: 3, fill: '#d8b25a' }, body);
+    bodyPart(0, 1.37, 1.46, 10, SK);
+    sv('ellipse', { cx: 150, cy: HY(1.545), rx: 13, ry: 17, fill: SK }, body);
+    sv('path', { d: 'M136 ' + HY(1.5) + ' Q134 ' + HY(1.68) + ' 150 ' + HY(1.67) + ' Q166 ' + HY(1.68) + ' 164 ' + HY(1.5) + ' Q160 ' + HY(1.62) + ' 150 ' + HY(1.62) + ' Q140 ' + HY(1.62) + ' 136 ' + HY(1.5) + 'Z', fill: HR }, body);
+    sv('rect', { x: 132, y: HY(0.04) - 5, width: 15, height: 6, rx: 3, fill: '#c49a6c' }, body);
+    sv('rect', { x: 153, y: HY(0.04) - 5, width: 15, height: 6, rx: 3, fill: '#c49a6c' }, body);
+    var JOINTS = [[0.08, 'щиколотки'], [0.47, 'колени'], [0.87, 'запястья'], [1.1, 'локти'], [1.43, 'подбородок / шея']];
     JOINTS.forEach(function (j) {
       sv('line', { x1: 96, y1: HY(j[0]), x2: 204, y2: HY(j[0]), stroke: '#ff5d52', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' });
       var t = sv('text', { x: 210, y: HY(j[0]) + 4 }); t.textContent = j[1]; t.setAttribute('style', 'fill:#ff8d84');
@@ -1631,12 +1888,12 @@
     function analyse(light) {
       var bot = edgeY(-1), top = edgeY(1);
       if (bot == null || top == null) return;
-      var yT = HY(Math.min(top, 1.95)), yB = HY(Math.max(bot, -0.1));
+      var yT = HY(Math.min(top, 1.88)), yB = HY(Math.max(bot, -0.1));
       shadeTop.setAttribute('height', Math.max(0, yT));
       shadeBot.setAttribute('y', Math.min(330, yB)); shadeBot.setAttribute('height', Math.max(0, 330 - yB));
       frameR.setAttribute('y', yT); frameR.setAttribute('height', Math.max(2, yB - yT));
       var big = top - bot > 4;
-      smallNote.textContent = big ? 'человек занимает ' + Math.round(1.73 / (top - bot) * 100) + '% высоты кадра' : '';
+      smallNote.textContent = big ? 'человек занимает ' + Math.round(1.66 / (top - bot) * 100) + '% высоты кадра' : '';
       /* суставы у нижнего края */
       var P = fig.points(), cut = null;
       [[P.ankle, 'щиколотки'], [P.knee, 'колени'], [P.wrist, 'запястья'], [P.elbow, 'локти'], [P.chin, 'подбородок']].forEach(function (j) {
@@ -1663,7 +1920,7 @@
     chips.addEventListener('click', function (e) { var b = e.target.closest('.mls-chip'); if (!b) return; st.target = +b.getAttribute('data-i') * 100; stage.invalidate(); });
     $('[data-r="s"]').addEventListener('input', function () { st.target = +this.value; stage.invalidate(); });
     place(); analyse();
-    root.__mlsApi = { stage: stage, st: st, place: place, analyse: analyse };
+    root.__mlsApi = { stage: stage, st: st, fig: fig, place: place, analyse: analyse };
   }
   S.widgets.shots = widget;
 })();

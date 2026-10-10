@@ -84,10 +84,8 @@
     var view = $('.mls-view');
     var stage = new S.Stage(view);
     stage.setSun(125, 32); stage.setDaylight(32);
-    var TREES = [[-7, -9, 6], [6.5, -11, 7], [-4, 4, 5], [-8, 1, 6], [8, 2, 5.5], [-13, -16, 8], [12, -19, 9], [-3, -24, 9], [18, -9, 6], [-19, -6, 7]];
-    S.buildPark(stage, { trees: TREES, pathZ: -2.2, lamps: [[-4.5, -5], [4.5, -5]] });
-    stage.scene.add(S.makePlaza(2.2));
-    var bench = S.makeBench(); bench.position.set(-2.2, 0, -1.2); bench.rotation.y = 0.5; stage.scene.add(bench);
+    S.buildPiazza(stage);
+    var PLAN = stage.piazza;
     var fig = new S.Figure(); stage.scene.add(fig.root);
     fig.setPose(S.POSES.contra, true); fig.extra.bodyYaw = 10; fig.apply(fig.current);
 
@@ -137,7 +135,13 @@
           sv('line', { x1: 0, y1: cy, x2: 300, y2: cy, stroke: '#3a3d43', 'stroke-width': 2 });
           var tx = sv('text', { x: 12, y: cy + 18 }); tx.textContent = 'вид сбоку';
         } else {
-          TREES.forEach(function (t) { var q = P(t[0], 0, t[1]); if (q[0] > -20 && q[0] < 320 && q[1] > -20 && q[1] < 320) sv('circle', { cx: q[0], cy: q[1], r: t[2] * 1.6, fill: '#2f4a26', opacity: 0.8 }); });
+          sv('rect', { x: P(-12, 0, -16)[0], y: P(-12, 0, -16)[1], width: 24 * sc, height: 30 * sc, fill: '#2a2620' });
+          PLAN.boxes.forEach(function (b) {
+            var q = P(b.x, 0, b.z);
+            sv('rect', { x: -b.w / 2 * sc, y: -b.d / 2 * sc, width: b.w * sc, height: b.d * sc, rx: 2, fill: b.tower ? '#b07a52' : b.wall ? '#cbbd9f' : '#c9935f', opacity: 0.85,
+              transform: 'translate(' + q[0] + ',' + q[1] + ') rotate(' + (-b.r / U.D2R) + ')' });
+          });
+          PLAN.dots.forEach(function (d) { var q = P(d.x, 0, d.z); sv('circle', { cx: q[0], cy: q[1], r: Math.max(2.5, d.r * sc), fill: d.c, opacity: 0.9 }); });
           var tx2 = sv('text', { x: 12, y: 290 }); tx2.textContent = 'вид сверху';
         }
         var pts = [];

@@ -8,22 +8,22 @@
     { id: 'xls', name: 'Сверхобщий', sub: 'человек в пейзаже', b: -2.2, t: 8, f: 24, h: 2.0,
       what: 'Пространство главнее человека: герой — маленькая фигура в большом мире.',
       use: 'Начало сцены, смена места действия, ощущение масштаба или одиночества.', feel: 'Эпично, отстранённо.' },
-    { id: 'ls', name: 'Общий', sub: 'в полный рост', b: -0.18, t: 1.98, f: 35, h: 1.5,
+    { id: 'ls', name: 'Общий', sub: 'в полный рост', b: -0.18, t: 1.9, f: 35, h: 1.45,
       what: 'Герой виден целиком, с запасом сверху и снизу. Читаются поза, одежда и место.',
       use: 'Показать, кто и где находится; действие всем телом: идёт, танцует, работает.', feel: 'Нейтрально, информативно.' },
-    { id: 'mls', name: 'Средне-общий', sub: 'по колено', b: 0.64, t: 1.9, f: 50, h: 1.5,
+    { id: 'mls', name: 'Средне-общий', sub: 'по колено', b: 0.6, t: 1.82, f: 50, h: 1.45,
       what: 'Кадр от середины бедра или чуть выше колена. Видны жесты и часть окружения.',
       use: 'Диалоги в движении, герой с предметом в руках, вестерны («американский план»).', feel: 'Динамично, по-киношному.' },
-    { id: 'ms', name: 'Средний', sub: 'по пояс', b: 0.98, t: 1.86, f: 50, h: 1.5,
+    { id: 'ms', name: 'Средний', sub: 'по пояс', b: 0.93, t: 1.78, f: 50, h: 1.45,
       what: 'Кадр по пояс. Хорошо читаются жесты рук и мимика.',
       use: 'Интервью, разговоры, ведущий в кадре — самый ходовой план видео.', feel: 'Естественно, как в живом разговоре.' },
-    { id: 'mcu', name: 'Средне-крупный', sub: 'по грудь', b: 1.2, t: 1.82, f: 50, h: 1.55,
+    { id: 'mcu', name: 'Средне-крупный', sub: 'по грудь', b: 1.15, t: 1.74, f: 50, h: 1.5,
       what: 'Кадр по грудь. Внимание смещается на лицо, но жесты ещё видны.',
       use: 'Интервью и эмоциональные моменты разговора.', feel: 'Ближе, доверительно.' },
-    { id: 'cu', name: 'Крупный', sub: 'лицо и плечи', b: 1.36, t: 1.8, f: 85, h: 1.6,
+    { id: 'cu', name: 'Крупный', sub: 'лицо и плечи', b: 1.3, t: 1.73, f: 85, h: 1.55,
       what: 'Лицо крупно, чуть видны плечи. Макушку можно немного срезать.',
       use: 'Эмоции, реакции, важные слова.', feel: 'Интимно, сильная эмоция.' },
-    { id: 'ecu', name: 'Сверхкрупный', sub: 'деталь: глаза', b: 1.555, t: 1.69, f: 100, h: 1.62,
+    { id: 'ecu', name: 'Сверхкрупный', sub: 'деталь: глаза', b: 1.49, t: 1.61, f: 100, h: 1.55,
       what: 'Деталь — глаза, губы, руки. Остальное за кадром.',
       use: 'Акцент, напряжение, детали, которые важны для истории.', feel: 'Очень сильно, напряжённо.' }
   ];
@@ -66,10 +66,9 @@
     var view = $('.mls-view');
     var stage = new S.Stage(view);
     stage.setSun(60, 30); stage.setDaylight(30);
-    S.buildPark(stage, { pathZ: -3 });
-    stage.scene.add(S.makePlaza(2.4));
+    S.buildPiazza(stage);
     var fig = new S.Figure(); stage.scene.add(fig.root);
-    fig.setPose(S.POSES.pockets, true); fig.extra.bodyYaw = 12; fig.extra.headYaw = -6; fig.apply(fig.current);
+    fig.setPose(S.POSES.contra, true); fig.extra.bodyYaw = 18; fig.extra.headYaw = -10; fig.apply(fig.current);
 
     var st = { s: 300, target: 300 };
     function planAt(s) {
@@ -104,16 +103,21 @@
     var body = sv('g', {});
     /* силуэт человека (вид спереди) */
     function bodyPart(x, y0, y1, w, col) { sv('rect', { x: 150 + x - w / 2, y: HY(y1), width: w, height: HY(y0) - HY(y1), rx: Math.min(w / 2, 10), fill: col }, body); }
-    bodyPart(-12, 0.03, 0.88, 21, '#33435f'); bodyPart(12, 0.03, 0.88, 21, '#33435f');
-    bodyPart(0, 0.82, 1.06, 50, '#33435f');
-    bodyPart(0, 1.0, 1.45, 56, '#c98a2e'); bodyPart(0, 1.0, 1.42, 16, '#ebe6dc');
-    bodyPart(-34, 0.9, 1.43, 14, '#c98a2e'); bodyPart(34, 0.9, 1.43, 14, '#c98a2e');
-    bodyPart(0, 1.42, 1.5, 12, '#d6a084');
-    sv('ellipse', { cx: 150, cy: HY(1.6), rx: 15, ry: 20, fill: '#d6a084' }, body);
-    sv('path', { d: 'M135 ' + HY(1.61) + ' Q150 ' + HY(1.8) + ' 165 ' + HY(1.61) + 'Z', fill: '#3b2a20' }, body);
-    sv('rect', { x: 125, y: HY(0.03) - 6, width: 22, height: 8, rx: 3, fill: '#242326' }, body);
-    sv('rect', { x: 153, y: HY(0.03) - 6, width: 22, height: 8, rx: 3, fill: '#242326' }, body);
-    var JOINTS = [[0.1, 'щиколотки'], [0.5, 'колени'], [0.9, 'запястья'], [1.12, 'локти'], [1.48, 'подбородок / шея']];
+    var SK = '#e2b196', DR = '#b8433a', HR = '#4a2a1b';
+    sv('path', { d: 'M128 ' + HY(1.6) + ' Q124 ' + HY(1.38) + ' 132 ' + HY(1.26) + ' L168 ' + HY(1.26) + ' Q176 ' + HY(1.38) + ' 172 ' + HY(1.6) + 'Z', fill: HR }, body);
+    bodyPart(-10, 0.04, 0.52, 13, SK); bodyPart(10, 0.04, 0.52, 13, SK);
+    bodyPart(-30, 0.87, 1.38, 9, SK); bodyPart(30, 0.87, 1.38, 9, SK);
+    sv('ellipse', { cx: 120, cy: HY(0.85), rx: 5, ry: 8, fill: SK }, body); sv('ellipse', { cx: 180, cy: HY(0.85), rx: 5, ry: 8, fill: SK }, body);
+    sv('path', { d: 'M132 ' + HY(1.03) + ' L168 ' + HY(1.03) + ' L193 ' + HY(0.48) + ' Q181 ' + HY(0.455) + ' 171 ' + HY(0.48) + ' Q160 ' + HY(0.455) + ' 150 ' + HY(0.48) + ' Q140 ' + HY(0.455) + ' 129 ' + HY(0.48) + ' Q119 ' + HY(0.455) + ' 107 ' + HY(0.48) + 'Z', fill: DR }, body);
+    sv('path', { d: 'M126 ' + HY(1.31) + ' Q150 ' + HY(1.29) + ' 174 ' + HY(1.31) + ' L168 ' + HY(1.02) + ' L132 ' + HY(1.02) + 'Z', fill: DR }, body);
+    sv('path', { d: 'M126 ' + HY(1.31) + ' Q150 ' + HY(1.29) + ' 174 ' + HY(1.31) + ' Q178 ' + HY(1.38) + ' 170 ' + HY(1.39) + ' L130 ' + HY(1.39) + ' Q122 ' + HY(1.38) + ' 126 ' + HY(1.31) + 'Z', fill: SK }, body);
+    sv('rect', { x: 130, y: HY(1.033), width: 40, height: 3, fill: '#d8b25a' }, body);
+    bodyPart(0, 1.37, 1.46, 10, SK);
+    sv('ellipse', { cx: 150, cy: HY(1.545), rx: 13, ry: 17, fill: SK }, body);
+    sv('path', { d: 'M136 ' + HY(1.5) + ' Q134 ' + HY(1.68) + ' 150 ' + HY(1.67) + ' Q166 ' + HY(1.68) + ' 164 ' + HY(1.5) + ' Q160 ' + HY(1.62) + ' 150 ' + HY(1.62) + ' Q140 ' + HY(1.62) + ' 136 ' + HY(1.5) + 'Z', fill: HR }, body);
+    sv('rect', { x: 132, y: HY(0.04) - 5, width: 15, height: 6, rx: 3, fill: '#c49a6c' }, body);
+    sv('rect', { x: 153, y: HY(0.04) - 5, width: 15, height: 6, rx: 3, fill: '#c49a6c' }, body);
+    var JOINTS = [[0.08, 'щиколотки'], [0.47, 'колени'], [0.87, 'запястья'], [1.1, 'локти'], [1.43, 'подбородок / шея']];
     JOINTS.forEach(function (j) {
       sv('line', { x1: 96, y1: HY(j[0]), x2: 204, y2: HY(j[0]), stroke: '#ff5d52', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' });
       var t = sv('text', { x: 210, y: HY(j[0]) + 4 }); t.textContent = j[1]; t.setAttribute('style', 'fill:#ff8d84');
@@ -134,12 +138,12 @@
     function analyse(light) {
       var bot = edgeY(-1), top = edgeY(1);
       if (bot == null || top == null) return;
-      var yT = HY(Math.min(top, 1.95)), yB = HY(Math.max(bot, -0.1));
+      var yT = HY(Math.min(top, 1.88)), yB = HY(Math.max(bot, -0.1));
       shadeTop.setAttribute('height', Math.max(0, yT));
       shadeBot.setAttribute('y', Math.min(330, yB)); shadeBot.setAttribute('height', Math.max(0, 330 - yB));
       frameR.setAttribute('y', yT); frameR.setAttribute('height', Math.max(2, yB - yT));
       var big = top - bot > 4;
-      smallNote.textContent = big ? 'человек занимает ' + Math.round(1.73 / (top - bot) * 100) + '% высоты кадра' : '';
+      smallNote.textContent = big ? 'человек занимает ' + Math.round(1.66 / (top - bot) * 100) + '% высоты кадра' : '';
       /* суставы у нижнего края */
       var P = fig.points(), cut = null;
       [[P.ankle, 'щиколотки'], [P.knee, 'колени'], [P.wrist, 'запястья'], [P.elbow, 'локти'], [P.chin, 'подбородок']].forEach(function (j) {
@@ -166,7 +170,7 @@
     chips.addEventListener('click', function (e) { var b = e.target.closest('.mls-chip'); if (!b) return; st.target = +b.getAttribute('data-i') * 100; stage.invalidate(); });
     $('[data-r="s"]').addEventListener('input', function () { st.target = +this.value; stage.invalidate(); });
     place(); analyse();
-    root.__mlsApi = { stage: stage, st: st, place: place, analyse: analyse };
+    root.__mlsApi = { stage: stage, st: st, fig: fig, place: place, analyse: analyse };
   }
   S.widgets.shots = widget;
 })();
