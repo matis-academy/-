@@ -140,3 +140,18 @@ Settings style: black bg, grouped rounded cards #1c1c1e-ish, section headers gre
 ## Media tab (landscape): header: sidebar toggle icon, "No project selected - All Clips", icons: (aperture/filter?), select clips (check), sort (lines+arrow), cloud. Grid 4 columns of thumbnails with duration (00:01, 15:06) and name under: A001_10111718_C019 (Camera A, reel 001, MMDDHHMM, clip C019).
 ## Chat tab: Blackmagic Cloud logo, "Log in to Blackmagic Cloud to access your projects chat.", blue "Log In" button.
 ## Settings (landscape): split view — left list "Settings": Record, Camera, Media, Audio, Monitor, Live Stream, Function Buttons, LUTs, ... (selected blue row); right: section page with same rows; nav rail at far right.
+
+# Video 3 (monitoring tools detail, stabilization, torch)
+- Tools column icons (top→bottom): Zebra, Focus Assist, Grid, Frame Guide, Safe Area, False Color, Torch (⚡ + level number). Small white dot under an icon = that tool is enabled. Tapping an icon selects it (blue square) and shows its ruler; OFF/ON at top toggles the selected tool.
+- Zebra: ruler 75–100% (bubble "90%"); below ruler two text buttons "Mid Grey" and "MG+1" (zebra for 18% mid grey / mid grey +1 stop).
+- Focus Assist: ruler 0–100% sensitivity (bubbles 100%, 13%).
+- Grid: popover with 4 toggles: Thirds grid, (2nd icon square with cross-lines at corner — probably horizon/level ⚠), Crosshair, Centre Dot. Multi-select. Lines drawn white thin.
+- Frame Guide: ruler of ratios 9:16, 4:5, 1:1, 4:3, 14:9, 1.85:1, 2:1, 2.35:1, 2.39:1, 2.4:1, 2.76:1; drawn as thin white lines (vertical for portrait ratios, horizontal for scope); outside area slightly darkened.
+- Safe Area: ruler 5–100% (seen 37…100%), white rectangle centered with that % of frame size.
+- False Color: overlay colors + vertical legend at left: red (clip, top), yellow 95%WC, light grey 80%WC, pink MG+1, green 18%MG, blue NBDL, purple BDL (bottom), greys between.
+- Torch (⚡50): ON/OFF top, ruler 0–100% (73%,100%,34%,11%,3%,1%), AUTO button bottom; when on, blue ⚡ badge top-left of image; image visibly brighter on near objects.
+- Focus panel bottom icon (mountains+arrow) = focus presets/rack (not opened). Focus 0.000 = near (close), 1.000 = far.
+- Exposure comp range confirmed −3.0…+3.0.
+- Bottom right-column icon (target with dashes) = STABILIZATION: vertical list Off / Standard / Cinematic / Extreme (selected blue). Icon turns blue when stabilization active.
+- Record LUT to clip button (bottom of LUT panel) → when on blue; histogram label changes from "Apple Log - HDR" to "Rec.709".
+- LUT looks: Nature = warm orange, saturated; Paloma = golden/warm; Monochrome = B/W; Day Night = cold dark blue; Dusty = desaturated; Cinema Teal = teal-orange; Rec 709 Neutral = normal.
