@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Симулятор Blackmagic Camera</title>
+<style>
+  :root { color-scheme: dark; --bg: #0a0c10; --fg: #e7eaf0; --mut: #9aa3b2; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); }
+  body { font-family: Lato, "Helvetica Neue", -apple-system, "Segoe UI", Roboto, Arial, sans-serif; padding: 16px; }
+  .wrap { max-width: 1320px; margin: 0 auto; }
+  .note { max-width: 1320px; margin: 14px auto 0; font-size: 12.5px; color: var(--mut); line-height: 1.55; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div data-ml-widget="bmcamera"></div>
+</div>
+<p class="note">Учебный тренажёр курса Matis.Academy. Повторяет интерфейс приложения Blackmagic Camera 3.5 на iPhone 15 Pro Max по скриншотам, записям экрана и официальной техспецификации. Картинка в видоискателе нарисована программно: экспозиция, баланс белого, шум, мерцание ламп и глубина резкости считаются по упрощённой физической модели. Blackmagic Camera и DaVinci Resolve — товарные знаки Blackmagic Design; тренажёр не связан с компанией.</p>
+<script src="bm-camera-sim.js"></script>
+</body>
+</html>
