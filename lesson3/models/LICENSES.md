@@ -12,3 +12,8 @@
 - RobotExpressive README (CC0): https://github.com/mrdoob/three.js/blob/master/examples/models/gltf/RobotExpressive/README.md
 
 У Xbot и Michelle одинаковые имена костей (mixamorig:*), поэтому анимацию ходьбы Xbot можно применить к Michelle.
+
+## woman.glb
+
+Модель девушки в кружевном платье (`woman.glb`, `woman-embedded.js`) предоставлена владельцем курса.
+Перед публикацией убедитесь, что права на неё позволяют коммерческое использование.

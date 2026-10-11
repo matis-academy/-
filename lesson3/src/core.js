@@ -843,7 +843,7 @@
     scene.traverse(function (m) { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false; } });
     this.bones = {};
     scene.traverse(function (o) { if (o.isBone) self.bones[o.name.replace(/^mixamorig:?/, '')] = o; });
-    this.clips = {}; g.animations.forEach(function (a) { self.clips[a.name] = a; });
+    this.clips = {}; g.animations.forEach(function (a) { self.clips[a.name.toLowerCase()] = a; });
     this.mixer = new T.AnimationMixer(scene);
     this.aIdle = this.mixer.clipAction(this.clips.idle); this.aWalk = this.mixer.clipAction(this.clips.walk);
     this.aIdle.play(); this.aWalk.play(); this.aWalk.weight = 0;

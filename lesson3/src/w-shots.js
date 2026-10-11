@@ -103,7 +103,7 @@
     var body = sv('g', {});
     /* силуэт человека (вид спереди) */
     function bodyPart(x, y0, y1, w, col) { sv('rect', { x: 150 + x - w / 2, y: HY(y1), width: w, height: HY(y0) - HY(y1), rx: Math.min(w / 2, 10), fill: col }, body); }
-    var SK = '#e2b196', DR = '#b8433a', HR = '#4a2a1b';
+    var SK = '#e0a988', DR = '#efe4cc', HR = '#5a3424';
     sv('path', { d: 'M128 ' + HY(1.6) + ' Q124 ' + HY(1.38) + ' 132 ' + HY(1.26) + ' L168 ' + HY(1.26) + ' Q176 ' + HY(1.38) + ' 172 ' + HY(1.6) + 'Z', fill: HR }, body);
     bodyPart(-10, 0.04, 0.52, 13, SK); bodyPart(10, 0.04, 0.52, 13, SK);
     bodyPart(-30, 0.87, 1.38, 9, SK); bodyPart(30, 0.87, 1.38, 9, SK);
