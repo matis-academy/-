@@ -112,3 +112,31 @@ Left black rounded pill with green dot (that's iOS dynamic island in landscape �
 ## Portrait camera (IMG_0142): TC on top; image 16:9; below: histogram panel (left), REC button (center), audio meter panel (right); row: LENS 24mm | FPS 30 | SHUTTER[A] 1/37 | IRIS f/1,8 grey | ISO[A] 451 | WB[A] 4160K | TINT[A] 9; icon row: [focus-target dotted], [LUT], [lens circle], [+/- A], [cam circle A], [frame corners]; ⋮ handles at both sides; storage panel bottom; tab bar.
 Bottom tab bar items (portrait): Camera/Media/Chat/Settings; selected tab gets dark blue rounded box w/ blue icon+label.
 Settings style: black bg, grouped rounded cards #1c1c1e-ish, section headers grey bold, iOS blue toggles, chevrons, values grey right.
+
+# Video transcription (2 screen recordings, landscape, app 3.5) — key frames in video-frames/
+## General dial pattern (tap any HUD item → it highlights blue box; a vertical control column opens at right edge of image)
+- Column: thin vertical ruler with fine ticks + small grey labels (finer values), plus a column of large "quick" values/preset icons to the right.
+- Current value shown in a dark rounded bubble left of ruler with a blue pointer line to center mark. Drag ruler up/down to scrub.
+- Top of column: lock icon (padlock) — locks value (Shutter, ISO, WB, Tint); WB/TINT also have "AUTO" button (blue when auto) next to lock.
+- Tapping a quick value selects it (blue pill). Choosing manual value removes blue "A" badge from HUD label.
+## LENS (tap "LENS 24mm"): top ↺ (reset zoom). Quick column: 120mm, 48mm, 24mm, 13mm (lens icons, selected blue), then "Front" (person icon), bottom icon camera+arrow (switch?). Ruler shows zoom (0.5x…5x labels like 1.5x, 2x, 2.5x, 5.5x); bubble "1x", "2x", "5x", "0.5x", "1.5x". HUD LENS shows 13/24/48/120mm. Right column lens icon shows small "2.0x"/"0.5x" under it. IRIS shows f/1,8 (24/48), f/2,2 (13mm), f/2,8 (120mm), greyed.
+## FPS: top "OFF/ SPEED" button; ruler values 23.98,24,25,29.97,30,48,50,59.94,60; bubble "60"/"30"/"23.98"; bottom "TIME LAPSE" button. Storage time changes with fps (1:15:14 at 60).
+## SHUTTER: top lock; quick column 1/100, 1/50, 1/33, 1/25 (flicker-free for 50Hz); ruler 1/24..1/200 etc; bubble "1/27","1/100","1/30","1/24". Auto shutter shows odd values (1/35, 1/49).
+## ISO: top lock; quick column 3200,1600,800,400,200,100; ruler fine values (5280,5000,4000,3200,2500,2000,1600,1250,1000,800,640,500,400,320,250,200); bubble value.
+## WB: top AUTO (blue = auto) + lock; quick icons: sun (Daylight ~5600K), bulb (Incandescent ~3200K), fluorescent tube (~4000K), house-shade (Shade ~7500K), cloud (Cloud ~6500K); ruler 2500K..10000K labels each 500K; bubble "4480K". When WB locked, HUD shows small lock icon next to WB.
+## TINT: AUTO + lock; same preset icons; ruler −50..+50 (labels 0,10,20,30,40); bubble "15", "10".
+## Right column icons (top→bottom) & what they open:
+1. Frame-corners = MONITORING TOOLS: column with top OFF/ON (for selected tool) and icons: zebra (striped circle) → level ruler 75–100% (bubble "85%"); focus assist (person in brackets); grid (#) → sub-options popover: thirds grid, crosshair, center dot (multi-select, blue); frame guide (rect); safe area (rect in rect); false color (landscape/wave icon, blue when on); bottom "⚡50" (unknown, likely flicker/50Hz or torch — ask).
+2. Camera-circle + A = FOCUS: top AUTO (blue = AF); ruler 0.000–1.000 (bubble 0.659/0.741/1.000/0.531); bottom icon mountains+arrow (rack focus presets?). Tap on image shows "AF" bracket square; long-press shows "AE/AF" (lock).
+3. +/- with A = EXPOSURE: top AUTO; ruler −2..+2 EV (labels -1.0,-0.5,0.0,+0.5,+1.0,+1.5,+2.0), bubble "0.0","+0.8","+2.0","-1.1"; with AUTO on, SHUTTER and ISO show A and change automatically.
+4. REC button.
+5. Lens circle (with "0.5x"/"2.0x" sublabel) = opens LENS dial (same as tapping LENS).
+6. LUT icon = LUT panel: top OFF/ON; list of LUT names with thumbnail chips (selected one has rainbow outline): Rec 709 Neutral, Cinema Teal, Day Night, Dusty, Monochrome, Nature, Nostalgic, Paloma, Rift, Vivid, Warm Fade; bottom icon arrow-into-camera = Record LUT to clip. When ON: small "LUT" badge top-left of image and HUD text hides while panel open.
+   Looks: Rec709 Neutral = normal contrast/saturation; Cinema Teal = warm skin/teal shadows, punchy; Day Night = dark blue; Dusty = desaturated faded warm; Monochrome = B/W; Nature = bright pastel/greens; (Nostalgic/Paloma/Rift/Vivid/Warm Fade — not seen clearly).
+   With LUT OFF + Apple Log: flat, low-contrast greyish image.
+7. Bottom icon focus-target with dots (⊙ with brackets) — not opened in video (maybe stabilization/AE metering?) — ask.
+## Bottom panels: histogram (tap → large RGB parade/scope overlay with 0–100% lines, 0..1023 scale, opacity slider 100%, 3 page dots); Internal Storage; audio meters (tap → large "iPhone Microphone" meter overlay). Badge "4K 16:9" and battery "25%" in HUD top-right.
+## Side "⋮" handles: not opened in video.
+## Media tab (landscape): header: sidebar toggle icon, "No project selected - All Clips", icons: (aperture/filter?), select clips (check), sort (lines+arrow), cloud. Grid 4 columns of thumbnails with duration (00:01, 15:06) and name under: A001_10111718_C019 (Camera A, reel 001, MMDDHHMM, clip C019).
+## Chat tab: Blackmagic Cloud logo, "Log in to Blackmagic Cloud to access your projects chat.", blue "Log In" button.
+## Settings (landscape): split view — left list "Settings": Record, Camera, Media, Audio, Monitor, Live Stream, Function Buttons, LUTs, ... (selected blue row); right: section page with same rows; nav rail at far right.
