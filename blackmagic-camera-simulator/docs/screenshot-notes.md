@@ -155,3 +155,11 @@ Settings style: black bg, grouped rounded cards #1c1c1e-ish, section headers gre
 - Bottom right-column icon (target with dashes) = STABILIZATION: vertical list Off / Standard / Cinematic / Extreme (selected blue). Icon turns blue when stabilization active.
 - Record LUT to clip button (bottom of LUT panel) → when on blue; histogram label changes from "Apple Log - HDR" to "Rec.709".
 - LUT looks: Nature = warm orange, saturated; Paloma = golden/warm; Monochrome = B/W; Day Night = cold dark blue; Dusty = desaturated; Cinema Teal = teal-orange; Rec 709 Neutral = normal.
+
+# Video 4 (side ⋮ panels)
+- Tap on image: "AE/AF" label + bracket square (tap = focus & exposure point).
+- When HUD hidden (swipe), only image + right column visible; swipe brings back HUD.
+- Left ⋮ → vertical column of 3 rounded buttons at left edge: Presets (two toggles icon), Slate (clapperboard), Remote camera (phone icon, greyed when Remote Camera Control off).
+- Presets panel (centered dark translucent card, title "Presets"): empty state "No presets currently created. Create a preset using your current settings by pressing the + icon"; toolbar: + (new), ✓ (apply), ↻ (overwrite), ✎ (rename), 🗑 (delete).
+- Slate panel (full overlay, X close top-right, 2 pages with dots): row 1: "SLATE FOR — Next Clip" | "LENS DATA — iPhone 15 Pro Max 13mm"; row 2: REEL ‹1›, SCENE ‹1›, TAKE ‹1› big steppers; row 3 toggles: Good Take Last Clip | Interior / Exterior | Day / Night (selected = blue fill + blue underline). Page 2 (not shown) presumably Production Name, Camera Ident, Director, Camera Operator (from spec).
+- Right ⋮ → column of 3 rounded buttons F1, F2, F3 (greyed when unassigned).
