@@ -969,9 +969,19 @@
       n.__mls = true;
       window.MLStudio.injectCSS();
       n.innerHTML = '<div class="mls"><div class="mls-view"><div class="mls-load">Загружаю 3D-сцену…</div></div></div>';
-      withThree(function () { n.innerHTML = ''; w(n); }, function () {
-        n.querySelector('.mls-load').textContent = 'Не удалось загрузить 3D-библиотеку. Проверьте интернет и обновите страницу.';
-      });
+      var start = function () {
+        withThree(function () { n.innerHTML = ''; w(n); }, function () {
+          n.querySelector('.mls-load').textContent = 'Не удалось загрузить 3D-библиотеку. Проверьте интернет и обновите страницу.';
+        });
+      };
+      /* виджеты стоят в разных местах урока: каждый запускается, когда до него остаётся ~1,5 экрана */
+      if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (en) {
+          if (!en[0].isIntersecting) return;
+          io.disconnect(); start();
+        }, { rootMargin: '1200px 0px' });
+        io.observe(n);
+      } else start();
     });
   }
   window.MLStudio.init = init;
