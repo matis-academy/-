@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { RoundedBoxGeometry } from './vendor/RoundedBoxGeometry.js';
 import { RoomEnvironment } from './vendor/RoomEnvironment.js';
-import { PARTS, GROUPS } from './parts.js?v=3';
+import { PARTS, GROUPS } from './parts.js?v=4';
 
 // Единицы сцены: 1 = 1 см. Оси: +x — сторона разъёмов, −x — рукоятка,
 // +y — верх, +z — перед (байонет), −z — задняя панель (экран).
@@ -733,7 +733,7 @@ let lensOn = true, screenOpen = false;
 const I18N = {
   ru: {
     eyebrow: 'Интерактивная 3D-модель', hint: 'Наведите на кнопку — она подсветится и появится описание. Вращайте модель мышью, колесо — масштаб.',
-    hintM: 'Нажмите на любую кнопку камеры', views: '☰ Виды',
+    hintM: 'Нажмите на любую кнопку камеры', views: '☰ Виды', simLink: '📷 Симулятор съёмки →',
     vFront: 'Спереди', vTop: 'Сверху', vRear: 'Сзади', vLeft: 'Разъёмы', vRight: 'Слоты', vBottom: 'Снизу',
     tLens: 'Объектив', tScreen: 'Открыть экран', tSpin: 'Вращение', controls: 'Органы управления', search: 'Поиск: Fn, ISO, видео…',
     source: 'Источник:', disclaimer: '3D-модель упрощённая; расположение и назначение органов управления — по официальной инструкции.',
@@ -741,7 +741,7 @@ const I18N = {
   },
   en: {
     eyebrow: 'Interactive 3D model', hint: 'Hover a control to highlight it and see what it does. Drag to rotate, scroll to zoom.',
-    hintM: 'Tap any control on the camera', views: '☰ Views',
+    hintM: 'Tap any control on the camera', views: '☰ Views', simLink: '📷 Shooting simulator (RU) →',
     vFront: 'Front', vTop: 'Top', vRear: 'Rear', vLeft: 'Ports', vRight: 'Card slots', vBottom: 'Bottom',
     tLens: 'Lens', tScreen: 'Open screen', tSpin: 'Auto-rotate', controls: 'Controls', search: 'Search: Fn, ISO, movie…',
     source: 'Source:', disclaimer: 'Simplified 3D model; control layout and functions follow the official Help Guide.',

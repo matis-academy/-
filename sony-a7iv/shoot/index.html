@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Симулятор съёмки α7 IV</title>
+  <meta name="description" content="Учебный симулятор съёмки на Sony α7 IV: экспозиция, глубина резкости, фокусное расстояние и смаз считаются по законам оптики.">
+  <link rel="stylesheet" href="shoot.css?v=1">
+  <script type="importmap">
+    { "imports": { "three": "../vendor/three.module.min.js" } }
+  </script>
+</head>
+<body>
+  <header class="top">
+    <a class="back" href="../">← 3D-модель</a>
+    <div class="top-title">
+      <h1>Симулятор съёмки <span>Sony α7 IV</span></h1>
+      <p>Сцена: портрет в парке, золотой час</p>
+    </div>
+  </header>
+
+  <div class="layout">
+    <section class="left">
+      <div class="vf-wrap" id="vfWrap">
+        <div class="vf" id="vf">
+          <canvas id="cv" aria-label="Изображение в видоискателе"></canvas>
+          <div class="vf-grid" id="vfGrid"></div>
+          <div class="vf-top">
+            <span class="vf-mode" id="oMode">A</span>
+            <span id="oLens">85 мм</span>
+            <span id="oAf">AF-S</span>
+            <span id="oIs" class="vf-is">IS</span>
+          </div>
+          <div class="vf-focus" id="oFocus"></div>
+          <div class="vf-flash" id="vfFlash"></div>
+          <div class="vf-bottom">
+            <span id="oT" class="vf-v">1/250</span>
+            <span id="oN" class="vf-v">F1,8</span>
+            <span id="oEv" class="vf-v">±0,0</span>
+            <span id="oIso" class="vf-v">ISO 100</span>
+          </div>
+          <div class="vf-hint" id="vfHint">Нажмите в кадре — камера сфокусируется в этой точке. Перетаскивайте, чтобы повернуть камеру.</div>
+        </div>
+      </div>
+
+      <section class="explain" id="explain" aria-label="Что происходит в кадре">
+        <h2>Что происходит в кадре</h2>
+        <div class="tiles">
+          <article class="tile" id="tExp"><h3>Экспозиция</h3><div class="big"></div><p></p></article>
+          <article class="tile" id="tDof"><h3>Глубина резкости</h3><div class="big"></div><p></p></article>
+          <article class="tile" id="tFov"><h3>Угол и перспектива</h3><div class="big"></div><p></p></article>
+          <article class="tile" id="tBlur"><h3>Смаз</h3><div class="big"></div><p></p></article>
+          <article class="tile" id="tNoise"><h3>Шум</h3><div class="big"></div><p></p></article>
+        </div>
+        <div class="dofbar" id="dofBar" aria-label="Шкала глубины резкости">
+          <div class="dof-zone" id="dofZone"></div>
+          <div class="dof-focus" id="dofFocus"></div>
+          <div class="dof-marks" id="dofMarks"></div>
+          <div class="dof-scale" id="dofScale"></div>
+        </div>
+      </section>
+    </section>
+
+    <aside class="right" id="controls">
+      <section class="card">
+        <h2>Режим съёмки <small>диск режимов</small></h2>
+        <div class="seg" id="modes" role="radiogroup">
+          <button data-mode="AUTO">AUTO</button><button data-mode="P">P</button><button data-mode="A">A</button><button data-mode="S">S</button><button data-mode="M">M</button>
+        </div>
+        <p class="note" id="modeNote"></p>
+      </section>
+
+      <section class="card">
+        <h2>Экспозиция</h2>
+        <div class="ctl" id="cN"></div>
+        <div class="ctl" id="cT"></div>
+        <div class="ctl" id="cIso"></div>
+        <div class="ctl" id="cEc"></div>
+      </section>
+
+      <section class="card">
+        <h2>Объектив</h2>
+        <div class="lenses" id="lenses"></div>
+        <p class="note" id="lensNote"></p>
+        <div class="ctl" id="cZoom"></div>
+      </section>
+
+      <section class="card">
+        <h2>Фокус</h2>
+        <div class="seg small" id="focusModes"><button data-fm="AF">AF-S — автофокус</button><button data-fm="MF">MF — вручную</button></div>
+        <div class="ctl" id="cFocus"></div>
+      </section>
+
+      <section class="card">
+        <h2>Положение фотографа</h2>
+        <div class="ctl" id="cDist"></div>
+        <label class="sw"><input type="checkbox" id="swSteady" checked> <span>SteadyShot — стабилизатор матрицы (до 5,5 ступени)</span></label>
+        <label class="sw"><input type="checkbox" id="swTripod"> <span>Камера на штативе</span></label>
+        <label class="sw"><input type="checkbox" id="swGrid" checked> <span>Сетка «правило третей»</span></label>
+      </section>
+
+      <section class="card shoot-card">
+        <button class="shutter" id="shutter" aria-label="Сделать снимок"><span></span></button>
+        <div class="shoot-txt"><b>Спуск затвора</b><span>или клавиша «Пробел»</span></div>
+      </section>
+
+      <section class="card">
+        <h2>Снимки <small id="shotCount"></small></h2>
+        <div class="gallery" id="gallery"><p class="note">Здесь появятся ваши кадры с разбором настроек.</p></div>
+      </section>
+    </aside>
+  </div>
+
+  <nav class="mbar" id="mbar">
+    <button class="mb-thumb" id="mbThumb" aria-label="Последний снимок"></button>
+    <button class="shutter" id="mbShutter" aria-label="Сделать снимок"><span></span></button>
+    <button class="mb-explain" id="mbExplain">Почему так?</button>
+  </nav>
+
+  <dialog id="photo" class="photo">
+    <div class="ph-inner">
+      <div class="ph-img"><img id="phImg" alt="Снимок"></div>
+      <div class="ph-side">
+        <div class="ph-exif" id="phExif"></div>
+        <canvas id="phHist" width="256" height="80" aria-label="Гистограмма"></canvas>
+        <ul class="ph-notes" id="phNotes"></ul>
+        <div class="ph-btns">
+          <button id="phPrev">←</button><button id="phNext">→</button>
+          <a id="phDl" download>Скачать</a>
+          <button id="phClose">Закрыть</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <div class="loading" id="loading">Готовлю сцену…</div>
+  <script type="module" src="app.js?v=1"></script>
+</body>
+</html>
