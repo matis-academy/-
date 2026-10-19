@@ -71,7 +71,8 @@ export function solveExposure(st, lens, sceneEV) {
   const ec = mode === 'AUTO' ? 0 : st.ec;
   const avMin = log2(lens.maxN ** 2), avMax = log2(lens.minN ** 2);
   const tvMin = log2(1 / 30), tvMax = log2(8000);
-  const tvHand = log2(lens.f);                 // авто-ISO держит выдержку не длиннее 1/f
+  // авто-ISO держит выдержку не длиннее 1/f (настройка «Мин. выдержка»: медленнее — 1/(f/2), быстрее — 1/(2f))
+  const tvHand = log2(lens.f * ({ slow: 0.5, fast: 2 }[st.autoMinSS] || 1));
   const isoMax = isoAuto ? log2(AUTO_ISO_MAX / 100) : 0;
   let isoS = isoAuto ? 0 : isoShift(st.iso);
   const need = () => sceneEV + isoS - ec;      // нужное av + tv
@@ -110,6 +111,34 @@ export function solveExposure(st, lens, sceneEV) {
   }
   return { N, t, iso, isoAuto, offset, ec, warnN, warnT };
 }
+
+// Цвет излучения чёрного тела (приближение Таннера Хелланда), линейный RGB, максимум = 1
+export function kelvinRGB(K) {
+  const t = clamp(K, 1000, 40000) / 100;
+  let r, g, b;
+  if (t <= 66) {
+    r = 255;
+    g = 99.4708025861 * Math.log(t) - 161.1195681661;
+    b = t <= 19 ? 0 : 138.5177312231 * Math.log(t - 10) - 305.0447927307;
+  } else {
+    r = 329.698727446 * Math.pow(t - 60, -0.1332047592);
+    g = 288.1221695283 * Math.pow(t - 60, -0.0755148492);
+    b = 255;
+  }
+  const lin = (v) => { const c = clamp(v, 0, 255) / 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
+  const out = [lin(r), lin(g), lin(b)];
+  const m = Math.max(...out);
+  return out.map((x) => x / m);
+}
+// Множители каналов для баланса белого K: свет с температурой K станет нейтральным.
+// Опорная точка — дневной свет 5500 K (сцена отрисована «как есть» при 5500 K).
+export function wbGains(K) {
+  const ref = kelvinRGB(5500), k = kelvinRGB(K);
+  const g = ref.map((x, i) => x / Math.max(k[i], 1e-3));
+  return g.map((x) => x / g[1]);
+}
+// Авто-баланс белого: почти полностью нейтрализует основной свет сцены, оставляя немного атмосферы
+export const awbKelvin = (lightK) => lightK + (5500 - lightK) * 0.12;
 
 // Форматирование, как на экране камеры
 export function fmtShutter(t) {

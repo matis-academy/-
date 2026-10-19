@@ -2,6 +2,11 @@
 
 export const LENSES = [
   {
+    id: '1635', name: 'FE 16-35 mm F4 ZA OSS', short: '16-35', fMin: 16, fMax: 35, minN: 22, ois: true,
+    maxN: () => 4, minFocus: () => 0.28,
+    about: 'Широкоугольный зум: пейзажи, архитектура, интерьеры. Подчёркивает перспективу, почти всё резко.',
+  },
+  {
     id: 'kit', name: 'FE 28-70 mm F3.5-5.6 OSS', short: '28-70', fMin: 28, fMax: 70, minN: 22, ois: true,
     // светосила зума падает с ростом фокусного
     maxN: (f) => (f < 35 ? 3.5 : f < 45 ? 4 : f < 55 ? 4.5 : f < 65 ? 5 : 5.6),
@@ -17,6 +22,11 @@ export const LENSES = [
     id: '85', name: 'FE 85 mm F1.8', short: '85/1,8', fMin: 85, fMax: 85, minN: 22, ois: false,
     maxN: () => 1.8, minFocus: () => 0.8,
     about: 'Классический портретник: сжимает перспективу и сильно размывает фон.',
+  },
+  {
+    id: '70200', name: 'FE 70-200 mm F4 G OSS', short: '70-200', fMin: 70, fMax: 200, minN: 22, ois: true,
+    maxN: () => 4, minFocus: () => 1.0,
+    about: 'Телезум: спорт, события, портреты издалека. Сильно «сжимает» пространство, но требует коротких выдержек.',
   },
 ];
 export const lensById = (id) => LENSES.find((l) => l.id === id);

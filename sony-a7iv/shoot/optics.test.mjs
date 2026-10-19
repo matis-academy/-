@@ -76,3 +76,26 @@ test('форматирование значений', () => {
   assert.equal(O.fmtEV(-0.33), '−0,3');
   assert.equal(O.fmtDist(0.45), '45 см');
 });
+
+test('цветовая температура: 3200 K теплее (краснее) 5500 K, 8000 K холоднее', () => {
+  const warm = O.kelvinRGB(3200), day = O.kelvinRGB(5500), cool = O.kelvinRGB(8000);
+  assert.ok(warm[2] / warm[0] < day[2] / day[0]);
+  assert.ok(cool[2] / cool[0] > day[2] / day[0]);
+});
+
+test('баланс белого: свет лампы × множители «Лампа 3200 K» = нейтральный', () => {
+  const light = O.kelvinRGB(3200), ref = O.kelvinRGB(5500), g = O.wbGains(3200);
+  const out = light.map((x, i) => x * g[i] / ref[i]);
+  near(out[0] / out[1], 1, 1e-6);
+  near(out[2] / out[1], 1, 1e-6);
+  const d = O.wbGains(5500);
+  near(d[0], 1, 1e-9); near(d[2], 1, 1e-9);
+});
+
+test('авто-ISO: «медленнее» допускает выдержку 1/(f/2)', () => {
+  const lens = { maxN: 1.8, minN: 22, f: 50 };
+  const std = O.solveExposure({ mode: 'A', N: 8, t: 1 / 100, iso: 'AUTO', ec: 0 }, lens, 6);
+  const slow = O.solveExposure({ mode: 'A', N: 8, t: 1 / 100, iso: 'AUTO', ec: 0, autoMinSS: 'slow' }, lens, 6);
+  assert.ok(slow.t > std.t, `${slow.t} > ${std.t}`);
+  assert.ok(slow.iso < std.iso);
+});
