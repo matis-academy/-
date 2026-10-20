@@ -156,7 +156,15 @@ h2 small { font-weight: 500; color: var(--muted); font-size: 12px; margin-left: 
 .sw input { accent-color: var(--accent); margin-top: 2px; }
 .sw input:disabled + span { color: var(--muted); }
 
-.mission-cur { background: rgba(255,138,42,.08); border: 1px solid rgba(255,138,42,.4); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+.card-head { display: flex; align-items: center; justify-content: space-between; width: 100%; border: 0; background: transparent; padding: 0; cursor: pointer; text-align: left; }
+.card-head h2 { margin: 0; }
+.card-head .chev { color: var(--muted); font-size: 16px; transition: transform .2s; }
+.card-head[aria-expanded="true"] .chev { transform: rotate(180deg); }
+.card-head[aria-expanded="true"] + #missionCur:not(:empty), #missionCur:not(:empty) { margin-top: 10px; }
+#missions:not([hidden]) { margin-top: 10px; }
+.mission-cur { background: rgba(255,138,42,.08); border: 1px solid rgba(255,138,42,.4); border-radius: 10px; padding: 9px 12px; }
+.mc-head small { display: block; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.mission-cur details { margin-top: 4px; }
 .mission-cur p { margin: 6px 0; font-size: 13px; line-height: 1.45; }
 .mission-cur details { font-size: 12.5px; color: #cfd3db; }
 .mission-cur summary { cursor: pointer; color: var(--accent); }
@@ -197,6 +205,30 @@ h2 small { font-weight: 500; color: var(--muted); font-size: 12px; margin-left: 
 .ph-btns { display: flex; gap: 6px; margin-top: auto; }
 .ph-btns > * { flex: 1; text-align: center; border: 1px solid var(--line); background: #1f232b; border-radius: 8px; padding: 9px 6px; cursor: pointer; color: var(--text); text-decoration: none; font-size: 13.5px; }
 
+.tour-btn { margin-left: auto; display: flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: #1a1d24; border-radius: 9px; padding: 6px 11px 6px 7px; cursor: pointer; font-size: 13px; }
+.tour-btn span { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #1a1007; display: grid; place-items: center; font-weight: 800; }
+.tour-btn em { font-style: normal; }
+.tour-btn:hover { border-color: #3a3f4c; }
+
+/* Тур для новичков */
+.tour { position: fixed; inset: 0; z-index: 100; }
+.tour-hole { position: fixed; border-radius: 10px; box-shadow: 0 0 0 200vmax rgba(5, 6, 9, .68); outline: 2px solid var(--accent); outline-offset: 0; transition: left .3s, top .3s, width .3s, height .3s; pointer-events: none; }
+.tour-card { position: fixed; background: #1a1d24; border: 1px solid #3a3f4c; border-radius: 12px; padding: 14px 16px 12px; box-shadow: 0 16px 40px rgba(0,0,0,.55); transition: left .3s, top .3s; color: var(--text); }
+.tour-card h3 { margin: 4px 0 6px; font-size: 16px; }
+.tour-card p { margin: 0; font-size: 13.5px; line-height: 1.5; color: #d3d7df; }
+.tour-step { font-size: 11px; letter-spacing: .08em; color: var(--accent); }
+.tour-btns { display: flex; gap: 6px; margin-top: 12px; align-items: center; }
+.tour-btns span { flex: 1; }
+.tour-btns button { border: 1px solid #3a3f4c; background: #242832; border-radius: 8px; padding: 7px 12px; cursor: pointer; font-size: 13px; }
+.tour-btns button:disabled { opacity: .35; cursor: default; }
+.tour-btns .tour-next { background: var(--accent); border-color: var(--accent); color: #1a1007; font-weight: 700; }
+.tour-btns .tour-skip { border: 0; background: transparent; color: var(--muted); padding-left: 0; }
+.tour-arrow { position: absolute; width: 16px; height: 16px; background: #1a1d24; border: 1px solid #3a3f4c; transform: rotate(45deg); }
+.tour-arrow.bottom { top: -9px; border-right: 0; border-bottom: 0; }
+.tour-arrow.top { bottom: -9px; border-left: 0; border-top: 0; }
+.tour-arrow.left { right: -9px; border-left: 0; border-bottom: 0; }
+.tour-arrow.right { left: -9px; border-right: 0; border-top: 0; }
+
 .loading { position: fixed; inset: 0; display: grid; place-items: center; background: var(--bg); color: var(--muted); z-index: 50; transition: opacity .4s; }
 .loading.done { opacity: 0; pointer-events: none; }
 
@@ -209,6 +241,7 @@ h2 small { font-weight: 500; color: var(--muted); font-size: 12px; margin-left: 
 @media (max-width: 860px) {
   .top { padding: 8px 12px; gap: 10px; }
   .top h1 { font-size: 15px; } .top h1 span { font-size: 12px; } .top p { display: none; }
+  .tour-btn { padding: 4px; border-radius: 50%; } .tour-btn em { display: none; }
   .layout { display: flex; flex-direction: column; padding: 0 0 24px; }
   .left { display: contents; }
   .vf-wrap { order: 0; position: sticky; top: 0; z-index: 10; background: var(--bg); width: 100%; }

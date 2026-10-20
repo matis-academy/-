@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Симулятор съёмки α7 IV</title>
   <meta name="description" content="Учебный симулятор съёмки на Sony α7 IV: экспозиция, глубина резкости, фокусное расстояние, смаз, замер и баланс белого считаются по законам оптики.">
-  <link rel="stylesheet" href="shoot.css?v=2">
+  <link rel="stylesheet" href="shoot.css?v=3">
   <script type="importmap">
     { "imports": { "three": "../vendor/three.module.min.js" } }
   </script>
@@ -17,6 +17,7 @@
       <h1>Симулятор съёмки <span>Sony α7 IV</span></h1>
       <p id="sceneName">Загрузка сцены…</p>
     </div>
+    <button class="tour-btn" id="tourBtn" title="Тур по симулятору"><span>?</span><em>Как пользоваться</em></button>
   </header>
 
   <div class="layout">
@@ -83,9 +84,12 @@
     </section>
 
     <aside class="right" id="controls">
-      <section class="card">
-        <h2>Задания</h2>
-        <div id="missions"></div>
+      <section class="card missions-card" id="missionsCard">
+        <button class="card-head" id="missionsHead" aria-expanded="false" aria-controls="missions">
+          <h2>Задания <small id="missionsSum"></small></h2><span class="chev" aria-hidden="true">⌄</span>
+        </button>
+        <div id="missionCur"></div>
+        <div id="missions" hidden></div>
       </section>
 
       <section class="card">
@@ -157,6 +161,6 @@
   </dialog>
 
   <div class="loading" id="loading">Готовлю сцену…</div>
-  <script type="module" src="app.js?v=2"></script>
+  <script type="module" src="app.js?v=3"></script>
 </body>
 </html>

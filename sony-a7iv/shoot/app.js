@@ -4,6 +4,7 @@ import { LENSES, lensById } from './lenses.js?v=2';
 import { Pipeline, METER_W, METER_H } from './pipeline.js?v=2';
 import { CameraMenu } from './menu.js?v=2';
 import { MISSIONS, missionById } from './tasks.js?v=2';
+import { Tour } from './tour.js?v=1';
 import * as Park from './scenes/park.js?v=2';
 import * as Night from './scenes/night.js?v=2';
 import * as Stadium from './scenes/stadium.js?v=2';
@@ -702,7 +703,7 @@ function faceBrightness(canvasOut, u, f, A) {
 $('shutter').addEventListener('click', (e) => { e.stopPropagation(); shoot(); });
 // Пробел — спуск. Не мешаем только вводу текста и кнопкам, выбранным с клавиатуры.
 document.addEventListener('keydown', (e) => {
-  if (e.code !== 'Space' || menu.open || $('photo').open) return;
+  if (e.code !== 'Space' || menu.open || $('photo').open || document.body.classList.contains('touring')) return;
   const a = document.activeElement;
   if (a && (['TEXTAREA', 'SELECT'].includes(a.tagName) || (a.tagName === 'INPUT' && a.type !== 'range' && a.type !== 'checkbox') || (a.tagName === 'BUTTON' && a.matches(':focus-visible')))) return;
   e.preventDefault();
@@ -712,19 +713,31 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && e.detail > 0) b.blur(); });
 
 // ───────────────────────── Задания ─────────────────────────
+// Карточка сворачивается (по умолчанию свёрнута): видны прогресс и текущее задание, список — по нажатию.
+let missionsOpen = false;
+try { missionsOpen = localStorage.getItem('a7sim-missions-open') === '1'; } catch (e) { /* хранилище недоступно */ }
+function setMissionsOpen(open) {
+  missionsOpen = open;
+  $('missions').hidden = !open;
+  $('missionsHead').setAttribute('aria-expanded', String(open));
+  try { localStorage.setItem('a7sim-missions-open', open ? '1' : '0'); } catch (e) { /* хранилище недоступно */ }
+}
+$('missionsHead').addEventListener('click', () => setMissionsOpen(!missionsOpen));
+
 function renderMissions() {
-  const el = $('missions');
   const ms = activeMission ? missionById(activeMission) : null;
-  el.innerHTML = `
-    ${ms ? `<div class="mission-cur">
-      <div class="mc-head"><b>${ms.title}</b><button class="mc-x" id="mcStop">Выйти</button></div>
-      <p>${ms.goal}</p>
-      <details><summary>Подсказки</summary><ul>${ms.hints.map((h) => `<li>${h}</li>`).join('')}</ul></details>
-    </div>` : '<p class="note">Выберите задание: сцена загрузится, камера вернётся к исходным настройкам, а каждый снимок будет проверяться.</p>'}
-    <div class="mission-list">${MISSIONS.map((m) => `<button data-m="${m.id}" class="${m.id === activeMission ? 'on' : ''}"><span class="mc-ok">${done.has(m.id) ? '✓' : ''}</span><span>${m.title}</span><small>${SCENE_LIST.find((x) => x[0] === m.scene)[1]}</small></button>`).join('')}</div>
-    <div class="mission-progress">Выполнено ${MISSIONS.filter((m) => done.has(m.id)).length} из ${MISSIONS.length}</div>`;
-  el.querySelectorAll('[data-m]').forEach((b) => b.addEventListener('click', () => startMission(b.dataset.m)));
+  const nDone = MISSIONS.filter((m) => done.has(m.id)).length;
+  $('missionsSum').textContent = `выполнено ${nDone} из ${MISSIONS.length}`;
+  $('missionCur').innerHTML = ms ? `<div class="mission-cur">
+      <div class="mc-head"><span><small>Сейчас</small><b>${ms.title}</b></span><button class="mc-x" id="mcStop">Выйти</button></div>
+      <details><summary>Цель и подсказки</summary><p>${ms.goal}</p><ul>${ms.hints.map((h) => `<li>${h}</li>`).join('')}</ul></details>
+    </div>` : '';
+  $('missions').innerHTML = `
+    ${ms ? '' : '<p class="note">Выберите задание: сцена загрузится, камера вернётся к исходным настройкам, а каждый снимок будет проверяться.</p>'}
+    <div class="mission-list">${MISSIONS.map((m) => `<button data-m="${m.id}" class="${m.id === activeMission ? 'on' : ''}"><span class="mc-ok">${done.has(m.id) ? '✓' : ''}</span><span>${m.title}</span><small>${SCENE_LIST.find((x) => x[0] === m.scene)[1]}</small></button>`).join('')}</div>`;
+  $('missions').querySelectorAll('[data-m]').forEach((b) => b.addEventListener('click', () => startMission(b.dataset.m)));
   $('mcStop')?.addEventListener('click', () => { activeMission = null; renderMissions(); });
+  setMissionsOpen(missionsOpen);
 }
 function startMission(id) {
   activeMission = id;
@@ -733,6 +746,7 @@ function startMission(id) {
   lockedEV = null;
   loadScene(ms.scene, { keep: false });
   if (ms.setup) { Object.assign(S, ms.setup); acquireFocus(true); }
+  missionsOpen = false;                       // список сворачивается, остаётся только текущее задание
   renderMissions();
   toast(`Задание: ${ms.title}`);
   if (mobile) $('vfWrap').scrollIntoView({ behavior: 'smooth' });
@@ -871,6 +885,46 @@ function measureNearest() {
   pipe.nearest = m;
 }
 
+// ───────────────────────── Тур для новичков ─────────────────────────
+const card = (id) => () => $(id)?.closest('.card');
+const TOUR_STEPS = [
+  { el: () => $('vf'), title: 'Это экран камеры',
+    text: 'Картинка считается по законам оптики: угол обзора, глубина резкости, экспозиция и смаз — как у настоящей α7 IV. Нажмите в кадре, чтобы сфокусироваться, а потяните — чтобы повернуть камеру.' },
+  { el: () => $('shutter'), title: 'Спуск затвора',
+    text: `Делает снимок${mobile ? '' : ' (на компьютере — ещё и клавиша «Пробел»)'}. К каждому кадру будет разбор: что получилось и как сделать лучше.` },
+  { el: () => document.querySelector('.vf-bottom'), title: 'Главные цифры',
+    text: 'Выдержка, диафрагма, экспокоррекция и ISO. Если камере не хватает диапазона, значение мигает красным.' },
+  { el: () => document.querySelector('.cam-bar'), title: 'Кнопки камеры',
+    text: `MENU — все настройки, Fn — быстрые (фокус, замер, баланс белого…), AEL — зафиксировать экспозицию, DISP — гистограмма и вид экрана, ▶ — просмотр снимков.${mobile ? ' «Почему так?» — пояснения к кадру.' : ''}` },
+  { el: () => $('missionsCard'), title: 'Задания', before: () => setMissionsOpen(false),
+    text: 'Лучший способ начать: 9 упражнений, каждый снимок проверяется автоматически. Нажмите на заголовок, чтобы раскрыть список.' },
+  { el: card('scenes'), title: 'Сцены', text: 'Парк на закате, ночная улица и стадион в полдень: разный свет — разные задачи.' },
+  { el: card('modes'), title: 'Режим съёмки',
+    text: 'Как диск режимов на камере: A — вы выбираете диафрагму, S — выдержку, M — всё сами, P и AUTO — камера помогает.' },
+  { el: card('cN'), title: 'Экспозиция',
+    text: 'Диафрагма, выдержка, ISO и экспокоррекция. Значения с пометкой «подбирает камера» в этом режиме выбирает она сама.' },
+  { el: card('lenses'), title: 'Объективы', text: 'Пять объективов Sony FE: от широкого 16-35 до телевика 70-200. У каждого своя светосила и минимальная дистанция фокусировки.' },
+  { el: card('swTripod'), title: 'Где стоит фотограф',
+    text: 'Расстояние до объекта, стабилизатор, штатив и проводка — от них зависят перспектива, шевелёнка и смаз движения.' },
+  { el: () => $('explain'), title: 'Что происходит в кадре',
+    text: 'Пояснения обновляются вживую: экспозиция, глубина резкости, смаз, шум и цвет. Шкала внизу показывает, что попадает в зону резкости.' },
+  { el: null, title: 'Готово!', text: 'Начните с задания «Портрет с размытым фоном». Повторить тур можно кнопкой «?» вверху страницы.' },
+];
+// Прокрутка к элементу: на телефоне — под закреплённый видоискатель, на компьютере — внутри панели настроек
+function tourScroll(el) {
+  if ($('vfWrap').contains(el)) { if (mobile) window.scrollTo({ top: 0, behavior: 'smooth' }); else el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
+  if (mobile) {
+    const top = el.getBoundingClientRect().top + window.scrollY - $('vfWrap').getBoundingClientRect().bottom - 12;
+    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+  } else el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+const tour = new Tour(TOUR_STEPS, {
+  scrollFor: tourScroll,
+  onEnd: () => { try { localStorage.setItem('a7sim-tour', 'done'); } catch (e) { /* хранилище недоступно */ } window.scrollTo({ top: 0, behavior: 'smooth' }); },
+});
+function startTour() { menu.close(); if ($('photo').open) $('photo').close(); $('vfHint').classList.add('hide'); tour.start(); }
+$('tourBtn').addEventListener('click', startTour);
+
 // ───────────────────────── Старт ─────────────────────────
 resize();
 renderMissions();
@@ -879,5 +933,8 @@ requestAnimationFrame(loop);
 $('loading').classList.add('done');
 if (mobile) $('vfHint').textContent = 'Нажмите — фокус, тяните — поворот';
 setTimeout(() => $('vfHint').classList.add('hide'), 7000);
+let tourSeen = false;
+try { tourSeen = localStorage.getItem('a7sim-tour') === 'done' || new URLSearchParams(location.search).has('notour'); } catch (e) { /* хранилище недоступно */ }
+if (!tourSeen) setTimeout(startTour, 900);
 
-window.__sim = { S, get R() { return R; }, get meterEV() { return meterEV; }, get SC() { return SC; }, get focus() { return { focusTarget, focusCur, focusOk, focusKind }; }, camera, hitAt, shoot, update, acquireFocus, loadScene, startMission, pipe, shots, measure, setKey };
+window.__sim = { startTour, S, get R() { return R; }, get meterEV() { return meterEV; }, get SC() { return SC; }, get focus() { return { focusTarget, focusCur, focusOk, focusKind }; }, camera, hitAt, shoot, update, acquireFocus, loadScene, startMission, pipe, shots, measure, setKey };
