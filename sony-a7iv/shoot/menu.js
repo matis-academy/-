@@ -2,7 +2,8 @@
 // (menu-data.js); значки и оформление свои. Пункты, которые влияют на картинку симулятора, связаны
 // с состоянием S через привязки (makeBindings), остальные просто запоминают выбранное значение.
 import * as O from './optics.js?v=3';
-import { MENU_TABS, KEY_DEFAULTS } from './menu-data.js?v=1';
+import { MENU_TABS, KEY_DEFAULTS } from './menu-data.js?v=2';
+import { HELP } from './menu-help.js?v=1';
 
 const svg = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const ICONS = {
@@ -62,9 +63,18 @@ export function makeBindings(api, X) {
       return out;
     },
   });
-  map('x_burst', 'burstFps', { 'Hi+': 10, Hi: 8, Mid: 6, Lo: 3 });
-  map('x_timer', 'timerSec', { '10 сек.': 10, '5 сек.': 5, '2 сек.': 2 });
-  map('x_brk', 'brStep', { '0,3EV': 1 / 3, '0,5EV': 0.5, '0,7EV': 2 / 3, '1,0EV': 1, '2,0EV': 2, '3,0EV': 3 });
+  map('x_burst', 'burstFps', { 'Hi+': 10, Hi: 8, Mid: 6, Lo: 3 }, { help: {
+    what: 'Сколько кадров в секунду снимает камера, пока зажата кнопка спуска в режиме «Непрер. съемка».',
+    use: 'Быстрее — больше шансов поймать удачный момент в спорте и с детьми, но больше лишних кадров. Для неспешной серии хватит Mid или Lo.',
+    opts: { 'Hi+': 'Максимальная скорость, до 10 кадров в секунду.', Hi: 'Высокая скорость, около 8 кадров в секунду.', Mid: 'Средняя скорость, около 6 кадров в секунду.', Lo: 'Низкая скорость, около 3 кадров в секунду.' } } });
+  map('x_timer', 'timerSec', { '10 сек.': 10, '5 сек.': 5, '2 сек.': 2 }, { help: {
+    what: 'Через сколько секунд после нажатия кнопки спуска камера сделает снимок.',
+    use: '10 секунд — чтобы успеть встать в кадр самому. 2 секунды — чтобы камера на штативе успокоилась после нажатия и снимок не смазался.',
+    opts: { '10 сек.': 'Успеете добежать и встать в кадр.', '5 сек.': 'Промежуточный вариант.', '2 сек.': 'Для штатива: убирает дрожь от нажатия кнопки.' } } });
+  map('x_brk', 'brStep', { '0,3EV': 1 / 3, '0,5EV': 0.5, '0,7EV': 2 / 3, '1,0EV': 1, '2,0EV': 2, '3,0EV': 3 }, { help: {
+    what: 'На сколько ступеней экспозиции отличаются кадры брекетинга: обычный, темнее и светлее.',
+    use: 'Маленький шаг — чтобы выбрать лучший из похожих кадров. Большой (2–3 EV) — чтобы потом склеить HDR из тёмного, нормального и светлого кадра.',
+    opts: { '0,3EV': 'Почти незаметная разница — страховка экспозиции.', '1,0EV': 'Заметная разница: в два раза темнее и в два раза светлее.', '2,0EV': 'Сильная разница — для HDR в контрастной сцене.', '3,0EV': 'Очень сильная разница — для HDR с солнцем в кадре.' } } });
   map('shoot9_0', 'steady', onOff, { sim: 'Стабилизатор: до 5,5 ступени выдержки с рук.' });
   map('shoot11_0', 'gridOn', onOff, { sim: 'Линии сетки поверх кадра.' });
   map('shoot11_1', 'grid', { 'Сетка 3x3': 'thirds', 'Квадратн. сетка': 'square', 'Диаг.+квад.сет.': 'diag' }, { sim: 'Вид сетки.' });
@@ -79,7 +89,10 @@ export function makeBindings(api, X) {
     sim: 'Пересчитывает цвета снимка. «Пользоват.» в симуляторе — как будто вы замерили баланс по серой карте под светом сцены.',
     after: () => (S.wb === 'K' ? [{ id: 'x_wbk', name: 'Цв. температура', help: 'На камере значение выбирается кнопкой ▶ у пункта «Цв.тмп./Ф-тр.». 2500–9900 K.', opts: [2500, 2800, 3000, 3200, 3600, 4000, 4500, 5000, 5500, 6000, 6500, 7500, 8500, 9900].map((k) => `${k}K`), def: '5500K' }] : []),
   });
-  map('x_wbk', 'wbK', Object.fromEntries([2500, 2800, 3000, 3200, 3600, 4000, 4500, 5000, 5500, 6000, 6500, 7500, 8500, 9900].map((k) => [`${k}K`, k])));
+  map('x_wbk', 'wbK', Object.fromEntries([2500, 2800, 3000, 3200, 3600, 4000, 4500, 5000, 5500, 6000, 6500, 7500, 8500, 9900].map((k) => [`${k}K`, k])), { help: {
+    what: 'Цветовая температура в кельвинах (K), под которую настроен баланс белого.',
+    use: 'Ставьте число, равное температуре света: лампа накаливания ≈ 3200 K, день ≈ 5500 K, тень ≈ 7500 K. Меньше число — снимок холоднее (синее), больше — теплее (желтее).',
+    opts: { _range: '2500 K — убирает очень тёплый свет свечей и натриевых фонарей; 5500 K — дневной свет; 9900 K — сильно затенённые места и пасмурное небо.' } } });
   map('exp4_1', 'awbPri', { Стандартная: 'std', Атмосфера: 'amb', Белый: 'white' }, { sim: 'Сколько «тёплого» света оставляет AWB.' });
   map('exp5_0', 'dro', { Выкл: false, 'Опт.Д-диап.: Авто': true }, { sim: 'Вытягивает тени.' });
   map('exp5_1', 'look', tbl(MENU_ITEM('exp5_1').opts, MENU_ITEM('exp5_1').opts), { sim: 'Стиль цвета и контраста.' });
@@ -102,6 +115,10 @@ export function makeBindings(api, X) {
   map('setup7_4', 'review', { '10 сек.': 10, '5 сек.': 5, '2 сек.': 2, Выкл: 0 }, { sim: 'Показ снимка сразу после съемки.' });
   map('setup9_2', 'beep', onOff, { sim: 'Сигнал фокусировки.' });
 
+  // разделы с вложенными пунктами
+  B.shoot0_1p = { help: { what: 'Раздел качества снимка: формат файла (RAW или JPEG), тип RAW, качество и размер JPEG/HEIF.', use: 'Загляните сюда, чтобы решить, в каком виде камера сохранит снимок: RAW — для обработки в редакторе, JPEG — чтобы сразу показать или опубликовать.' } };
+  B.shoot1_1p = { help: { what: 'Раздел выбора карты памяти: в какое гнездо записывать фото и видео и переходить ли автоматически на вторую карту.', use: 'Нужно, если в камере две карты: можно писать на обе сразу для надёжности или продолжать на второй, когда первая заполнится.' } };
+  B.shoot11_2 = { help: { what: 'Как экран показывает картинку: с учётом настроек (экспокоррекция, баланс белого, Творческий Вид) или всегда в «нормальной» яркости.', use: 'Обычно оставляют отображение настроек — тогда на экране видно, каким выйдет снимок. Выключают при студийной вспышке, когда без неё экран слишком тёмный.' } };
   // значения, которые подставляет приложение
   B.shoot9_3 = { opts: () => ['8mm', '10mm', '12mm', '16mm', '20mm', '24mm', '28mm', '35mm', '50mm', '70mm', '85mm', '100mm', '135mm', '200mm', '300mm', '400mm', '500mm', '1000mm'] };
 
@@ -138,6 +155,17 @@ export class CameraMenu {
     this.stack = [];             // вложенные экраны: { title, rows: () => [], row, opts? }
     this.fnSel = 0; this.note = ''; this.noteT = 0;
     root.addEventListener('click', (e) => this.onClick(e));
+    // справка по наведению мыши (на сенсорных экранах — по выбору пункта)
+    root.addEventListener('pointerover', (e) => {
+      if (e.pointerType === 'touch') return;
+      if (this.mode === 'fn') return this.hoverFn(e);
+      const row = e.target.closest?.('.mn-row');
+      if (row) this.hoverRow(+row.dataset.row);
+    });
+    root.addEventListener('pointerout', (e) => {
+      if (e.pointerType === 'touch' || root.contains(e.relatedTarget) && e.relatedTarget.closest?.(this.mode === 'fn' ? '.fn-tile, .fn-list button' : '.mn-row')) return;
+      if (this.mode === 'fn') this.hoverFn(e); else this.hoverRow(null);
+    });
     document.addEventListener('keydown', (e) => this.onKey(e));
   }
   save() { try { localStorage.setItem(STORE, JSON.stringify(this.X)); } catch (e) { /* хранилище недоступно */ } }
@@ -216,7 +244,7 @@ export class CameraMenu {
       const cur = this.value(it), list = this.opts(it);
       return this.push({
         title: it.name, item: it, row: Math.max(0, list.indexOf(cur)), opts: true,
-        rows: () => this.opts(it).map((l) => ({ name: l, on: l === this.value(it), def: l === it.def, act: () => { this.setValue(it, l); this.pop(); } })),
+        rows: () => this.opts(it).map((l) => ({ name: l, opt: l, item: it, on: l === this.value(it), def: l === it.def, act: () => { this.setValue(it, l); this.pop(); } })),
       });
     }
     if (it.kind === 'group') return this.push({ title: it.name, item: it, rows: () => this.expand(it.children).map((c) => this.rowOf(c)) });
@@ -229,7 +257,7 @@ export class CameraMenu {
       return this.push({
         title: it.name, item: it,
         rows: () => it.sub.map((name) => ({
-          name, val: b?.sub ? '›' : '', dim: !b?.sub, item: it,
+          name, opt: name, val: b?.sub ? '›' : '', dim: !b?.sub, item: it,
           act: () => (b?.sub ? this.confirm(it, b.sub(name)) : this.flash(`«${name}» — подпункт «${it.name}». В симуляторе не настраивается, описание — в справочнике, стр. ${it.page}.`)),
         })),
       });
@@ -308,6 +336,44 @@ export class CameraMenu {
     this.push({ title: it.name, item: it, text: 'Функции кнопок и дисков при фотосъемке (заводские). Переназначение в симуляторе недоступно.', rows: () => Object.entries(keys).map(([k, v]) => ({ name: k, val: v, act: () => this.render() })) });
   }
 
+  // ── справка: «что это», «когда менять», расшифровка значений (menu-help.js) ──
+  helpOf(it) { return HELP[it.id] || this.B[it.id]?.help || {}; }
+  optText(it, label) { const o = this.helpOf(it).opts; return o ? o[label] || '' : ''; }
+  // панель справки для пункта it; opt — вариант, на который указывают (в списке значений или подпунктов)
+  infoHtml(it, opt) {
+    if (!it) return this.stack.at(-1)?.text ? `<p class="mi-what">${esc(this.stack.at(-1).text)}</p>` : '';
+    const h = this.helpOf(it), movie = this.movieOnly(it);
+    const what = h.what || it.help || '';
+    let val = '';
+    if (opt != null) {
+      const ex = this.optText(it, opt);
+      val = `<div class="mi-val"><span>${it.kind === 'value' ? 'Вариант' : 'Подпункт'}: <b>${esc(opt)}</b>${opt === it.def ? ' <i>заводское</i>' : ''}</span>${ex ? `<p>${esc(ex)}</p>` : ''}</div>`;
+    } else if (it.kind === 'value' && !movie) {
+      const cur = this.value(it), ex = this.optText(it, cur);
+      val = `<div class="mi-val"><span>Сейчас: <b>${esc(cur)}</b>${cur === it.def ? ' <i>заводское</i>' : it.def ? ` · заводское: ${esc(it.def)}` : ''}</span>${ex ? `<p>${esc(ex)}</p>` : ''}</div>`;
+    }
+    const range = h.opts?._range ? `<p class="mi-range">${esc(h.opts._range)}</p>` : '';
+    const sim = movie ? '<span class="mn-badge movie">Только для видео</span>' : this.bound(it) ? '<span class="mn-badge">Влияет на кадр в симуляторе</span>' : '';
+    const simLong = this.bound(it) && !movie ? this.B[it.id]?.sim || '' : '';
+    const scr = this.stack.at(-1), tab = MENU_TABS[this.tab];
+    const star = !scr?.opts && tab.id !== 'my' && !it.id.startsWith('x_') && !it.child && INDEX.has(it.id) ? `<button class="mn-star${this.X.my.includes(it.id) ? ' on' : ''}" data-star="${it.id}" title="Добавить в Мое меню / убрать">${this.X.my.includes(it.id) ? '★' : '☆'} Мое меню</button>` : '';
+    return `
+      <h4>${esc(it.name)}</h4>
+      ${what ? `<p class="mi-what">${esc(what)}</p>` : ''}
+      ${h.use ? `<p class="mi-use"><b>Когда менять.</b> ${esc(h.use)}</p>` : ''}
+      ${val}${range}
+      ${simLong ? `<p class="mi-sim">В симуляторе: ${esc(simLong)}</p>` : ''}
+      <div class="mn-meta">${sim}${it.page ? `<span>Справочник, стр. ${it.page}</span>` : ''}${star}</div>`;
+  }
+  rowInfo(x) { return this.note ? `<p class="mi-what">${esc(this.note)}</p>` : this.infoHtml(x?.item || this.stack.at(-1)?.item, x?.opt); }
+  // наведение мышью: справка обновляется сразу, без перерисовки списка
+  hoverRow(i) {
+    const box = this.root.querySelector('.mn-info');
+    if (!box || !this.rows) return;
+    const x = i == null ? this.rows[(this.stack.at(-1) || this).row] : this.rows[i];
+    box.innerHTML = this.rowInfo(x);
+  }
+
   // ── отрисовка ──
   render() {
     const r = this.root;
@@ -319,31 +385,30 @@ export class CameraMenu {
     this.group = Math.min(this.group, groups.length - 1);
     const scr = this.stack.at(-1);
     const rows = scr ? scr.rows() : this.mainRows();
+    this.rows = rows;
     const sel = scr ? scr : this;
     sel.row = Math.max(0, Math.min(sel.row, rows.length - 1));
-    const cur = rows[sel.row];
-    const it = cur?.item || scr?.item;
-    const help = this.note || (scr?.opts && it ? it.help : cur?.item ? cur.item.help : scr?.text || '');
-    const simTxt = it ? (this.movieOnly(it) ? 'Только для видео' : this.bound(it) ? 'Влияет на кадр в симуляторе' : '') : '';
-    const simLong = it && this.bound(it) && !this.movieOnly(it) ? this.B[it.id]?.sim || '' : '';
-    const star = it && !scr?.opts && tab.id !== 'my' && !it.id.startsWith('x_') && !it.child && INDEX.has(it.id) ? `<button class="mn-star${this.X.my.includes(it.id) ? ' on' : ''}" data-star="${it.id}" title="Добавить в Мое меню / убрать">${this.X.my.includes(it.id) ? '★' : '☆'} Мое меню</button>` : '';
-    const rowHtml = (x, i) => `<button class="mn-row${i === sel.row ? ' sel' : ''}${x.on ? ' on' : ''}${x.dim ? ' dim' : ''}${x.child ? ' child' : ''}" data-row="${i}">${x.sim ? '<i class="mn-sim" title="Влияет на кадр"></i>' : ''}<span>${esc(x.name)}</span>${x.def ? '<small>завод.</small>' : ''}${x.on ? '<b class="mn-dot">●</b>' : `<em>${esc(x.val ?? '')}</em>`}</button>`;
+    const rowHtml = (x, i) => {
+      const ex = x.opt != null && x.item ? this.optText(x.item, x.opt) : '';
+      return `<button class="mn-row${i === sel.row ? ' sel' : ''}${x.on ? ' on' : ''}${x.dim ? ' dim' : ''}${x.child ? ' child' : ''}${ex ? ' ex' : ''}" data-row="${i}">${x.sim ? '<i class="mn-sim" title="Влияет на кадр"></i>' : ''}<span>${esc(x.name)}${ex ? `<small class="mn-ex">${esc(ex)}</small>` : ''}</span>${x.def ? '<small class="mn-def">завод.</small>' : ''}${x.on ? '<b class="mn-dot">●</b>' : `<em>${esc(x.val ?? '')}</em>`}</button>`;
+    };
     r.innerHTML = `
       <div class="mn ${scr ? 'deep' : ''} col-${this.col}">
         <nav class="mn-tabs" aria-label="Вкладки меню">${MENU_TABS.map((t, i) => `<button data-tab="${i}" class="${i === this.tab ? 'on' : ''}" title="${t.name}" aria-label="${t.name}">${ICONS[t.id]}<small>${SHORT[t.id]}</small></button>`).join('')}</nav>
         <div class="mn-head"><span class="mn-tabname">${esc(tab.name)}</span>${scr ? `<button class="mn-back" data-back>‹ ${esc(this.stack.length > 1 ? this.stack.at(-2).title : groups[this.group].name)}</button><b>${esc(scr.title)}</b>` : `<b>${this.group + 1}/${groups.length} ${esc(groups[this.group].name)}</b>`}</div>
         <div class="mn-groups" role="list">${groups.map((g, i) => `<button data-group="${i}" class="${i === this.group ? 'on' : ''}"><small>${i + 1}</small>${esc(g.name)}</button>`).join('')}</div>
         <div class="mn-list" role="list">${scr?.text ? `<p class="mn-text">${esc(scr.text)}</p>` : ''}${rows.length ? rows.map(rowHtml).join('') : '<p class="mn-text">Пусто. Добавьте пункты: «Добавить пункт» ниже или кнопка ☆ у любого пункта меню.</p>'}</div>
-        <div class="mn-help">
-          <p>${esc(help)}${simLong ? ` <span class="mn-simtxt">${esc(simLong)}</span>` : ''}</p>
-          <div class="mn-meta">${simTxt ? `<span class="mn-badge${this.movieOnly(it) ? ' movie' : ''}">${simTxt}</span>` : ''}${it?.page ? `<span>Справочник, стр. ${it.page}</span>` : ''}${star}</div>
-        </div>
+        <div class="mn-info" aria-live="polite">${this.rowInfo(rows[sel.row])}</div>
         <button class="menu-close" data-close aria-label="Закрыть меню">✕</button>
       </div>`;
     r.querySelector('.mn-list .sel')?.scrollIntoView({ block: 'nearest' });
     r.querySelector('.mn-groups .on')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }
 
+  fnHelp(it, opt) {
+    const h = this.helpOf(it), v = opt ?? this.value(it), ex = this.optText(it, v);
+    return `<b>${esc(it.name.replace(/\.$/, ''))}.</b> ${esc(h.what || it.help)}${ex ? ` <span class="fn-val">${esc(v)}: ${esc(ex)}</span>` : ''} <span class="mn-page">Стр. ${it.page}</span>`;
+  }
   renderFn() {
     const r = this.root;
     const items = this.X.fn.map((id) => MENU_ITEM(id));
@@ -352,10 +417,19 @@ export class CameraMenu {
       <div class="fn-panel">
         <div class="fn-grid">${items.map((it, i) => `<button class="fn-tile${i === this.fnSel ? ' sel' : ''}" data-fn="${i}"><small>${esc(it.name)}</small><b>${esc(this.value(it))}</b></button>`).join('')}</div>
         <div class="fn-opts"><button class="fn-arrow" data-cyc="-1" aria-label="Предыдущее значение">◀</button><div class="fn-list">${this.opts(cur).map((l) => `<button data-opt="${esc(l)}" class="${l === val ? 'on' : ''}">${esc(l)}</button>`).join('')}</div><button class="fn-arrow" data-cyc="1" aria-label="Следующее значение">▶</button></div>
-        <div class="menu-help"><b>${esc(cur.name.replace(/\.$/, ''))}.</b> ${esc(cur.help)} <span class="mn-page">Стр. ${cur.page}</span></div>
+        <div class="menu-help">${this.fnHelp(cur)}</div>
         <button class="menu-close" data-close aria-label="Закрыть">✕</button>
       </div>`;
     r.querySelector('.fn-list .on')?.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }
+  hoverFn(e) {
+    const help = this.root.querySelector('.menu-help');
+    if (!help) return;
+    const tile = e.target.closest?.('.fn-tile'), opt = e.target.closest?.('.fn-list button');
+    const cur = MENU_ITEM(this.X.fn[this.fnSel]);
+    if (tile) help.innerHTML = this.fnHelp(MENU_ITEM(this.X.fn[+tile.dataset.fn]));
+    else if (opt) help.innerHTML = this.fnHelp(cur, opt.dataset.opt);
+    else help.innerHTML = this.fnHelp(cur);
   }
   cycle(it, d) {
     const o = this.opts(it), i = o.indexOf(this.value(it));

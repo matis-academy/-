@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import * as O from './optics.js?v=3';
 import { LENSES, lensById } from './lenses.js?v=2';
 import { Pipeline, METER_W, METER_H } from './pipeline.js?v=3';
-import { CameraMenu } from './menu.js?v=3';
+import { CameraMenu } from './menu.js?v=4';
 import { MISSIONS, missionById } from './tasks.js?v=3';
 import { Tour } from './tour.js?v=1';
 import * as Park from './scenes/park.js?v=3';
