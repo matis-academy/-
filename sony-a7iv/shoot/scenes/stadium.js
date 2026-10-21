@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { rng, canvasTex, skyDome, makePerson, loopX } from './kit.js?v=2';
-import { kelvinRGB } from '../optics.js?v=2';
+import { kelvinRGB } from '../optics.js?v=3';
 
 // «Стадион», яркий полдень (≈ EV 15, «солнечные 16»). Бегун пересекает кадр по дорожке.
 export function build({ mobile = false } = {}) {

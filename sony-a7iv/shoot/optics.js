@@ -72,7 +72,7 @@ export function solveExposure(st, lens, sceneEV) {
   const avMin = log2(lens.maxN ** 2), avMax = log2(lens.minN ** 2);
   const tvMin = log2(1 / 30), tvMax = log2(8000);
   // авто-ISO держит выдержку не длиннее 1/f (настройка «Мин. выдержка»: медленнее — 1/(f/2), быстрее — 1/(2f))
-  const tvHand = log2(lens.f * ({ slow: 0.5, fast: 2 }[st.autoMinSS] || 1));
+  const tvHand = log2(lens.f * ({ slower: 0.25, slow: 0.5, fast: 2, faster: 4 }[st.autoMinSS] || 1));
   const isoMax = isoAuto ? log2(AUTO_ISO_MAX / 100) : 0;
   let isoS = isoAuto ? 0 : isoShift(st.iso);
   const need = () => sceneEV + isoS - ec;      // нужное av + tv
@@ -138,7 +138,8 @@ export function wbGains(K) {
   return g.map((x) => x / g[1]);
 }
 // Авто-баланс белого: почти полностью нейтрализует основной свет сцены, оставляя немного атмосферы
-export const awbKelvin = (lightK) => lightK + (5500 - lightK) * 0.12;
+// keep — какую долю отличия от дневного света AWB оставляет (сохраняет атмосферу)
+export const awbKelvin = (lightK, keep = 0.12) => lightK + (5500 - lightK) * keep;
 
 // Форматирование, как на экране камеры
 export function fmtShutter(t) {

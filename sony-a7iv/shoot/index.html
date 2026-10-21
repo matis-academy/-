@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Симулятор съёмки α7 IV</title>
   <meta name="description" content="Учебный симулятор съёмки на Sony α7 IV: экспозиция, глубина резкости, фокусное расстояние, смаз, замер и баланс белого считаются по законам оптики.">
-  <link rel="stylesheet" href="shoot.css?v=3">
+  <link rel="stylesheet" href="shoot.css?v=4">
   <script type="importmap">
     { "imports": { "three": "../vendor/three.module.min.js" } }
   </script>
@@ -38,6 +38,7 @@
               <span id="oAel" class="vf-ael" hidden>✱ AEL</span>
             </div>
             <canvas id="vfHist" class="vf-hist" width="144" height="64" hidden></canvas>
+            <div class="vf-level" id="oLevel" hidden><i></i><span></span></div>
             <div class="vf-bottom">
               <span id="oT" class="vf-v">1/250</span>
               <span id="oN" class="vf-v">F1,8</span>
@@ -45,10 +46,12 @@
               <span id="oIso" class="vf-v">ISO 100</span>
             </div>
           </div>
+          <div class="vf-mask" id="vfMask" hidden></div>
           <div class="vf-spot" id="oSpot" hidden></div>
           <div class="vf-focus" id="oFocus"></div>
           <div class="vf-flash" id="vfFlash"></div>
           <div class="vf-count" id="vfCount" hidden></div>
+          <img class="vf-review" id="vfReview" alt="Только что сделанный снимок" hidden>
           <div class="vf-toast" id="vfToast"></div>
           <div class="vf-hint" id="vfHint">Нажмите в кадре — камера сфокусируется в этой точке. Перетаскивайте, чтобы повернуть камеру.</div>
           <button class="shutter vf-shutter" id="shutter" aria-label="Сделать снимок (пробел)" title="Спуск затвора (пробел)"><span></span></button>
@@ -106,7 +109,7 @@
       </section>
 
       <section class="card">
-        <h2>Экспозиция <small>замер и стиль — в Fn / MENU</small></h2>
+        <h2>Экспозиция <small>замер, ББ, стиль — в Fn / MENU</small></h2>
         <div class="ctl" id="cN"></div>
         <div class="ctl" id="cT"></div>
         <div class="ctl" id="cIso"></div>
@@ -161,6 +164,6 @@
   </dialog>
 
   <div class="loading" id="loading">Готовлю сцену…</div>
-  <script type="module" src="app.js?v=3"></script>
+  <script type="module" src="app.js?v=4"></script>
 </body>
 </html>

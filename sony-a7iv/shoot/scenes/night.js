@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { rng, canvasTex, skyDome, makePerson, loopX } from './kit.js?v=2';
-import { kelvinRGB } from '../optics.js?v=2';
+import { kelvinRGB } from '../optics.js?v=3';
 
 // «Ночная улица», синий час. Свет — фонари (натриевые, ~2300 K), витрины, неон, фары машин.
 // Модель стоит под фонарём на тротуаре в начале координат, дорога — позади неё.

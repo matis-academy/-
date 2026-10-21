@@ -1,13 +1,13 @@
 import * as THREE from 'three';
-import * as O from './optics.js?v=2';
+import * as O from './optics.js?v=3';
 import { LENSES, lensById } from './lenses.js?v=2';
-import { Pipeline, METER_W, METER_H } from './pipeline.js?v=2';
-import { CameraMenu } from './menu.js?v=2';
-import { MISSIONS, missionById } from './tasks.js?v=2';
+import { Pipeline, METER_W, METER_H } from './pipeline.js?v=3';
+import { CameraMenu } from './menu.js?v=3';
+import { MISSIONS, missionById } from './tasks.js?v=3';
 import { Tour } from './tour.js?v=1';
-import * as Park from './scenes/park.js?v=2';
-import * as Night from './scenes/night.js?v=2';
-import * as Stadium from './scenes/stadium.js?v=2';
+import * as Park from './scenes/park.js?v=3';
+import * as Night from './scenes/night.js?v=3';
+import * as Stadium from './scenes/stadium.js?v=3';
 
 const SCENES = { park: Park, night: Night, stadium: Stadium };
 const SCENE_LIST = [['park', 'Парк', 'закат'], ['night', 'Улица', 'ночь'], ['stadium', 'Стадион', 'полдень']];
@@ -25,17 +25,20 @@ const LREF_LOG = -4.37;
 const GAIN0 = 0.12 / 2 ** LREF_LOG;
 
 // ───────────────────────── Состояние ─────────────────────────
+// Настройки камеры (сбрасываются заданиями и «Сброс настроек камеры»). Названия значений — в menu.js.
 const DEFAULTS = {
   mode: 'A', N: 2.8, t: 1 / 250, iso: 'AUTO', ec: 0, autoMinSS: 'std',
-  fm: 'AF-S', area: 'point', eyeAF: true, mfDist: 3,
+  fm: 'AF-S', area: 'point', eyeAF: true, eyeSubj: 'human', mfDist: 3,
   meter: 'multi', spotLink: 'center',
-  wb: 'AWB', wbK: 5500, dro: false, look: 'ST', zebra: 0, peak: 'off',
-  drive: 'single', steady: true, tripod: false, pan: false,
-  fileFormat: 'JPEG', jpegSize: 'L',
+  wb: 'AWB', wbK: 5500, awbPri: 'std', dro: false, look: 'ST',
+  zebraOn: false, zebraLvl: 101, peakOn: false, peakLvl: 1, peakColor: 'white',
+  drive: 'single', burstFps: 10, timerSec: 10, brStep: 1, steady: true, tripod: false, pan: false,
+  fileFormat: 'JPEG', jpegSize: 'L', aspect: '3:2', nr: 1, lvOff: false,
 };
+// Настройки экрана и управления (сбрасывает только «Инициализировать»)
+const VIEW_DEFAULTS = { gridOn: true, grid: 'thirds', disp: 'all', beep: true, focusColor: 'white', touch: 'on', touchFn: 'focus', review: 0 };
 const S = {
-  ...DEFAULTS, sceneId: 'park', lensId: '85', f: 85, dist: 3, yaw: 0, pitch: 0, focusUV: [0.5, 0.33],
-  grid: 'thirds', disp: 'all', beep: true,
+  ...DEFAULTS, ...VIEW_DEFAULTS, sceneId: 'park', lensId: '85', f: 85, dist: 3, yaw: 0, pitch: 0, focusUV: [0.5, 0.33],
 };
 let SC = null;                       // текущая сцена
 let R = null;                        // решённая экспозиция
@@ -52,9 +55,21 @@ const lens = () => lensById(S.lensId);
 const lensSpec = () => ({ f: S.f, maxN: lens().maxN(S.f), minN: lens().minN });
 const apertureList = () => O.APERTURES.filter((n) => n >= lens().maxN(S.f) - 1e-6 && n <= lens().minN + 1e-6);
 const stabStops = (st = S) => (st.tripod ? Infinity : st.steady ? 5.5 : 0);
-const WB_K = { day: 5500, shade: 7500, cloudy: 6500, tungsten: 3200, fluor: 4000 };
-const wbKelvin = (st = S) => Math.round(st.wb === 'AWB' ? O.awbKelvin(SC.lightK) : st.wb === 'K' ? st.wbK : WB_K[st.wb]);
-const PEAK = { red: [1, 0.12, 0.1], yellow: [1, 0.9, 0.1], white: [1, 1, 1] };
+const WB_K = { day: 5500, shade: 7500, cloudy: 6500, tungsten: 3200, fluorWW: 3000, fluorCW: 4000, fluorDW: 5000, fluorD: 6500, flash: 6000 };
+const autoWB = (wb) => ['AWB', 'AWBa', 'AWBw', 'uw'].includes(wb);
+// сколько «тёплого» оттенка оставляет AWB: Атмосфера — больше, Белый — почти ничего
+const awbKeep = (st) => (st.wb === 'AWBa' ? 0.3 : st.wb === 'AWBw' ? 0.02 : { std: 0.12, amb: 0.3, white: 0.02 }[st.awbPri]);
+// «Пользоват.» — как будто баланс замерен по серой карте под основным светом сцены
+const wbKelvin = (st = S) => Math.round(autoWB(st.wb) ? O.awbKelvin(SC.lightK, awbKeep(st)) : st.wb === 'K' ? st.wbK : /^c\d$/.test(st.wb) ? SC.lightK : WB_K[st.wb]);
+const WB_TAG = { AWB: 'AWB', AWBa: 'AWB A', AWBw: 'AWB W', uw: 'AWB ≈', c1: 'C1', c2: 'C2', c3: 'C3' };
+const PEAK = { red: [1, 0.12, 0.1], yellow: [1, 0.9, 0.1], blue: [0.3, 0.5, 1], white: [1, 1, 1] };
+const zebraThr = () => (S.zebraLvl > 100 ? 0.985 : S.zebraLvl / 100 * 0.97);
+const ASPECT = { '3:2': 1.5, '4:3': 4 / 3, '16:9': 16 / 9, '1:1': 1 };
+// Область фокусировки: «широкие» (камера выбирает сама) и «точечные» (там, куда указали)
+const areaWide = (a = S.area) => a === 'wide' || a === 'zone';
+const areaPoint = (a = S.area) => !areaWide(a) && a !== 'track';
+let touchTrack = false;              // отслеживание, запущенное касанием (Сенс. отслежив.)
+const tracking = () => S.area === 'track' || touchTrack;
 const evSource = () => (lockedEV ?? meterEV);
 const gainFor = (res) => GAIN0 * 2 ** (12 + O.isoShift(res.iso) - O.settingsEV(res.N, res.t));
 
@@ -163,18 +178,19 @@ function visibleEye() {
 function acquireFocus(instant = false, quiet = false) {
   placeCamera();
   if (S.fm === 'MF') { focusTarget = S.mfDist; focusKind = 'mf'; focusOk = true; if (instant) focusCur = focusTarget; if (!quiet) update(); return; }
-  let uv = S.focusUV, dist = null, kind = S.area;
-  if (S.area === 'track' && trackRoot) {
+  if (S.area === 'center') S.focusUV = [0.5, 0.5];
+  let uv = S.focusUV, dist = null, kind = areaPoint() ? 'point' : S.area;
+  if (tracking() && trackRoot) {
     const m = SC.movers.find((x) => x.root === trackRoot);
     const p = m ? m.anchor() : SC.subject.face();
     const u = projectUV(p);
     if (inFrameUV(u, 0.01)) { uv = [u.x, u.y]; S.focusUV = uv; dist = depthOf(p); }
   }
-  if (S.eyeAF && (S.area === 'wide' || (S.area === 'track' && trackRoot === SC.subject.root) || S.area === 'point')) {
+  if (S.eyeAF && S.eyeSubj === 'human' && (areaWide() || (tracking() && trackRoot === SC.subject.root) || (areaPoint() && !touchTrack))) {
     const e = visibleEye();
-    if (e && (S.area !== 'point' || Math.hypot((e.uv[0] - uv[0]) * 1.5, e.uv[1] - uv[1]) < 0.16)) { uv = e.uv; dist = e.dist; kind = 'eye'; }
+    if (e && (!areaPoint() || tracking() || Math.hypot((e.uv[0] - uv[0]) * 1.5, e.uv[1] - uv[1]) < 0.16)) { uv = e.uv; dist = e.dist; kind = 'eye'; }
   }
-  if (dist == null && S.area === 'wide') {
+  if (dist == null && areaWide()) {
     let best = null;       // широкая зона: ближайший предмет в центральной части кадра
     for (let i = 0; i < 5; i++) for (let j = 0; j < 3; j++) {
       const u = [0.25 + i * 0.125, 0.3 + j * 0.2], h = hitAt(u);
@@ -187,7 +203,7 @@ function acquireFocus(instant = false, quiet = false) {
   focusOk = dist >= mfd;
   focusTarget = Math.max(dist, mfd);
   focusKind = kind;
-  if (S.area !== 'point' || kind === 'eye') S.focusUV = uv;
+  if (!areaPoint() || tracking() || kind === 'eye') S.focusUV = uv;
   if (instant) focusCur = focusTarget;
   if (!quiet) { focusLocked = false; update(); }
 }
@@ -348,11 +364,11 @@ function setKey(k, v) {
   }
   if (k === 'fm' && v === 'MF') S.mfDist = O.nearest(MF_LIST, focusTarget);
   if (k === 'pan' && !v) S.yaw = 0;
-  if (k === 'area' && v !== 'track') trackRoot = null;
+  if (k === 'area') { touchTrack = false; if (v !== 'track') trackRoot = null; }
+  if (k === 'drive') brIdx = 0;
   S[k] = v;
   if (menu.open) menu.render();
-  if (k === 'disp' || k === 'grid') { update(); return; }
-  if (['fm', 'area', 'eyeAF', 'pan'].includes(k)) acquireFocus(); else update();
+  if (['fm', 'area', 'eyeAF', 'eyeSubj', 'pan'].includes(k)) acquireFocus(); else update();
 }
 
 function renderLenses() {
@@ -385,7 +401,8 @@ function update() {
   for (const c of Object.values(C)) c.refresh();
   document.querySelectorAll('#modes button').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.mode === S.mode)));
   document.querySelectorAll('#focusModes button').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.fm === S.fm)));
-  document.querySelectorAll('#focusAreas button').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.area === S.area)));
+  const areaOn = { wide: areaWide(), point: areaPoint(), track: S.area === 'track' };
+  document.querySelectorAll('#focusAreas button').forEach((b) => b.setAttribute('aria-checked', String(areaOn[b.dataset.area])));
   $('lenses').querySelectorAll('button').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.lens === S.lensId)));
   $('swEye').checked = S.eyeAF; $('swSteady').checked = S.steady; $('swTripod').checked = S.tripod; $('swPan').checked = S.pan;
   $('modeNote').textContent = MODE_NOTES[S.mode];
@@ -396,12 +413,16 @@ function update() {
   const ui = $('vfUi');
   ui.classList.toggle('hidden', S.disp === 'none');
   $('vfHist').hidden = S.disp !== 'hist';
+  $('oLevel').hidden = S.disp !== 'level';
+  const ar = ASPECT[S.aspect], mw = ar < 1.5 ? ar / 1.5 : 1, mh = ar > 1.5 ? 1.5 / ar : 1;
+  $('vfMask').hidden = ar === 1.5;
+  $('vfMask').style.cssText = `left:${(1 - mw) * 50}%;right:${(1 - mw) * 50}%;top:${(1 - mh) * 50}%;bottom:${(1 - mh) * 50}%`;
   $('oMode').textContent = S.mode === 'AUTO' ? 'iA' : S.mode;
   $('oLens').textContent = `${S.f} мм`;
   $('oAf').textContent = S.fm === 'MF' ? `MF ${O.fmtDist(focusTarget)}` : `${S.fm}${S.eyeAF ? ' 👁' : ''}`;
   $('oMeter').textContent = METER_NAMES[S.meter];
-  $('oWb').textContent = S.wb === 'AWB' ? 'AWB' : `${wbKelvin()}K`;
-  $('oLook').textContent = S.look;
+  $('oWb').textContent = WB_TAG[S.wb] || `${wbKelvin()}K`;
+  $('oLook').textContent = S.lvOff ? 'VIEW' : S.look;
   $('oIs').classList.toggle('off', !S.steady || S.tripod);
   $('oAel').hidden = lockedEV == null;
   $('oT').textContent = O.fmtShutter(R.t);
@@ -424,13 +445,14 @@ function placeFocusFrame() {
   const fe = $('oFocus');
   fe.style.left = `${S.focusUV[0] * 100}%`;
   fe.style.top = `${S.focusUV[1] * 100}%`;
-  fe.className = `vf-focus ${S.fm === 'MF' ? 'mf' : ''} ${focusKind === 'eye' && S.fm !== 'MF' ? 'eye' : ''} ${S.area === 'track' && trackRoot ? 'track' : ''} ${focusLocked && focusOk ? 'ok' : ''} ${!focusOk ? 'bad' : ''}`;
+  fe.className = `vf-focus sz-${S.area} ${S.focusColor === 'red' ? 'red' : ''} ${S.fm === 'MF' ? 'mf' : ''} ${focusKind === 'eye' && S.fm !== 'MF' ? 'eye' : ''} ${tracking() && trackRoot ? 'track' : ''} ${focusLocked && focusOk ? 'ok' : ''} ${!focusOk ? 'bad' : ''}`;
 }
 
 function drawGrid() {
   const g = $('vfGrid');
   const L = (x1, y1, x2, y2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
   let s = '';
+  if (!S.gridOn) { g.innerHTML = ''; return; }
   if (S.grid === 'thirds') for (const k of [1 / 3, 2 / 3]) s += L(k * 150, 0, k * 150, 100) + L(0, k * 100, 150, k * 100);
   if (S.grid === 'square' || S.grid === 'diag') { for (let i = 1; i < 6; i++) s += L(i * 25, 0, i * 25, 100); for (let j = 1; j < 4; j++) s += L(0, j * 25, 150, j * 25); }
   if (S.grid === 'diag') s += L(0, 0, 150, 100) + L(150, 0, 0, 100);
@@ -518,7 +540,7 @@ function updateExplain() {
     iso <= 1600 ? `ISO ${iso} — чисто` : iso <= 6400 ? `ISO ${iso} — малый шум` : iso <= 25600 ? `ISO ${iso} — шумно` : `ISO ${iso} — сильный шум`,
     'ISO усиливает сигнал матрицы вместе с шумом. α7 IV даёт чистую картинку примерно до ISO 6400.');
   const lk = SC.lightK, k = A.wbK, dk = Math.log2(k / lk);
-  setTile('tWb', Math.abs(dk) < 0.25 ? 'ok' : 'warn', `${S.wb === 'AWB' ? 'AWB · ' : ''}${k} K`,
+  setTile('tWb', Math.abs(dk) < 0.25 ? 'ok' : 'warn', `${autoWB(S.wb) ? 'AWB · ' : ''}${k} K`,
     `Основной свет сцены ≈ ${lk} K. ${Math.abs(dk) < 0.25 ? 'Баланс близок к свету — цвета естественные.' : dk > 0 ? 'Баланс выше температуры света — кадр уйдёт в тёплые, оранжевые тона.' : 'Баланс ниже температуры света — кадр станет синеватым.'}`);
   drawDofBar(A);
 }
@@ -539,15 +561,20 @@ const menu = new CameraMenu($('camMenu'), {
   S,
   set: (k, v) => setKey(k, v),
   act: (a) => {
-    if (a === 'gallery') { menu.close(); if (shots.length) openPhoto(0); }
-    if (a === 'clear') { shots.length = 0; renderGallery(); menu.render(); toast('Галерея очищена'); }
-    if (a === 'reset') { Object.assign(S, DEFAULTS); S.lensId = SC.defaults.lensId; S.f = SC.defaults.f; lockedEV = null; acquireFocus(true); toast('Настройки сброшены'); }
+    if (a === 'gallery') { menu.close(); if (shots.length) openPhoto(0); else toast('Снимков пока нет'); }
+    if (a === 'clear' || a === 'clearOld') { shots.length = a === 'clear' ? 0 : Math.min(1, shots.length); renderGallery(); menu.render(); toast(a === 'clear' ? 'Все снимки удалены' : 'Оставлен последний снимок'); }
+    if (a === 'reset' || a === 'init') {
+      Object.assign(S, DEFAULTS); S.lensId = SC.defaults.lensId; S.f = SC.defaults.f; lockedEV = null; trackRoot = null; touchTrack = false;
+      if (a === 'init') { Object.assign(S, VIEW_DEFAULTS); shots.length = 0; renderGallery(); }
+      menu.resetStore(a === 'init');
+      menu.close(); acquireFocus(true); toast(a === 'init' ? 'Камера инициализирована' : 'Настройки камеры сброшены');
+    }
   },
 });
 $('bMenu').addEventListener('click', () => menu.toggle('menu'));
 $('bFn').addEventListener('click', () => menu.toggle('fn'));
 $('bAel').addEventListener('click', () => { lockedEV = lockedEV == null ? meterEV : null; update(); toast(lockedEV != null ? 'Экспозиция зафиксирована (AEL)' : 'AEL снят'); });
-$('bDisp').addEventListener('click', () => setKey('disp', { all: 'hist', hist: 'none', none: 'all' }[S.disp]));
+$('bDisp').addEventListener('click', () => setKey('disp', { all: 'hist', hist: 'level', level: 'none', none: 'all' }[S.disp]));
 $('bPlay').addEventListener('click', () => (shots.length ? openPhoto(0) : toast('Снимков пока нет')));
 $('bWhy').addEventListener('click', () => $('explain').scrollIntoView({ behavior: 'smooth', block: 'start' }));
 
@@ -581,15 +608,22 @@ vf.addEventListener('pointermove', (e) => {
 vf.addEventListener('pointerup', (e) => {
   if (!down) return;
   const r = vf.getBoundingClientRect();
-  if (!down.drag) {
-    S.focusUV = [clamp((e.clientX - r.left) / r.width, 0.04, 0.96), clamp((e.clientY - r.top) / r.height, 0.06, 0.94)];
-    if (S.area === 'track') {
-      const h = hitAt(S.focusUV);
+  // касание экрана: что делает — задаёт MENU → Настройка → Сенсорн.управл.
+  const tf = S.touch === 'on' ? S.touchFn : 'off';
+  if (!down.drag && tf === 'off') toast(S.touch === 'on' ? 'Касание выключено: «Сенс. функ. в съем.» = Выкл' : 'Сенсорное управление выключено в MENU → Настройка');
+  else if (!down.drag) {
+    const uv = [clamp((e.clientX - r.left) / r.width, 0.04, 0.96), clamp((e.clientY - r.top) / r.height, 0.06, 0.94)];
+    const startTrack = S.area === 'track' || (tf === 'track' && S.fm !== 'MF');
+    if (S.area !== 'center' || startTrack) S.focusUV = uv;
+    if (startTrack) {
+      const h = hitAt(uv);
       trackRoot = h ? rootOf(h.object) : null;
-      toast(trackRoot ? `Трекинг: ${trackRoot === SC.subject.root ? SC.subject.name : panMover().name}` : 'Трекинг: объект не выбран');
+      touchTrack = S.area !== 'track' && !!trackRoot;
+      toast(trackRoot ? `Отслеживание: ${trackRoot === SC.subject.root ? SC.subject.name : SC.movers.find((m) => m.root === trackRoot)?.name || 'объект'}` : 'Отслеживание: объект не выбран');
       if (S.pan) S.yaw = 0;
     }
     if (S.fm !== 'MF') acquireFocus(); else update();
+    if (tf === 'shutter') shoot();
   } else if (S.fm !== 'MF') acquireFocus();
   down = null;
   $('vfHint').classList.add('hide');
@@ -617,28 +651,64 @@ async function shoot() {
   busy = true;
   document.querySelectorAll('.shutter').forEach((b) => b.classList.add('busy'));
   try {
-    if (S.drive === 'timer2' || S.drive === 'timer10') {
-      for (let s = S.drive === 'timer2' ? 2 : 10; s > 0; s--) { $('vfCount').textContent = s; $('vfCount').hidden = false; await sleep(1000); }
+    const d = S.drive;
+    if (d === 'timer' || d === 'timerC') {
+      for (let s = S.timerSec; s > 0; s--) { $('vfCount').textContent = s; $('vfCount').hidden = false; await sleep(1000); }
       $('vfCount').hidden = true;
     }
-    const n = S.drive === 'burst' ? 5 : 1;
+    // каждый кадр серии: сдвиг экспозиции (брекетинг), баланса белого (в майредах) или уровень DRO
+    const st = S.brStep, ev = (x) => `${x > 0 ? '+' : x < 0 ? '−' : '±'}${O.fmtEV(Math.abs(x)).replace(/^[+±]/, '')} EV`;
+    let plan = [{}], dt = 0.1;
+    if (d === 'burst') { plan = Array(5).fill({}); dt = 1 / S.burstFps; }
+    if (d === 'timerC') plan = Array(3).fill({});
+    if (d === 'bracketC') plan = [0, -st, st].map((x) => ({ ec: x, tag: `брекетинг ${ev(x)}` }));
+    if (d === 'bracketS') { const x = [0, -st, st][brIdx]; plan = [{ ec: x, tag: `брекетинг ${brIdx + 1}/3: ${ev(x)}` }]; brIdx = (brIdx + 1) % 3; }
+    if (d === 'bracketWB') plan = [0, -20, 20].map((m) => ({ mired: m, tag: `брекетинг ББ ${m ? (m > 0 ? 'холоднее' : 'теплее') : 'исходный'}` }));
+    if (d === 'bracketDRO') plan = [0, 0.5, 1].map((x) => ({ dro: x, tag: `брекетинг DRO ${['выкл', 'Lo', 'Hi'][x * 2]}` }));
     const t0 = performance.now() / 1000;
-    for (let i = 0; i < n; i++) { await captureOne(t0 + i * 0.1); await sleep(16); }
+    for (let i = 0; i < plan.length; i++) { await captureOne(t0 + i * dt, plan[i]); await sleep(16); }
+    if (S.review) showReview(shots[0].url, S.review);
   } finally {
     document.querySelectorAll('.shutter').forEach((b) => b.classList.remove('busy'));
     busy = false;
   }
 }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+let brIdx = 0;                        // номер кадра в покадровом брекетинге
+// Экспозиция кадра брекетинга: в M с ручным ISO сдвигается выдержка, иначе — как экспокоррекция
+function bracketRes(shift) {
+  if (S.mode === 'M' && S.iso !== 'AUTO') return O.solveExposure({ ...S, t: O.nearest(O.SHUTTERS, S.t * 2 ** shift) }, lensSpec(), evSource());
+  return O.solveExposure({ ...S, ec: S.ec + shift }, lensSpec(), evSource());
+}
+let reviewT = 0;
+function showReview(url, sec) {
+  const el = $('vfReview');
+  el.src = url; el.hidden = false;
+  clearTimeout(reviewT);
+  reviewT = setTimeout(() => { el.hidden = true; }, sec * 1000);
+}
+$('vfReview').addEventListener('pointerdown', (e) => { e.stopPropagation(); $('vfReview').hidden = true; });
+function cropAspect(c, a) {
+  const r = ASPECT[a];
+  if (r === 1.5) return c;
+  const w = r < 1.5 ? Math.round(c.height * r) : c.width, h = r > 1.5 ? Math.round(c.width / r) : c.height;
+  const o = document.createElement('canvas');
+  o.width = w; o.height = h;
+  o.getContext('2d').drawImage(c, (c.width - w) / 2, (c.height - h) / 2, w, h, 0, 0, w, h);
+  return o;
+}
 
-async function captureOne(t0) {
+async function captureOne(t0, mod = {}) {
   SC.update(t0);
   SC.scene.updateMatrixWorld(true);
   if (S.pan) { const m = panMover(); if (m) S.yaw = followYaw(m); }
   if (S.fm !== 'MF') acquireFocus(true); else focusCur = focusTarget;
   placeCamera();
-  const st = { ...S }, res = { ...R }, focus = focusTarget;
+  const st = { ...S }, res = mod.ec ? bracketRes(mod.ec) : { ...R }, focus = focusTarget;
+  if (mod.ec && !(S.mode === 'M' && S.iso !== 'AUTO')) st.ec = S.ec + mod.ec;
+  if (mod.dro != null) st.dro = mod.dro;
   const A = analyse(st, res, focus);
+  if (mod.mired) A.wbK = Math.round(1e6 / (1e6 / A.wbK + mod.mired));
   const faceUV = projectUV(SC.subject.face());
   await sleep(20);
 
@@ -652,7 +722,7 @@ async function captureOne(t0) {
   const phi = Math.random() * Math.PI * 2;
   const pm = st.pan ? panMover() : null;
   const seen = SC.movers.map(() => false);           // попал ли объект в кадр за время выдержки
-  const out = pipe.capture(SC.scene, camera, { f: st.f, N: res.N, focus, iso: res.iso, gain: gainFor(res), wb: O.wbGains(A.wbK), look: st.look, dro: st.dro }, {
+  const out = pipe.capture(SC.scene, camera, { f: st.f, N: res.N, focus, iso: res.iso, gain: gainFor(res), wb: O.wbGains(A.wbK), look: st.look, dro: st.dro, nr: st.nr }, {
     frames,
     step: (k) => {
       const s = frames > 1 ? k / (frames - 1) : 0;
@@ -670,7 +740,8 @@ async function captureOne(t0) {
   SC.update(performance.now() / 1000);
   pipe.setSize(liveW, liveH);
   placeCamera();
-  const shot = { url: out.toDataURL('image/jpeg', 0.92), st, res, focus, A, n: shots.length + 1, sceneId: SC.id, face: faceBrightness(out, faceUV, st.f, A) };
+  const face = faceBrightness(out, faceUV, st.f, A);
+  const shot = { url: cropAspect(out, st.aspect).toDataURL('image/jpeg', 0.92), st, res, focus, A, n: shots.length + 1, sceneId: SC.id, face, tag: mod.tag };
   if (activeMission && missionById(activeMission).scene === SC.id) {
     const ms = missionById(activeMission);
     const results = ms.check(shot);
@@ -743,7 +814,7 @@ function startMission(id) {
   activeMission = id;
   const ms = missionById(id);
   Object.assign(S, DEFAULTS);
-  lockedEV = null;
+  lockedEV = null; trackRoot = null; touchTrack = false;
   loadScene(ms.scene, { keep: false });
   if (ms.setup) { Object.assign(S, ms.setup); acquireFocus(true); }
   missionsOpen = false;                       // список сворачивается, остаётся только текущее задание
@@ -788,7 +859,7 @@ function openPhoto(i) {
   $('phImg').src = s.url;
   $('phDl').href = s.url;
   $('phDl').download = `a7iv_${String(s.n).padStart(3, '0')}.jpg`;
-  $('phExif').innerHTML = `<b>Снимок ${s.n}</b><br>${lensById(s.st.lensId).name}<br>${exifLine(s)} · ${s.st.mode === 'AUTO' ? 'iA' : s.st.mode}<br>ББ ${s.st.wb === 'AWB' ? 'AWB ' : ''}${s.A.wbK} K · ${s.st.look} · замер «${METER_NAMES[s.st.meter]}»<br>Фокус ${O.fmtDist(s.focus)}`;
+  $('phExif').innerHTML = `<b>Снимок ${s.n}</b><br>${lensById(s.st.lensId).name}<br>${exifLine(s)} · ${s.st.mode === 'AUTO' ? 'iA' : s.st.mode}<br>ББ ${WB_TAG[s.st.wb] ? `${WB_TAG[s.st.wb]} ` : ''}${s.A.wbK} K${s.tag ? ` · ${s.tag}` : ''} · ${s.st.look} · замер «${METER_NAMES[s.st.meter]}»<br>Фокус ${O.fmtDist(s.focus)}`;
   $('phMission').innerHTML = s.mission ? `<div class="phm ${s.mission.pass ? 'pass' : 'fail'}"><b>${s.mission.pass ? '✓ Задание выполнено' : '✗ Задание не выполнено'}: ${s.mission.title}</b><ul>${s.mission.results.map((r) => `<li class="${r.ok ? 'ok' : 'bad'}">${r.ok ? '✓' : '✗'} ${r.text}</li>`).join('')}</ul></div>` : '';
   $('phNotes').innerHTML = notesFor(s).map(([c, t]) => `<li class="${c}">${t}</li>`).join('');
   drawHist(s.url);
@@ -843,17 +914,22 @@ function loop(now) {
     SC.update(now / 1000);
     SC.scene.updateMatrixWorld();
     if (S.pan) { const m = panMover(); if (m) S.yaw = followYaw(m); }
-    if (S.fm === 'AF-C' && frameNo % 4 === 0) acquireFocusQuiet();
+    if (afc() && frameNo % 4 === 0) acquireFocusQuiet();
     focusCur = Math.exp(Math.log(focusCur) + (Math.log(focusTarget) - Math.log(focusCur)) * Math.min(1, dt * 9));
     const locked = S.fm !== 'MF' && focusOk && Math.abs(Math.log(focusCur / focusTarget)) < 0.02;
-    if (locked && !focusLocked && S.fm === 'AF-S') beep();
+    if (locked && !focusLocked && !afc()) beep();
     if (locked !== focusLocked) { focusLocked = locked; placeFocusFrame(); }
     placeCamera();
     if (++frameNo % 6 === 0) measureNearest();
+    // «Отоб.парам.ВЫКЛ»: видоискатель показывает нормальную яркость без баланса белого и стиля
+    const lv = S.lvOff;
     pipe.renderLive(SC.scene, camera, {
-      f: S.f, N: R.N, focus: focusCur, iso: R.iso, gain: gainFor(R), wb: O.wbGains(wbKelvin()), look: S.look, dro: S.dro,
-      peak: S.peak !== 'off', peakColor: PEAK[S.peak], zebra: S.zebra,
+      f: S.f, N: R.N, focus: focusCur, iso: R.iso, nr: S.nr,
+      gain: lv ? GAIN0 * 2 ** (12 - evSource()) : gainFor(R), wb: O.wbGains(lv ? O.awbKelvin(SC.lightK) : wbKelvin()),
+      look: lv ? 'ST' : S.look, dro: lv ? 0 : S.dro,
+      peak: S.peakOn ? S.peakLvl : 0, peakColor: PEAK[S.peakColor], zebra: S.zebraOn ? zebraThr() : 0,
     });
+    if (S.disp === 'level' && frameNo % 6 === 0) drawLevel();
     if (frameNo % 8 === 0) {
       const raw = measure(pipe.readMeter());
       meterReady = true;
@@ -867,6 +943,15 @@ function loop(now) {
     if (slow > 0.6 && resScale > 0.55) { resScale *= 0.85; slow = 0; resize(); }
   }
   requestAnimationFrame(loop);
+}
+// AF-A ведёт себя как AF-C, когда объект движется
+function afc() { return S.fm === 'AF-C' || (S.fm === 'AF-A' && (!!SC.subject.moving || (tracking() && !!trackRoot && trackRoot !== SC.subject.root))); }
+// Уровень (DISP): крена у камеры в симуляторе нет, показываем наклон вперёд/назад
+function drawLevel() {
+  const deg = THREE.MathUtils.radToDeg(camera.rotation.x);
+  const el = $('oLevel');
+  el.classList.toggle('flat', Math.abs(deg) < 1);
+  el.querySelector('span').textContent = `${deg > 0 ? '↑' : deg < 0 ? '↓' : ''} ${Math.abs(deg).toFixed(1).replace('.', ',')}°`;
 }
 // AF-C: тихое обновление дистанции (без перерисовки всего интерфейса каждый раз)
 function acquireFocusQuiet() {
@@ -895,7 +980,7 @@ const TOUR_STEPS = [
   { el: () => document.querySelector('.vf-bottom'), title: 'Главные цифры',
     text: 'Выдержка, диафрагма, экспокоррекция и ISO. Если камере не хватает диапазона, значение мигает красным.' },
   { el: () => document.querySelector('.cam-bar'), title: 'Кнопки камеры',
-    text: `MENU — все настройки, Fn — быстрые (фокус, замер, баланс белого…), AEL — зафиксировать экспозицию, DISP — гистограмма и вид экрана, ▶ — просмотр снимков.${mobile ? ' «Почему так?» — пояснения к кадру.' : ''}` },
+    text: `MENU — полное меню α7 IV по справочнику (зелёная точка — пункт влияет на кадр), Fn — быстрые (фокус, замер, баланс белого…), AEL — зафиксировать экспозицию, DISP — гистограмма и вид экрана, ▶ — просмотр снимков.${mobile ? ' «Почему так?» — пояснения к кадру.' : ''}` },
   { el: () => $('missionsCard'), title: 'Задания', before: () => setMissionsOpen(false),
     text: 'Лучший способ начать: 9 упражнений, каждый снимок проверяется автоматически. Нажмите на заголовок, чтобы раскрыть список.' },
   { el: card('scenes'), title: 'Сцены', text: 'Парк на закате, ночная улица и стадион в полдень: разный свет — разные задачи.' },

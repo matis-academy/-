@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { rng, canvasTex, skyDome, makePerson, makeTree, loopX } from './kit.js?v=2';
-import { kelvinRGB } from '../optics.js?v=2';
+import { kelvinRGB } from '../optics.js?v=3';
 
 // «Портрет в парке», золотой час. Солнце низко за спиной модели — контровой свет.
 // Модель стоит в начале координат лицом к +z, фотограф — на оси +z.

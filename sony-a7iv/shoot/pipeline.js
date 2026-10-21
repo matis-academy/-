@@ -110,7 +110,7 @@ const FINAL_FRAG = /* glsl */`
     if (uPeak > 0.0) {
       vec2 t = 1.0 / uRes;
       float g = abs(dispLum(vUv + vec2(t.x, 0.)) - dispLum(vUv - vec2(t.x, 0.))) + abs(dispLum(vUv + vec2(0., t.y)) - dispLum(vUv - vec2(0., t.y)));
-      s = mix(s, uPeakColor, smoothstep(0.16, 0.3, g) * 0.9);
+      s = mix(s, uPeakColor, smoothstep(0.16 * uPeak, 0.3 * uPeak, g) * 0.9);
     }
     gl_FragColor = vec4(s, 1.0);
   }
@@ -230,19 +230,21 @@ export class Pipeline {
     this.mixMat.uniforms.tBlur.value = this.dofRT.texture;
   }
 
-  // p: { gain, iso, N, wb:[r,g,b], look, dro, peak, peakColor, zebra }
+  // p: { gain, iso, N, wb:[r,g,b], look, dro (0…1), peak (0 — выкл, иначе множитель порога), peakColor, zebra, nr }
   _final(p, scale, target, live) {
     const fu = this.finalMat.uniforms;
     fu.uScale.value = p.gain * scale;
-    fu.uNoise.value = 0.0045 * Math.sqrt(p.iso / 100);
-    fu.uChroma.value = p.iso > 3200 ? 0.0028 * Math.sqrt(p.iso / 3200) : 0;
+    const nr = p.nr || 1;                  // ослабленное шумоподавление — больше шума на высоких ISO
+    const k = p.iso > 800 ? nr : 1 + (nr - 1) * (p.iso / 800);
+    fu.uNoise.value = 0.0045 * Math.sqrt(p.iso / 100) * k;
+    fu.uChroma.value = p.iso > 3200 ? 0.0028 * Math.sqrt(p.iso / 3200) * k : 0;
     fu.uSeed.value = Math.floor(Math.random() * 1000);
     fu.uVignette.value = Math.max(0, 0.38 - (p.N - 1.4) * 0.07);
     fu.uRes.value.set(this.w, this.h);
     fu.uWB.value.set(...(p.wb || [1, 1, 1]));
     fu.uLook.value = Math.max(0, LOOKS.indexOf(p.look || 'ST'));
-    fu.uDro.value = p.dro ? 1 : 0;
-    fu.uPeak.value = live && p.peak ? 1 : 0;
+    fu.uDro.value = Number(p.dro) || 0;
+    fu.uPeak.value = live && p.peak ? p.peak : 0;      // множитель порога: меньше — больше контуров
     if (p.peakColor) fu.uPeakColor.value.set(...p.peakColor);
     fu.uZebra.value = live && p.zebra ? p.zebra : 0;
     this.finalQ.render(this.r, target);
