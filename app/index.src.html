@@ -143,6 +143,8 @@ h1,h2,h3{font-family:'Russo One',Montserrat,sans-serif;font-weight:400;margin:0;
 .tabs button.on{color:var(--acc)}
 .tabs button .dot{position:absolute;top:4px;left:calc(50% + 8px);width:8px;height:8px;border-radius:50%;background:var(--acc);display:none}
 .tabs button .dot.on{display:block}
+.tgban{display:block;margin:0 0 12px;padding:10px 14px;border-radius:14px;background:var(--card);border:1px solid var(--line);font-size:13px;line-height:1.4;color:var(--mut);text-decoration:none}
+.tgban b{color:var(--acc);font-weight:600}
 .toast{position:fixed;left:50%;top:calc(var(--top) + 14px);z-index:40;transform:translate(-50%,-20px);opacity:0;background:var(--cream);color:#2b1c13;font-weight:600;font-size:14px;padding:10px 16px;border-radius:20px;box-shadow:0 8px 24px rgba(0,0,0,.35);transition:.3s;pointer-events:none;white-space:nowrap}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 @media (prefers-reduced-motion:reduce){.scr,.game.on,.ex.on{animation:none}}
@@ -236,7 +238,8 @@ h1,h2,h3{font-family:'Russo One',Montserrat,sans-serif;font-weight:400;margin:0;
 var TG=window.Telegram&&Telegram.WebApp, IN_TG=!!(TG&&TG.initData);
 var CFG={
   bot:'Claude_tel_matis_bot',
-  appLink:'https://t.me/Claude_tel_matis_bot', // после включения Mini App в BotFather: 'https://t.me/Claude_tel_matis_bot?startapp'
+  mainApp:false, // true — после включения Main Mini App в BotFather: тогда ссылки-вызовы открывают студию прямо в Telegram
+  web:'https://matis.academy/app/',
   stickers:'https://t.me/addstickers/pixel_matis_by_Claude_tel_matis_bot',
   group:'https://t.me/academy_matis',
   // ID тем группы (число из ссылки на тему t.me/academy_matis/<ID>); пока не заданы — открывается вся группа
@@ -469,7 +472,8 @@ function result(){var n=G.res.filter(Boolean).length,tot=G.rounds.length,id=G.id
   if(n===tot)scene.play('cheer');
   $('#gx').onclick=gClose;$('#back').onclick=gClose;$('#again').onclick=function(){startGame(id);};
   $('#share').onclick=function(){var t='Я набрал '+n+' из '+tot+' в игре «'+gm.ttl+'» у кота Пикселя из Matis Academy 🐈‍⬛ Сможешь лучше?';
-    open('https://t.me/share/url?url='+encodeURIComponent(CFG.appLink)+'&text='+encodeURIComponent(t));};}
+    var u=CFG.mainApp?'https://t.me/'+CFG.bot+'?startapp=g_'+id:CFG.web+'?g='+id;
+    open('https://t.me/share/url?url='+encodeURIComponent(u)+'&text='+encodeURIComponent(t));};}
 
 /* ---------- школа ---------- */
 function renderSchool(){
@@ -525,6 +529,8 @@ renderTip();renderSchool();
 load(function(st){if(st&&st.v===1){S=st;S.best=S.best||{};S.ach=S.ach||[];}
   var fresh=checkin();renderLvl();renderAch();renderGames();
   var sp=(TG&&TG.initDataUnsafe&&TG.initDataUnsafe.start_param)||'';
+  if(!sp){var qm=/[?&]g=(det|kr|bl)\b/.exec(location.search);if(qm)sp='g_'+qm[1];}
+  if(!IN_TG){var bn=el('a','tgban','<b>Открой студию в Telegram</b> — там прогресс сохраняется, а Пиксель помнит разговор →');bn.href='https://t.me/'+CFG.bot;bn.target='_blank';bn.rel='noopener';$('.app').insertBefore(bn,$('.app').firstChild);}
   if(/^g_(det|kr|bl)$/.test(sp))setTimeout(function(){startGame(sp.slice(2));},400);
   else if(sp==='chat')go('chat');
   setTimeout(function(){if(scene.sleeping()){scene.say('Тсс… Пиксель спит. Погладь, чтобы разбудить',4200);return;}
