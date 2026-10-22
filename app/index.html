@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Студия Пикселя · Matis Academy</title>
+<script src="https://telegram.org/js/telegram-web-app.js?59"></script>
+<style>
+@font-face{font-family:'Russo One';src:url(/wp-content/uploads/2026/10/RussoOne-Regular.ttf) format('truetype');font-display:swap}
+@font-face{font-family:'Montserrat';font-weight:400;src:url(/wp-content/uploads/2026/10/Montserrat-Regular-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
+@font-face{font-family:'Montserrat';font-weight:400;src:url(/wp-content/uploads/2026/10/Montserrat-Regular-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap}
+@font-face{font-family:'Montserrat';font-weight:600;src:url(/wp-content/uploads/2026/10/Montserrat-SemiBold-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
+@font-face{font-family:'Montserrat';font-weight:600;src:url(/wp-content/uploads/2026/10/Montserrat-SemiBold-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap}
+:root{--bg:#151311;--card:#2b1c13;--surf:#3a271b;--line:#54392a;--tx:#f2efe8;--mut:#cfc6b8;--dim:#9c8f80;--acc:#fd7e2f;--ok:#a8d86a;--bad:#ef8a7a;--cream:#e8e3d7;
+  --top:0px;--bot:0px;--tabh:64px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:400 15px/1.5 Montserrat,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+a{color:inherit}
+h1,h2,h3{font-family:'Russo One',Montserrat,sans-serif;font-weight:400;margin:0;letter-spacing:.01em}
+.app{min-height:100vh;padding:calc(var(--top) + 12px) 16px calc(var(--tabh) + var(--bot) + 20px);max-width:560px;margin:0 auto}
+.scr{display:none;animation:in .28s ease}
+.scr.on{display:block}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.k{font:600 11px/1 Montserrat,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--acc)}
+.h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:24px 2px 12px}
+.h h2{font-size:20px}
+.mut{color:var(--mut)}
+.card{background:var(--card);border-radius:20px;padding:16px}
+/* ---------- студия ---------- */
+.scene{position:relative;border-radius:24px;overflow:hidden;background:radial-gradient(120% 90% at 50% 18%,#4a2f1e 0%,#2b1c13 48%,#1b1410 100%);aspect-ratio:1/1;max-height:420px;width:100%;user-select:none;touch-action:manipulation}
+.scene .floor{position:absolute;left:0;right:0;bottom:0;height:24%;background:linear-gradient(#24170f,#1a120d);border-top:1px solid #54392a}
+.scene .light{position:absolute;left:8%;top:10%;width:16%;aspect-ratio:3/4;border-radius:6px;background:linear-gradient(#f8e9d2,#e8c9a0);box-shadow:0 0 60px 18px rgba(253,200,140,.22);transform:rotate(-8deg);opacity:.9}
+.scene .light:after{content:'';position:absolute;left:46%;top:100%;width:6%;height:150%;background:#3a271b}
+.scene .clap{position:absolute;right:9%;bottom:20%;width:17%;aspect-ratio:1.25/1}
+.scene svg.pix{position:absolute;left:50%;bottom:7%;width:62%;transform:translateX(-50%);overflow:visible;cursor:pointer;filter:drop-shadow(0 0 1px rgba(242,239,232,.55)) drop-shadow(0 0 8px rgba(242,239,232,.12))}
+.bub{position:absolute;left:50%;top:7%;transform:translateX(-50%);max-width:84%;background:var(--cream);color:#2b1c13;font:600 14px/1.35 Montserrat,sans-serif;padding:10px 14px;border-radius:16px;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.25);transition:opacity .25s,transform .25s}
+.bub:after{content:'';position:absolute;left:50%;bottom:-7px;margin-left:-7px;border:7px solid transparent;border-bottom:0;border-top-color:var(--cream)}
+.bub.hide{opacity:0;transform:translateX(-50%) translateY(6px)}
+.lvl{margin-top:12px;display:grid;grid-template-columns:1fr auto;gap:10px 14px;align-items:center}
+.lvl .rk{font-family:'Russo One';font-size:18px}
+.lvl .st{font-weight:600;color:var(--acc);white-space:nowrap}
+.bar{grid-column:1/-1;height:10px;border-radius:6px;background:var(--surf);overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,#b3682c,#fd7e2f);transition:width .6s ease}
+.lvl small{grid-column:1/-1;color:var(--dim);font-size:12px;margin-top:-4px}
+.tip{margin-top:12px;position:relative;border-left:3px solid var(--acc)}
+.tip p{margin:8px 0 0}
+.tip .more{margin-top:10px;font-weight:600;font-size:13px;color:var(--acc);display:inline-flex;gap:6px}
+.ach{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.ach div{background:var(--card);border-radius:16px;padding:12px 6px 10px;text-align:center;font-size:11px;line-height:1.25;color:var(--dim)}
+.ach div b{display:block;font-size:26px;line-height:1.2;margin-bottom:4px;filter:grayscale(1);opacity:.35}
+.ach div.on{color:var(--tx);background:var(--surf)}
+.ach div.on b{filter:none;opacity:1}
+.stk{margin-top:12px;display:flex;align-items:center;gap:14px;background:var(--cream);color:#2b1c13;border-radius:20px;padding:12px 16px;width:100%;text-align:left}
+.stk svg{width:58px;height:58px;flex:none}
+.stk b{display:block;font-family:'Russo One';font-weight:400;font-size:16px}
+.stk span{font-size:13px;color:#5a4636}
+/* ---------- игры ---------- */
+.gl{display:grid;gap:12px}
+.gc{display:grid;grid-template-columns:88px 1fr;gap:14px;align-items:center;background:var(--card);border-radius:20px;padding:12px;text-align:left;width:100%}
+.gc .ph{width:88px;height:88px;border-radius:14px;background:#000 center/cover;position:relative;overflow:hidden}
+.gc .ph em{position:absolute;inset:auto 6px 6px auto;font-style:normal;font:600 11px Montserrat;background:rgba(21,19,17,.8);padding:3px 7px;border-radius:8px;color:var(--acc)}
+.gc h3{font-size:16px;margin-bottom:4px}
+.gc p{margin:0;font-size:13px;color:var(--mut);line-height:1.4}
+.gc .best{margin-top:6px;font-size:12px;color:var(--dim)}
+.game{position:fixed;inset:0;z-index:20;background:var(--bg);overflow:auto;padding:calc(var(--top) + 12px) 16px calc(var(--bot) + 24px);display:none}
+.game.on{display:block;animation:in .25s ease}
+.game .in{max-width:560px;margin:0 auto}
+.gtop{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.gtop .x{width:36px;height:36px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-size:18px}
+.dots{display:flex;gap:5px}
+.dots i{width:9px;height:9px;border-radius:50%;background:var(--surf)}
+.dots i.ok{background:var(--ok)}.dots i.no{background:var(--bad)}.dots i.cur{background:var(--acc)}
+.frame{position:relative;border-radius:18px;overflow:hidden;aspect-ratio:3/2;background:#000}
+.frame .img{position:absolute;inset:0;background:#000 center/cover no-repeat;transform-origin:50% 50%}
+.frame .noise{position:absolute;inset:0;mix-blend-mode:overlay;opacity:.5;pointer-events:none;background-size:240px 160px;image-rendering:pixelated}
+.frame .hud{position:absolute;left:10px;top:10px;font:600 11px/1 Montserrat;color:#fff;background:rgba(0,0,0,.45);border-radius:8px;padding:5px 8px;letter-spacing:.06em}
+.frame .hud:before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff4b4b;margin-right:6px;vertical-align:0}
+.q{margin:16px 2px 12px;font-family:'Russo One';font-size:18px;line-height:1.3}
+.timer{height:6px;border-radius:4px;background:var(--surf);overflow:hidden;margin:-2px 0 14px}
+.timer i{display:block;height:100%;background:var(--acc);width:100%}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opts.one{grid-template-columns:1fr}
+.opt{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:14px 12px;font-weight:600;font-size:14px;line-height:1.3;text-align:left;min-height:56px;transition:transform .1s}
+.opt:active{transform:scale(.98)}
+.opt.ok{border-color:var(--ok);background:#2e3a1f}
+.opt.no{border-color:var(--bad);background:#3d211b}
+.opt[disabled]{cursor:default}
+.ex{margin-top:14px;display:none}
+.ex.on{display:block;animation:in .25s ease}
+.ex .v{font-family:'Russo One';font-size:17px;margin-bottom:6px}
+.ex .v.ok{color:var(--ok)}.ex .v.no{color:var(--bad)}
+.ex p{margin:0;color:var(--mut);font-size:14px}
+.ex a{color:var(--acc);font-weight:600;font-size:13px;text-decoration:none;display:inline-block;margin-top:8px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:14px;padding:15px 18px;border-radius:30px;background:var(--acc);color:#fff;font-weight:600;font-size:15px}
+.btn.ghost{background:var(--card);color:var(--tx)}
+.res{text-align:center;padding-top:8px}
+.res svg{width:200px;height:200px;overflow:visible}
+.res .sc{font-family:'Russo One';font-size:46px;line-height:1;margin:6px 0 4px}
+.res .sc span{color:var(--dim);font-size:26px}
+.res .xp{display:inline-block;margin-top:10px;font-weight:600;color:var(--acc);background:var(--card);border-radius:20px;padding:6px 14px}
+.res p{color:var(--mut);margin:10px auto 0;max-width:340px}
+/* ---------- школа ---------- */
+.lnk{display:grid;grid-template-columns:44px 1fr 16px;gap:14px;align-items:center;background:var(--card);border-radius:18px;padding:14px;margin-bottom:10px;text-decoration:none;width:100%;text-align:left}
+.lnk .ic{width:44px;height:44px;border-radius:12px;background:var(--surf);display:grid;place-items:center;font-size:22px}
+.lnk b{display:block;font-weight:600;font-size:15px;line-height:1.3}
+.lnk span{display:block;font-size:13px;color:var(--mut);line-height:1.35;margin-top:2px}
+.lnk:after{content:'›';color:var(--dim);font-size:22px;line-height:1}
+.lnk.hero{background:linear-gradient(135deg,#3a271b,#2b1c13);border:1px solid var(--line)}
+.lnk.hero .ic{background:var(--acc);color:#fff}
+.tops{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.tp{background:var(--card);border-radius:16px;padding:12px 4px 10px;text-align:center;font-size:12px;font-weight:600;line-height:1.2}
+.tp i{display:block;font-style:normal;font-size:24px;line-height:1.2;margin-bottom:6px}
+/* ---------- чат ---------- */
+.chat{display:flex;flex-direction:column;min-height:calc(100vh - var(--top) - var(--tabh) - var(--bot) - 40px)}
+.chead{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.chead .av{width:46px;height:46px;border-radius:50%;background:var(--cream);display:grid;place-items:center;flex:none;overflow:hidden}
+.chead .av svg{width:44px;height:44px}
+.chead b{display:block;font-family:'Russo One';font-weight:400;font-size:17px}
+.chead span{font-size:12px;color:var(--dim)}
+.msgs{flex:1;display:flex;flex-direction:column;gap:8px;padding-bottom:12px}
+.m{max-width:86%;padding:10px 13px;border-radius:16px;font-size:14.5px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word}
+.m.a{background:var(--card);border-bottom-left-radius:6px;align-self:flex-start}
+.m.u{background:#894a1f;border-bottom-right-radius:6px;align-self:flex-end}
+.m .ls{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.m .ls button{background:var(--surf);border-radius:12px;padding:6px 10px;font-size:12.5px;font-weight:600;color:var(--acc)}
+.m.typing{color:var(--dim)}
+.sugg{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+.sugg::-webkit-scrollbar{display:none}
+.sugg button{flex:none;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:8px 12px;font-size:13px;font-weight:600;color:var(--mut)}
+.cin{position:sticky;bottom:calc(var(--tabh) + var(--bot) + 8px);display:flex;gap:8px;background:var(--bg);padding-top:6px}
+.cin input{flex:1;min-width:0;background:var(--card);border:1.5px solid var(--line);border-radius:24px;color:var(--tx);font:500 15px Montserrat;padding:12px 16px;outline:none}
+.cin input:focus{border-color:#894a1f}
+.cin button{width:48px;height:48px;border-radius:50%;background:var(--acc);display:grid;place-items:center;flex:none}
+.cin button[disabled]{opacity:.5}
+.note{font-size:11.5px;color:var(--dim);text-align:center;margin-top:8px}
+/* ---------- таббар ---------- */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:10;background:rgba(21,19,17,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid #2b1c13;padding:6px 8px calc(6px + var(--bot))}
+.tabs .w{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.tabs button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;font-size:11px;font-weight:600;color:var(--dim);position:relative}
+.tabs button svg{width:24px;height:24px}
+.tabs button.on{color:var(--acc)}
+.tabs button .dot{position:absolute;top:4px;left:calc(50% + 8px);width:8px;height:8px;border-radius:50%;background:var(--acc);display:none}
+.tabs button .dot.on{display:block}
+.toast{position:fixed;left:50%;top:calc(var(--top) + 14px);z-index:40;transform:translate(-50%,-20px);opacity:0;background:var(--cream);color:#2b1c13;font-weight:600;font-size:14px;padding:10px 16px;border-radius:20px;box-shadow:0 8px 24px rgba(0,0,0,.35);transition:.3s;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){.scr,.game.on,.ex.on{animation:none}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+ <filter id="fMotion" x="-5%" y="0" width="110%" height="100%"><feGaussianBlur stdDeviation="11 0" edgeMode="duplicate"/></filter>
+ <filter id="fCold"><feColorMatrix type="matrix" values=".72 0 0 0 0  0 .9 0 0 .02  0 0 1.25 0 .06  0 0 0 1 0"/></filter>
+ <filter id="fWarm"><feColorMatrix type="matrix" values="1.22 0 0 0 .05  0 1 0 0 .01  0 0 .62 0 0  0 0 0 1 0"/></filter>
+</svg>
+<div class="app">
+
+<!-- ===== СТУДИЯ ===== -->
+<section class="scr on" id="s-home" aria-label="Студия">
+  <div class="scene" id="scene">
+    <div class="light"></div>
+    <svg class="clap" viewBox="0 0 50 40" aria-hidden="true"><rect x="2" y="12" width="46" height="26" rx="3" fill="#2a2a2e"/><path d="M2 12 L46 4 L47.5 10 L3.5 18 Z" fill="#f2efe8"/><path d="M9 10.8 L14 4.2 M19 9 L24 2.4 M29 7.2 L34 .6 M39 5.4 L44 -1" stroke="#2a2a2e" stroke-width="3.2"/><rect x="7" y="22" width="36" height="2" fill="#54392a"/><rect x="7" y="29" width="24" height="2" fill="#54392a"/></svg>
+    <div class="floor"></div>
+    <svg class="pix" id="pix" viewBox="22 -4 76 98" role="button" aria-label="Пиксель — погладь меня"><g id="pixg"></g></svg>
+    <div class="bub hide" id="bub"></div>
+  </div>
+  <div class="card lvl" id="lvl">
+    <div><div class="k">Твой уровень</div><div class="rk" id="rk">Наблюдатель</div></div>
+    <div class="st" id="streak">🔥 1 день</div>
+    <div class="bar"><i id="xpbar"></i></div>
+    <small id="xpnote">0 XP</small>
+  </div>
+  <div class="card tip">
+    <div class="k">Совет дня от Пикселя</div>
+    <p id="tip"></p>
+    <button class="more" id="tipmore" hidden>Читать в Wiki →</button>
+  </div>
+  <button class="stk" id="stk">
+    <svg viewBox="22 -4 76 98" aria-hidden="true"><g id="stkcat"></g></svg>
+    <div><b>Стикеры Пикселя</b><span>16 анимированных стикеров — добавь себе в Telegram</span></div>
+  </button>
+  <div class="h"><h2>Достижения</h2><span class="mut" id="achn" style="font-size:13px">0 из 8</span></div>
+  <div class="ach" id="ach"></div>
+</section>
+
+<!-- ===== ИГРЫ ===== -->
+<section class="scr" id="s-games" aria-label="Игры">
+  <div class="h" style="margin-top:6px"><div><div class="k">Тренируй глаз</div><h2 style="margin-top:6px;font-size:24px">Игры Пикселя</h2></div></div>
+  <div class="gl" id="gl"></div>
+  <p class="mut" style="font-size:13px;margin:16px 4px 0">За каждый верный ответ — XP. Пройди без ошибок и получи достижение. Результатом можно похвастаться в чате.</p>
+</section>
+
+<!-- ===== ШКОЛА ===== -->
+<section class="scr" id="s-school" aria-label="Школа">
+  <div class="h" style="margin-top:6px"><div><div class="k">Matis Academy</div><h2 style="margin-top:6px;font-size:24px">Школа</h2></div></div>
+  <div id="courses"></div>
+  <div class="h"><h2>Учиться дальше</h2></div>
+  <div id="learn"></div>
+  <div class="h"><h2>Группа школы</h2><span class="mut" style="font-size:13px">@academy_matis</span></div>
+  <div class="tops" id="tops"></div>
+</section>
+
+<!-- ===== ЧАТ ===== -->
+<section class="scr" id="s-chat" aria-label="Чат с Пикселем">
+  <div class="chat">
+    <div class="chead"><div class="av"><svg viewBox="-27 -29 54 50" id="cav"></svg></div><div><b>Пиксель</b><span>AI-помощник школы · отвечает по материалам Matis Academy</span></div></div>
+    <div class="msgs" id="msgs"></div>
+    <div class="sugg" id="sugg"></div>
+    <form class="cin" id="cin" autocomplete="off">
+      <input id="cinp" maxlength="600" placeholder="Спроси про съёмку или курсы…" enterkeyhint="send">
+      <button id="csend" aria-label="Отправить"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </form>
+    <div class="note">Пиксель — AI и может ошибаться. Сложный вопрос — смело в группу школы.</div>
+  </div>
+</section>
+</div>
+
+<!-- ===== ИГРА (оверлей) ===== -->
+<div class="game" id="game"><div class="in" id="gin"></div></div>
+
+<nav class="tabs" aria-label="Разделы"><div class="w">
+  <button data-t="home" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 20V11l7-5 7 5v9"/><path d="M9 6.8 7.6 3.5M15 6.8l1.4-3.3"/><circle cx="10" cy="13" r="1" fill="currentColor"/><circle cx="14" cy="13" r="1" fill="currentColor"/></svg>Студия</button>
+  <button data-t="games"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="12" rx="4"/><path d="M8 11v4M6 13h4"/><circle cx="15.5" cy="12" r=".6" fill="currentColor"/><circle cx="17.5" cy="14.5" r=".6" fill="currentColor"/></svg>Игры</button>
+  <button data-t="school"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="13" height="11" rx="2.5"/><path d="m16 11 5-3v9l-5-3"/></svg>Школа</button>
+  <button data-t="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg>Чат<span class="dot" id="chatdot"></span></button>
+</div></nav>
+<div class="toast" id="toast"></div>
+
+<script>
+/* Pixel — параметрический рисунок кота (PX-14 «чёрный минимал»). Claude, 22.10.2026.
+   Общий модуль для стикеров и Mini App. Координаты — «единицы сайта» (сидящий кот ~ x 26..94, y 12..92).
+   PX.cat(o) -> строка SVG <g>. Все параметры необязательны. */
+(function (G) {
+  var C = { fur: '#1f1f23', furD: '#17171a', white: '#f7f5f0', whiteD: '#dedad2', eye: '#a8d86a', pupil: '#0b0b0d',
+    nose: '#f0a0ac', ear: '#4a4a52', wh: '#8d8d95', line: '#c9c9cf', mouth: '#5a1f2a', tongue: '#f08a9a' };
+  function f(n) { return (Math.round(n * 100) / 100).toString(); }
+  function heart(x, y, s, col) {
+    return '<path transform="translate(' + f(x) + ' ' + f(y) + ') scale(' + f(s) + ')" d="M0 3 C-6 -1 -4 -6 0 -3 C4 -6 6 -1 0 3 Z" fill="' + (col || C.nose) + '"/>';
+  }
+  function eyes(o) {
+    var t = o.eyes || 'open', px = o.pdx || 0, py = o.pdy || 0, out = '';
+    function openEye(cx, big) {
+      var rx = big ? 5.7 : 4.9, ry = big ? 6.4 : 5.5;
+      var s = '<ellipse cx="' + f(cx) + '" cy="-2" rx="' + rx + '" ry="' + ry + '" fill="' + C.eye + '"/>';
+      if (big) s += '<circle cx="' + f(cx + px * .6) + '" cy="' + f(-1.6 + py * .6) + '" r="1.7" fill="' + C.pupil + '"/>';
+      else s += '<ellipse cx="' + f(cx + .3 + px) + '" cy="' + f(-1.6 + py) + '" rx="' + (o.pupilW || 2) + '" ry="3.9" fill="' + C.pupil + '"/>';
+      s += '<circle cx="' + f(cx + 1.7 + px * .5) + '" cy="' + f(-3.8 + py * .5) + '" r="' + (big ? 1.6 : 1.35) + '" fill="#fff"/>' +
+        '<circle cx="' + f(cx - 1.3 + px * .5) + '" cy="' + f(.9 + py * .5) + '" r=".6" fill="#fff"/>';
+      return s;
+    }
+    function arc(cx, up) { // up=true: ^ (радость); false: ‿ (закрыт спокойно)
+      return '<path d="M' + f(cx - 3.8) + ' ' + (up ? '-.6' : '-1.6') + ' q3.8 ' + (up ? '-4.4' : '3.2') + ' 7.6 0" stroke="' + C.line + '" stroke-width="1.8" fill="none" stroke-linecap="round"/>';
+    }
+    if (t === 'open' || t === 'sad' || t === 'angry' || t === 'look') { out = openEye(-7.8) + openEye(7.8); }
+    else if (t === 'wide') { out = openEye(-7.8, true) + openEye(7.8, true); }
+    else if (t === 'happy') { out = arc(-7.8, true) + arc(7.8, true); }
+    else if (t === 'closed') { out = arc(-7.8) + arc(7.8); }
+    else if (t === 'wink') { out = arc(-7.8, true) + openEye(7.8); }
+    else if (t === 'heart') { out = heart(-7.8, -1.6, 1.25) + heart(7.8, -1.6, 1.25); }
+    else if (t === 'squeeze') { // >_<
+      out = '<path d="M-11 -4.4 l5 2.6 l-5 2.6 M11 -4.4 l-5 2.6 l5 2.6" stroke="' + C.line + '" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+    }
+    if (o.blink && (t === 'open' || t === 'look' || t === 'sad')) {
+      var b = o.blink; // 0..1 доля закрытия
+      out += '<rect x="-14" y="' + f(-8 - 1) + '" width="28" height="' + f(12 * b) + '" fill="' + C.fur + '"/>';
+      if (b > .85) out += arc(-7.8) + arc(7.8);
+    }
+    if (t === 'sad') {
+      out += '<path d="M-12 -9.6 L-4.6 -11.4 M12 -9.6 L4.6 -11.4" stroke="' + C.line + '" stroke-width="1.5" stroke-linecap="round"/>';
+    }
+    if (t === 'angry') {
+      out += '<path d="M-14 -10 L-2.6 -5.2 L-2.6 -11 Z M14 -10 L2.6 -5.2 L2.6 -11 Z" fill="' + C.fur + '"/>' +
+        '<path d="M-12.4 -9 L-3.6 -5.2 M12.4 -9 L3.6 -5.2" stroke="' + C.line + '" stroke-width="1.5" stroke-linecap="round"/>';
+    }
+    return out;
+  }
+  function mouth(o) {
+    var m = o.mouth || 'w';
+    var nose = '<path d="M-2 3.4 h4 l-2 2.2 z" fill="' + C.nose + '" stroke="' + C.nose + '" stroke-width=".8" stroke-linejoin="round"/>';
+    var s = '';
+    if (m === 'w') s = '<path d="M0 5.8 v.9 M-2.8 7 q1.4 1.6 2.8 0 q1.4 1.6 2.8 0" stroke="' + C.fur + '" stroke-width="1.1" fill="none" stroke-linecap="round"/>';
+    else if (m === 'open') {
+      var k = o.mouthOpen == null ? 1 : o.mouthOpen;
+      s = '<path d="M-3.6 6.6 Q0 ' + f(6.8 + 6 * k) + ' 3.6 6.6 Z" fill="' + C.mouth + '"/>' +
+        '<ellipse cx="0" cy="' + f(6.8 + 4.2 * k) + '" rx="' + f(1.8 * k + .4) + '" ry="' + f(1.2 * k + .2) + '" fill="' + C.tongue + '"/>';
+    }
+    else if (m === 'o') s = '<ellipse cx="0" cy="8.4" rx="1.7" ry="' + f(o.oSize || 2.3) + '" fill="' + C.mouth + '"/>';
+    else if (m === 'flat') s = '<path d="M-2.2 7.6 h4.4" stroke="' + C.fur + '" stroke-width="1.1" stroke-linecap="round"/>';
+    else if (m === 'frown') s = '<path d="M-2.8 8.8 q2.8 -2.4 5.6 0" stroke="' + C.fur + '" stroke-width="1.1" fill="none" stroke-linecap="round"/>';
+    else if (m === 'grr') s = '<path d="M-3.2 7.2 h6.4 v2.2 h-6.4 z" fill="' + C.mouth + '"/><path d="M-2.4 7.2 l.8 1.4 l.8 -1.4 M.8 7.2 l.8 1.4 l.8 -1.4" fill="#fff"/>';
+    return nose + s;
+  }
+  function head(o) {
+    var eL = o.earL || 0, eR = o.earR || 0;
+    var s = '<g transform="rotate(' + f(eL) + ' -9 -11)"><path d="M-16 -5 Q-18 -23 -13 -25 Q-6 -19 -3 -13 Z" fill="' + C.fur + '" stroke="' + C.fur + '" stroke-width="2.2" stroke-linejoin="round"/><path d="M-13.5 -9 Q-14.5 -19 -12 -20.5 Q-8 -17 -6.5 -13.5 Z" fill="' + C.ear + '"/></g>' +
+      '<g transform="rotate(' + f(eR) + ' 9 -11)"><path d="M16 -5 Q18 -23 13 -25 Q6 -19 3 -13 Z" fill="' + C.fur + '" stroke="' + C.fur + '" stroke-width="2.2" stroke-linejoin="round"/><path d="M13.5 -9 Q14.5 -19 12 -20.5 Q8 -17 6.5 -13.5 Z" fill="' + C.ear + '"/></g>' +
+      '<ellipse rx="19" ry="16" fill="' + C.fur + '" stroke="' + C.fur + '" stroke-width="2.2"/>' +
+      '<ellipse cy="5.9" rx="5.4" ry="4" fill="' + C.white + '"/>' + eyes(o) +
+      '<ellipse cx="-11" cy="5.2" rx="2.6" ry="1.6" fill="' + C.nose + '" opacity="' + (o.blush || .35) + '"/><ellipse cx="11" cy="5.2" rx="2.6" ry="1.6" fill="' + C.nose + '" opacity="' + (o.blush || .35) + '"/>' +
+      mouth(o) +
+      '<path d="M-6 5 l-15 -2 M-6 7.5 l-15 1.8 M6 5 l15 -2 M6 7.5 l15 1.8" stroke="' + C.wh + '" stroke-width=".8" stroke-linecap="round"/>';
+    if (o.tear != null) { // слеза: 0..1 падение
+      var ty = 2 + o.tear * 14, op = o.tear > .85 ? (1 - o.tear) / .15 : 1;
+      s += '<path transform="translate(-9 ' + f(ty) + ')" d="M0 -2.6 Q2 .4 0 1.6 Q-2 .4 0 -2.6 Z" fill="#9fd3f5" opacity="' + f(op) + '"/>';
+    }
+    if (o.sweat) s += '<path transform="translate(17 -10)" d="M0 -3 Q2.4 .6 0 2 Q-2.4 .6 0 -3 Z" fill="#9fd3f5"/>';
+    return s;
+  }
+  // лапка: из точки плеча, угол в градусах (0 — вниз, 90 — влево (к зрителю справа налево), -90 — вправо, 180 — вверх)
+  function arm(x, y, ang, len, front) {
+    len = len || 15;
+    return '<g transform="translate(' + f(x) + ' ' + f(y) + ') rotate(' + f(ang) + ')"><rect x="-3.8" y="-2" width="7.6" height="' + f(len + 2) + '" rx="3.8" fill="' + C.fur + '"/>' +
+      '<ellipse cy="' + f(len) + '" rx="4.6" ry="3.8" fill="' + C.white + '"/></g>';
+  }
+  function cat(o) {
+    o = o || {};
+    var hx = 55 + (o.hdx || 0), hy = 41 + (o.hdy || 0), hr = o.hrot || 0, sy = o.breath || 1, tail = o.tail || 0;
+    var s = '<g class="px-cat">';
+    if (o.pose === 'lie') return lie(o);
+    // хвост
+    s += '<g transform="rotate(' + f(tail) + ' 72 84)"><path d="M70 84 C88 84 90 66 80 60" stroke="' + C.fur + '" stroke-width="9" fill="none" stroke-linecap="round"/>' +
+      (o.puff ? '<path d="M70 84 C88 84 90 66 80 60" stroke="' + C.fur + '" stroke-width="13" fill="none" stroke-linecap="round" stroke-dasharray="2 3"/>' : '') + '</g>';
+    // тело
+    s += '<g transform="translate(55 86) scale(' + f(o.bodySx || 1) + ' ' + f(sy) + ') translate(-55 -86)"><path d="M36 86 C32 70 39 56 55 56 C71 56 78 70 74 86 Z" fill="' + C.fur + '" stroke="' + C.fur + '" stroke-width="2.2" stroke-linejoin="round"/></g>';
+    // нижние лапки
+    if (!o.noPawL) s += '<ellipse cx="47" cy="85.5" rx="6.8" ry="4.2" fill="' + C.white + '"/>';
+    if (!o.noPawR) s += '<ellipse cx="63" cy="85.5" rx="6.8" ry="4.2" fill="' + C.white + '"/>';
+    if (o.behindHead) s += o.behindHead;
+    // голова
+    s += '<g transform="translate(' + f(hx) + ' ' + f(hy) + ') rotate(' + f(hr) + ')">' + head(o) + '</g>';
+    // поднятые лапки поверх
+    if (o.armL != null) s += arm(46, 66 + (o.armLy || 0), o.armL, o.armLlen);
+    if (o.armR != null) s += arm(64, 66 + (o.armRy || 0), o.armR, o.armRlen);
+    if (o.front) s += o.front;
+    return s + '</g>';
+  }
+  function lie(o) {
+    var b = o.breath || 1;
+    var s = '<g class="px-cat">';
+    s += '<path d="M84 84 C98 86 100 74 92 70" stroke="' + C.fur + '" stroke-width="8" fill="none" stroke-linecap="round" transform="rotate(' + f(o.tail || 0) + ' 84 84)"/>';
+    s += '<g transform="translate(62 86) scale(1 ' + f(b) + ') translate(-62 -86)"><ellipse cx="62" cy="76" rx="27" ry="11.5" fill="' + C.fur + '"/></g>';
+    s += '<ellipse cx="82" cy="86" rx="6" ry="3.4" fill="' + C.white + '"/>';
+    s += '<g transform="translate(37 70) rotate(-8) scale(.98)">' + head({ eyes: 'closed', mouth: o.mouth || 'w', earL: -6, earR: 4 }) + '</g>';
+    s += '<ellipse cx="40" cy="86.5" rx="7" ry="3.6" fill="' + C.white + '"/><ellipse cx="53" cy="86.8" rx="6.6" ry="3.4" fill="' + C.white + '"/>';
+    return s + '</g>';
+  }
+  G.PX = { C: C, cat: cat, head: head, heart: heart, f: f };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+(function(){
+'use strict';
+var TG=window.Telegram&&Telegram.WebApp, IN_TG=!!(TG&&TG.initData);
+var CFG={
+  bot:'Claude_tel_matis_bot',
+  appLink:'https://t.me/Claude_tel_matis_bot', // после включения Mini App в BotFather: 'https://t.me/Claude_tel_matis_bot?startapp'
+  stickers:'https://t.me/addstickers/pixel_matis_by_Claude_tel_matis_bot',
+  group:'https://t.me/academy_matis',
+  // ID тем группы (число из ссылки на тему t.me/academy_matis/<ID>); пока не заданы — открывается вся группа
+  topics:[['General','#',null],['Обучение','🎓',null],['WIKI','📖',null],['Wedding','💍',null],['Color','🎨',null],['Разборы','🎬',null],['Q&A','✍️',null],['Монтаж','✂️',null]],
+  up:'/wp-content/uploads/2026/10/'
+};
+var $=function(s,r){return (r||document).querySelector(s);}, $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));};
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e;}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function hap(k){try{if(!TG||!TG.HapticFeedback)return;if(k==='ok'||k==='err'||k==='warn')TG.HapticFeedback.notificationOccurred(k==='ok'?'success':k==='err'?'error':'warning');else TG.HapticFeedback.impactOccurred(k||'light');}catch(e){}}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function open(u){hap();if(/^https:\/\/t\.me\//.test(u)){if(TG&&TG.openTelegramLink)TG.openTelegramLink(u);else window.open(u,'_blank');return;}
+  if(u.charAt(0)==='/')u=location.origin+u;
+  if(TG&&TG.openLink&&IN_TG)TG.openLink(u);else window.open(u,'_blank');}
+function toast(t){var e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(function(){e.classList.remove('on');},2400);}
+var RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- Telegram ---------- */
+if(TG){try{TG.ready();TG.expand();TG.setHeaderColor('#151311');TG.setBackgroundColor('#151311');if(TG.setBottomBarColor)TG.setBottomBarColor('#151311');if(TG.disableVerticalSwipes)TG.disableVerticalSwipes();}catch(e){}
+  var applyInsets=function(){var a=TG.safeAreaInset||{},c=TG.contentSafeAreaInset||{};
+    document.documentElement.style.setProperty('--top',((a.top||0)+(c.top||0))+'px');
+    document.documentElement.style.setProperty('--bot',(a.bottom||0)+'px');};
+  applyInsets();try{TG.onEvent('safeAreaChanged',applyInsets);TG.onEvent('contentSafeAreaChanged',applyInsets);}catch(e){}}
+var USER=(TG&&TG.initDataUnsafe&&TG.initDataUnsafe.user)||null;
+var NAME=USER&&USER.first_name?USER.first_name.split(' ')[0].slice(0,24):'';
+
+/* ---------- хранилище: Telegram CloudStorage, иначе localStorage ---------- */
+var CS=TG&&TG.CloudStorage&&TG.isVersionAtLeast&&TG.isVersionAtLeast('6.9')&&IN_TG?TG.CloudStorage:null;
+var KEY='px_state_v1';
+function load(cb){var done=false,fin=function(v){if(done)return;done=true;var s=null;try{s=JSON.parse(v||'null');}catch(e){}cb(s);};
+  if(CS){try{CS.getItem(KEY,function(err,v){if(err||!v){try{fin(localStorage.getItem(KEY));}catch(e){fin(null);}}else fin(v);});setTimeout(function(){try{fin(localStorage.getItem(KEY));}catch(e){fin(null);}},2500);return;}catch(e){}}
+  try{fin(localStorage.getItem(KEY));}catch(e){fin(null);}}
+var saveT;function save(){clearTimeout(saveT);saveT=setTimeout(function(){var v=JSON.stringify(S);try{localStorage.setItem(KEY,v);}catch(e){}if(CS){try{CS.setItem(KEY,v,function(){});}catch(e){}}},300);}
+
+/* ---------- состояние и уровни ---------- */
+var RANKS=[[0,'Наблюдатель'],[100,'Охотник за кадром'],[300,'Оператор'],[700,'Создатель историй'],[1500,'Режиссёр']];
+var ACH=[['first','👋','Привет, Пиксель'],['s3','🔥','3 дня подряд'],['s7','📅','Неделя с котом'],['det','🕵️','Детектив кадра'],
+  ['kr','🎯','Глаз-алмаз'],['bl','⚡','Знаток терминов'],['pet','🐾','Котолюб'],['ask','💬','Любопытный']];
+var ACH_HOW={first:'открыть студию',s3:'заходить 3 дня подряд',s7:'заходить 7 дней подряд',det:'8 из 8 в «Что не так с кадром?»',kr:'8 из 8 в «Крупностях»',bl:'8 из 8 в блице',pet:'погладить Пикселя 50 раз',ask:'задать Пикселю 5 вопросов'};
+var S={v:1,xp:0,streak:0,last:'',pets:0,asks:0,best:{},ach:[]};
+function today(d){d=d||new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+function rankOf(xp){var r=0;for(var i=0;i<RANKS.length;i++)if(xp>=RANKS[i][0])r=i;return r;}
+function addXP(n,why){var r0=rankOf(S.xp);S.xp+=n;var r1=rankOf(S.xp);renderLvl();save();
+  if(r1>r0){setTimeout(function(){toast('Новый уровень: '+RANKS[r1][1]+'!');hap('ok');scene.play('cheer');},why?900:0);} }
+function grant(id){if(S.ach.indexOf(id)>=0)return;S.ach.push(id);save();renderAch();
+  var a=ACH.filter(function(x){return x[0]===id;})[0];if(a){setTimeout(function(){toast(a[1]+' Достижение: '+a[2]);hap('ok');},400);}}
+function dayWord(n){var m=n%10,h=n%100;return (m===1&&h!==11)?'день':(m>=2&&m<=4&&(h<12||h>14))?'дня':'дней';}
+function renderLvl(){var r=rankOf(S.xp),cur=RANKS[r][0],nx=RANKS[r+1];
+  $('#rk').textContent=RANKS[r][1];$('#streak').textContent='🔥 '+S.streak+' '+dayWord(S.streak);
+  $('#xpbar').style.width=(nx?Math.round(100*(S.xp-cur)/(nx[0]-cur)):100)+'%';
+  $('#xpnote').textContent=S.xp+' XP'+(nx?' · до уровня «'+nx[1]+'» — '+(nx[0]-S.xp):' · высший уровень');}
+function renderAch(){var box=$('#ach');box.innerHTML='';ACH.forEach(function(a){var on=S.ach.indexOf(a[0])>=0;var d=el('div',on?'on':'','<b>'+a[1]+'</b>'+esc(a[2]));d.title=on?a[2]:'Как получить: '+ACH_HOW[a[0]];
+  d.addEventListener('click',function(){toast(on?a[2]+' — получено':'Как получить: '+ACH_HOW[a[0]]);});box.appendChild(d);});
+  $('#achn').textContent=S.ach.length+' из '+ACH.length;}
+function checkin(){var t=today(),y=today(new Date(Date.now()-864e5));
+  if(S.last===t)return false;
+  S.streak=(S.last===y)?S.streak+1:1;S.last=t;S.xp+=10;save();
+  grant('first');if(S.streak>=3)grant('s3');if(S.streak>=7)grant('s7');
+  return true;}
+
+/* ---------- советы дня ---------- */
+var TIPS=[
+ ['Правило выдержки для видео: выдержка ≈ 1/(2 × FPS). Снимаешь 25 к/с — ставь 1/50, 50 к/с — 1/100. Так движение выглядит естественно.','/wiki/video/vyderzhka/'],
+ ['Под лампами в сети 50 Гц картинка может мерцать. Выдержка 1/50 или 1/100 обычно убирает фликер.','/wiki/video/vyderzhka/'],
+ ['Хочешь замедление в 2 раза на таймлайне 25 к/с — снимай в 50 к/с. Для 30 к/с — в 60 к/с.','/wiki/video/fps/'],
+ ['На ярком солнце не сокращай выдержку до 1/1000 — движение станет «рваным». Лучше поставь ND-фильтр.','/wiki/video/nd-filtr/'],
+ ['Выставляй баланс белого вручную, а не в «авто»: иначе цвет будет плавать от кадра к кадру при смене плана.',null],
+ ['Свет из-за спины героя — контровой — красиво подсвечивает волосы и отделяет человека от фона.','/wiki/video/kontrovoy-svet/'],
+ ['Золотой час — примерно час после восхода и перед закатом. Свет мягкий и тёплый, тени длинные.','/wiki/video/zolotoy-chas/'],
+ ['Синий час — короткое время после заката: небо глубокое синее, а город уже светится огнями.','/wiki/video/siniy-chas/'],
+ ['Оставляй «пространство для взгляда»: если герой смотрит вправо, пусть справа в кадре будет больше воздуха.','/wiki/video/prostranstvo-dlya-vzglyada/'],
+ ['Включи сетку в камере и ставь важные объекты на линии третей — кадр сразу станет спокойнее.','/wiki/video/pravilo-tretey/'],
+ ['Добавь передний план — ветку, стекло, плечо — и плоский кадр получит глубину.','/wiki/video/peredniy-plan/'],
+ ['Перебивки (B-roll) спасают монтаж: детали, руки, атмосфера. Снимай их больше, чем кажется нужным.','/wiki/video/b-roll/'],
+ ['Оставляй задел: начинай запись за 2–3 секунды до действия и не выключай сразу после. На монтаже скажешь спасибо.','/wiki/video/zadel/'],
+ ['Log-профиль даёт плоскую картинку с запасом по светам и теням — но его обязательно нужно красить на монтаже.','/wiki/video/log-profil/'],
+ ['LUT — это «готовый рецепт» цвета. Применяй его к правильно экспонированному кадру, иначе он не спасёт.','/wiki/video/lut/'],
+ ['Пересвет почти не вытянуть: выбитое в белое пропадает. При сомнении экспонируй чуть темнее и следи за светами.','/wiki/video/peresvet/'],
+ ['Чем выше ISO, тем больше шума. В темноте сначала добавь света или открой диафрагму, а уже потом поднимай ISO.','/wiki/video/ekspozitsiya/'],
+ ['Перед съёмкой составь шот-лист — список планов. Так на площадке ничего не забудешь.','/wiki/video/shot-list/'],
+ ['Приезжай на локацию заранее и посмотри, откуда светит солнце. Скаутинг экономит половину съёмочного дня.','/wiki/video/skauting-lokatsii/'],
+ ['Снимаешь с рук — прижми локти к телу и двигайся мягким шагом с перекатом с пятки на носок.','/wiki/video/handheld/'],
+ ['Собери мудборд перед съёмкой: 10–20 референсов по свету и цвету помогут договориться с героем о стиле.','/wiki/video/mudbord/'],
+ ['Мелкая клетка или полоска на одежде может «зарябить» в кадре — это муар. Попроси героя выбрать однотонное.','/wiki/video/muar/']
+];
+function renderTip(){var n=Math.floor((Date.now()+3*36e5)/864e5)%TIPS.length,t=TIPS[n];$('#tip').textContent=t[0];var m=$('#tipmore');if(t[1]){m.hidden=false;m.onclick=function(){open(t[1]);};}else m.hidden=true;}
+
+/* ---------- сцена: живой Пиксель ---------- */
+var scene=(function(){
+  var g=$('#pixg'),bub=$('#bub'),mood='idle',t0=0,nextBlink=0,blinkT=-1,earT=-1,hearts=[],busy=false,last=0,think=false;
+  var night=(function(){var h=new Date().getHours();return h>=1&&h<6;})(),sleeping=night;
+  var bubT;function say(t,ms){clearTimeout(bubT);bub.textContent=t;bub.classList.remove('hide');bubT=setTimeout(function(){bub.classList.add('hide');},ms||3200);}
+  function play(m){mood=m;t0=performance.now();if(m==='pet'){for(var i=0;i<3;i++)hearts.push({t:t0+i*120,x:55+(Math.random()*30-15)});}}
+  function frame(now){
+    requestAnimationFrame(frame);
+    if(now-last<33)return;last=now;
+    var t=now/1000,o,dt=(now-t0)/1000;
+    if(sleeping){o={pose:'lie',breath:1+.05*Math.sin(t*2.1),tail:4*Math.sin(t*1.1)};
+      var z='';for(var i=0;i<3;i++){var p=((t/3)+i/3)%1;z+='<text x="'+(44+p*22)+'" y="'+(54-p*34)+'" font-family="Russo One" font-size="'+(9+p*10)+'" fill="#cfc6b8" opacity="'+(p<.2?p/.2:1-(p-.2)/.8).toFixed(2)+'">Z</text>';}
+      g.innerHTML=PX.cat(o)+z;return;}
+    if(now>nextBlink){blinkT=now;nextBlink=now+2500+Math.random()*3500;if(Math.random()<.25)earT=now;}
+    var bk=blinkT>0&&now-blinkT<160?Math.sin((now-blinkT)/160*Math.PI):0;
+    var ear=earT>0&&now-earT<400?14*Math.sin((now-earT)/400*Math.PI):0;
+    o={eyes:'open',mouth:'w',blink:bk,tail:9*Math.sin(t*1.3),hrot:3*Math.sin(t*.7),earR:ear,breath:1+.012*Math.sin(t*2.4)};
+    if(think){o.eyes='look';o.pdx=1.3;o.pdy=-2;o.hrot=8;o.armR=162+4*Math.max(0,Math.sin(t*9));o.armRlen=13;o.mouth='flat';}
+    if(mood==='pet'){if(dt>1.6)mood='idle';else{o.eyes='happy';o.blush=.8;o.hrot=9*Math.sin(dt*7);o.blink=0;o.mouth='w';}}
+    else if(mood==='cheer'){if(dt>1.8)mood='idle';else{var j=Math.abs(Math.sin(dt*Math.PI*2));o.eyes='happy';o.mouth='open';o.armL=146-12*Math.sin(dt*14);o.armR=214+12*Math.sin(dt*14);o.armLlen=26;o.armRlen=26;o.armLy=-6;o.armRy=-6;o.blink=0;o.hdy=-j*2;}}
+    else if(mood==='sad'){if(dt>1.8)mood='idle';else{o.eyes='sad';o.mouth='frown';o.earL=-40;o.earR=40;o.hdy=2;o.blink=0;}}
+    else if(mood==='wave'){if(dt>1.8)mood='idle';else{o.armR=216+16*Math.sin(dt*12);o.armRlen=26;o.armRy=-6;o.mouth='open';o.mouthOpen=.5;}}
+    var hs='';hearts=hearts.filter(function(h){var p=(now-h.t)/1100;if(p<0)return true;if(p>1)return false;hs+='<g opacity="'+(p<.15?p/.15:1-p).toFixed(2)+'">'+PX.heart(h.x+3*Math.sin(p*6),24-p*26,1.6,'#e8697e')+'</g>';return true;});
+    var lift=mood==='cheer'?-Math.abs(Math.sin(dt*Math.PI*2))*8:0;
+    g.innerHTML='<g transform="translate(0 '+lift.toFixed(2)+')">'+PX.cat(o)+'</g>'+hs;
+  }
+  var PET=['Мррр…','Ещё! Ещё!','Мур-мур 💛','Ты лучший оператор!','Щекотно 😸','Мяу? Пошли в игры!','Я тут снимаю, вообще-то…','Мрр, кадр — огонь'];
+  $('#pix').addEventListener('click',function(){
+    if(sleeping){sleeping=false;say('Мяу? Я не сплю… просто закрыл глаза на секундочку 😼');hap('medium');play('wave');return;}
+    S.pets++;save();hap();play('pet');
+    if(S.pets===1||Math.random()<.45)say(PET[Math.floor(Math.random()*PET.length)],1800);
+    if(S.pets%10===0)addXP(2);
+    if(S.pets>=50)grant('pet');
+  });
+  if(!RM)requestAnimationFrame(frame);else g.innerHTML=PX.cat({});
+  return {say:say,play:play,think:function(v){think=v;},sleeping:function(){return sleeping;}};
+})();
+
+/* ---------- игры ---------- */
+var DEF={
+  ok:{l:'Всё в порядке',e:'Экспозиция, баланс белого и фокус в норме. Иногда лучший ответ — «ничего не трогать».'},
+  over:{l:'Пересвет',e:'Светлые участки «выбиты» в белое — деталей там уже нет, и на монтаже их не вернуть. Снизь ISO, прикрой диафрагму или поставь ND-фильтр.',w:'/wiki/video/peresvet/',css:'brightness(1.75) contrast(1.4) saturate(.8)'},
+  under:{l:'Недосвет',e:'Кадр тёмный: в тенях пропадают детали, а при вытягивании на монтаже полезет шум. Открой диафрагму, добавь света или чуть подними ISO.',w:'/wiki/video/ekspozitsiya/',css:'brightness(.3) contrast(1.15)'},
+  cold:{l:'Баланс белого',e:'Картинка ушла в синеву: в камере выставлен баланс белого под тёплый свет (например, 3200K), а снимали при дневном. Выставь ББ под источник света.',css:'url(#fCold)'},
+  warm:{l:'Баланс белого',e:'Кадр слишком жёлто-оранжевый: в камере выставлено больше Кельвинов, чем свет на площадке. Подстрой баланс белого под источник света.',css:'url(#fWarm)'},
+  focus:{l:'Мимо фокуса',e:'Резкость не на герое — вся картинка мягкая. Проверь точку фокуса, включи увеличение или фокус-пикинг.',css:'blur(3.2px)'},
+  motion:{l:'Смаз от движения',e:'Выдержка слишком длинная для такого движения — кадр «размазан». Для видео держись правила: выдержка ≈ 1/(2 × FPS) и двигай камеру плавнее.',w:'/wiki/video/motion-blur/',css:'url(#fMotion)'},
+  tilt:{l:'Завален горизонт',e:'Линии зданий и земли наклонены — у зрителя ощущение «крена». Включи сетку или уровень в камере, а на монтаже можно выровнять.',tr:'rotate(8deg) scale(1.3)'},
+  noise:{l:'Шум от высокого ISO',e:'В тёмной сцене ISO задрано — в кадре зерно и грязь в тенях. Добавь света, открой диафрагму, а ISO держи пониже.',w:'/wiki/video/ekspozitsiya/',css:'brightness(.62) saturate(.7) contrast(1.05)',noise:1}
+};
+var DET_PH=['foto-garderob-2-park.webp','foto-krupnost-2-srednii.webp','foto-u3-kompoziciya-treti-vozduh.webp','foto-polden-2-otkrytaya-ten.webp','foto-u3-kompoziciya-linii.webp','foto-garderob-1-urban.webp','foto-u3-kompoziciya-tri-plana.webp','lokatsiya-kadr-b-reshenie.webp','lesson2-mb-15.jpg','lesson2-ref-01.jpg','foto-krupnost-3-krupnyi.webp','foto-garderob-3-kafe.webp'];
+var NOISE_OLD='url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27240%27 height=%27240%27%3E%3Cfilter id=%27n%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%27.95%27 numOctaves=%272%27 stitchTiles=%27stitch%27/%3E%3CfeColorMatrix values=%270 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 1.4 -.35%27/%3E%3C/filter%3E%3Crect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23n)%27/%3E%3C/svg%3E")';
+var NOISE=(function(){try{var c=document.createElement('canvas');c.width=360;c.height=240;var x=c.getContext('2d'),d=x.createImageData(360,240),a=d.data;
+  for(var i=0;i<a.length;i+=4){var v=Math.random()*255|0,ch=Math.random()<.35;a[i]=ch?v:v;a[i+1]=ch?(Math.random()*255|0):v;a[i+2]=ch?(Math.random()*255|0):v;a[i+3]=255;}
+  x.putImageData(d,0,0);return 'url('+c.toDataURL('image/png')+')';}catch(e){return 'none';}})();
+var TILT_PH=['foto-garderob-1-urban.webp','foto-u3-kompoziciya-linii.webp','lokatsiya-kadr-b-reshenie.webp','foto-polden-2-otkrytaya-ten.webp','foto-krupnost-2-srednii.webp','foto-u3-kompoziciya-tri-plana.webp'];
+// крупности: [файл, ответ, соотношение сторон w/h, обрезка [cx,cy,w] долями кадра или null]
+var KR=[['foto-krupnost-1-obshchii.webp','общий',1.5],['foto-krupnost-2-srednii.webp','средний',1.5],['foto-krupnost-3-krupnyi.webp','крупный',1.5],['foto-krupnost-4-detal.webp','деталь',1.5],
+  ['lesson2-mb-11.jpg','общий',.8],['lesson2-ref-05.jpg','общий',.8],['svet-zolotoi-chas-dlinnaya-ten.webp','общий',1.5],['foto-u3-kompoziciya-linii.webp','общий',1.5],['lesson3-pose-07-natural-step-good.webp','общий',.667],
+  ['lesson2-mb-15.jpg','средний',.8],['foto-polden-2-otkrytaya-ten.webp','средний',1.5],
+  ['lesson2-ref-01.jpg','крупный',.8],['lesson2-mb-13.jpg','крупный',.8],['foto-polden-2-otkrytaya-ten.webp','крупный',1.5,[.35,.27,.24]],['foto-garderob-3-kafe.webp','крупный',1.5,[.4,.3,.34]],
+  ['foto-krupnost-2-srednii.webp','деталь',1.5,[.52,.5,.24]],['lesson2-mb-01.jpg','деталь',.8,[.66,.6,.42]]];
+var KR_E={'общий':'Общий план — человек виден целиком и много окружения. Он рассказывает, где мы находимся.','средний':'Средний план — человек примерно по пояс. Видны жесты и эмоции, но ещё понятно окружение.',
+  'крупный':'Крупный план — лицо и плечи. Всё внимание на эмоции героя.','деталь':'Деталь — один предмет или часть тела: руки, чашка, цветы. Детали добавляют атмосферу и «склеивают» монтаж.'};
+var BL=[
+ ['Снимаешь 25 к/с. Какую выдержку поставить по правилу 1/(2×FPS)?',['1/50','1/25','1/200','1/1000'],'Двойная частота кадров: 25 × 2 = 50, значит 1/50. Движение выглядит естественно.','/wiki/video/vyderzhka/'],
+ ['А если снимаешь 50 к/с?',['1/100','1/50','1/25','1/500'],'50 × 2 = 100 → выдержка 1/100.','/wiki/video/vyderzhka/'],
+ ['Что такое FPS?',['Кадры в секунду','Размер матрицы','Яркость кадра','Формат файла'],'FPS — frames per second: сколько кадров камера пишет за секунду.','/wiki/video/fps/'],
+ ['Нужно плавное замедление в 2 раза на таймлайне 25 к/с. В каком FPS снимать?',['50 к/с','25 к/с','30 к/с','24 к/с'],'Снимаешь 50 к/с, ставишь на таймлайн 25 к/с — получается замедление ровно в 2 раза.','/wiki/video/fps/'],
+ ['Что даёт высокое ISO в темноте?',['Светлее, но больше шума','Темнее и чище','Размытый фон','Тёплый цвет'],'ISO усиливает сигнал матрицы: картинка ярче, но шум растёт.','/wiki/video/ekspozitsiya/'],
+ ['Камера стоит на 3200K, а ты снимаешь днём на улице. Какой будет картинка?',['Синей','Оранжевой','Зелёной','Чёрно-белой'],'3200K — настройка под тёплые лампы. При дневном свете кадр уйдёт в синеву.',null],
+ ['Под лампами в сети 50 Гц мерцает картинка. Какая выдержка поможет?',['1/50 или 1/100','1/60 или 1/120','1/2000','1/30'],'Лампы в сети 50 Гц мигают 100 раз в секунду — выдержки 1/50 и 1/100 «ловят» целое число вспышек.','/wiki/video/vyderzhka/'],
+ ['Зачем на ярком солнце ND-фильтр?',['Чтобы сохранить нужную выдержку','Чтобы добавить контраст','Чтобы убрать шум','Чтобы изменить цвет'],'ND-фильтр — «солнечные очки» для объектива: затемняет кадр, и не приходится сокращать выдержку.','/wiki/video/nd-filtr/'],
+ ['Что такое Log-профиль?',['Плоская картинка с запасом под цвет','Формат звука','Режим автофокуса','Фильтр от шума'],'Log сохраняет широкий динамический диапазон, картинка выглядит серой — её красят на монтаже.','/wiki/video/log-profil/'],
+ ['Что такое кодек?',['Способ сжатия видео','Тип объектива','Карта памяти','Стабилизатор'],'Кодек (H.264, H.265, ProRes) определяет, как видео сжимается и сколько места занимает.','/wiki/video/kodek/'],
+ ['4K UHD — это какое разрешение?',['3840 × 2160','1920 × 1080','2560 × 1440','7680 × 4320'],'4K UHD — 3840 × 2160 пикселей, ровно в 4 раза больше Full HD.',null],
+ ['У какой диафрагмы фон размоется сильнее?',['f/1.8','f/8','f/11','f/16'],'Чем меньше число f, тем шире открыта диафрагма и тем меньше глубина резкости.',null],
+ ['Свет из-за спины героя, направленный на камеру, — это…',['Контровой','Рисующий','Заполняющий','Верхний'],'Контровой свет обрисовывает силуэт и волосы, отделяя героя от фона.','/wiki/video/kontrovoy-svet/'],
+ ['Когда «золотой час»?',['После восхода и перед закатом','В полдень','Ровно в полночь','В пасмурный день'],'Солнце низко, свет мягкий и тёплый, тени длинные.','/wiki/video/zolotoy-chas/'],
+ ['Как называют дополнительные кадры — детали, атмосферу — для монтажа?',['Перебивки (B-roll)','Дубли','Тайм-лапс','Хромакей'],'Перебивки помогают склеить историю и скрыть неудачные места.','/wiki/video/b-roll/'],
+ ['Мелкая клетка на рубашке «рябит» в кадре. Как это называется?',['Муар','Фликер','Перешарп','Виньетка'],'Муар — интерференция мелкого узора с сеткой матрицы.','/wiki/video/muar/']
+];
+var GAMES=[
+ {id:'det',ttl:'Что не так с кадром?',sub:'Найди ошибку: пересвет, баланс белого, фокус, шум…',img:'foto-garderob-2-park.webp',tag:'8 кадров'},
+ {id:'kr',ttl:'Крупности',sub:'Общий, средний, крупный или деталь? Угадай план.',img:'foto-krupnost-3-krupnyi.webp',tag:'8 кадров'},
+ {id:'bl',ttl:'Блиц по терминам',sub:'FPS, выдержка, ISO, Log — 10 секунд на ответ.',img:'lesson2-ref-07.jpg',tag:'на время'}
+];
+function renderGames(){var box=$('#gl');box.innerHTML='';GAMES.forEach(function(g){var b=S.best[g.id];
+  var c=el('button','gc','<div class="ph" style="background-image:url('+CFG.up+g.img+')"><em>'+g.tag+'</em></div><div><h3>'+esc(g.ttl)+'</h3><p>'+esc(g.sub)+'</p><div class="best">'+(b!=null?'Лучший результат: '+b+' из 8':'Ещё не играл')+'</div></div>');
+  c.addEventListener('click',function(){startGame(g.id);});box.appendChild(c);});}
+
+var G=null;
+function gOpen(){$('#game').classList.add('on');document.body.style.overflow='hidden';if(TG&&TG.BackButton){TG.BackButton.show();}}
+function gClose(){$('#game').classList.remove('on');document.body.style.overflow='';if(TG&&TG.BackButton)TG.BackButton.hide();if(G&&G.timer)cancelAnimationFrame(G.timer);G=null;renderGames();}
+if(TG&&TG.BackButton)TG.BackButton.onClick(function(){gClose();});
+function startGame(id){hap('medium');var rounds=[];
+  if(id==='det'){var kinds=shuffle(['over','under',Math.random()<.5?'cold':'warm','focus','motion','tilt','noise','ok']),ph=shuffle(DET_PH);
+    ph=ph.filter(function(x){return x!==TILT_PH[0];});var tph=TILT_PH[Math.floor(Math.random()*TILT_PH.length)];ph=ph.filter(function(x){return x!==tph;});
+    rounds=kinds.map(function(k,i){var labs=['Всё в порядке','Пересвет','Недосвет','Баланс белого','Мимо фокуса','Смаз от движения','Завален горизонт','Шум от высокого ISO'];
+      var right=DEF[k].l,opts=shuffle([right].concat(shuffle(labs.filter(function(x){return x!==right;})).slice(0,3)));return {k:k,ph:k==='tilt'?tph:ph[i%ph.length],opts:opts,right:right};});}
+  if(id==='kr'){var pool=shuffle(KR),need={'общий':2,'средний':2,'крупный':2,'деталь':2},pick=[];
+    pool.forEach(function(x){if(need[x[1]]>0&&pick.length<8){need[x[1]]--;pick.push(x);}});pool.forEach(function(x){if(pick.length<8&&pick.indexOf(x)<0)pick.push(x);});
+    rounds=shuffle(pick).map(function(x){return {kr:x,opts:['общий','средний','крупный','деталь'],right:x[1]};});}
+  if(id==='bl'){rounds=shuffle(BL).slice(0,8).map(function(q){return {bl:q,opts:shuffle(q[1]),right:q[1][0]};});}
+  G={id:id,rounds:rounds,i:0,res:[],timer:0};gOpen();round();}
+function cropStyle(x){var ar=x[2],c=x[3];if(!c)return 'background-image:url('+CFG.up+x[0]+');background-size:cover;background-position:center';
+  var box=1.5,w=c[2],h=w*ar/box;if(h>1){h=1;w=box/ar;}var px=(c[0]-w/2)/(1-w),py=(c[1]-h/2)/(1-h);
+  return 'background-image:url('+CFG.up+x[0]+');background-size:'+(100/w).toFixed(1)+'% auto;background-position:'+(Math.max(0,Math.min(1,px))*100).toFixed(1)+'% '+(Math.max(0,Math.min(1,py))*100).toFixed(1)+'%';}
+function round(){var r=G.rounds[G.i],box=$('#gin'),gm=GAMES.filter(function(x){return x.id===G.id;})[0];
+  var dots='';for(var i=0;i<G.rounds.length;i++)dots+='<i class="'+(i<G.res.length?(G.res[i]?'ok':'no'):i===G.i?'cur':'')+'"></i>';
+  var h='<div class="gtop"><button class="x" id="gx" aria-label="Закрыть">✕</button><div class="dots">'+dots+'</div><div class="k">'+(G.i+1)+' / '+G.rounds.length+'</div></div>';
+  if(G.id==='det'){var d=DEF[r.k];h+='<div class="frame"><div class="img" style="background-image:url('+CFG.up+r.ph+');'+(d.css?'filter:'+d.css+';':'')+(d.tr?'transform:'+d.tr+';':'')+'"></div>'+(d.noise?'<div class="noise" style="background-image:'+NOISE+'"></div>':'')+'<div class="hud">REC</div></div><div class="q">Что не так с этим кадром?</div>';}
+  if(G.id==='kr'){var tall=r.kr[2]<1&&!r.kr[3];h+='<div class="frame"'+(tall?' style="aspect-ratio:'+r.kr[2]+';max-width:'+Math.round(380*r.kr[2])+'px;margin:0 auto"':'')+'><div class="img" style="'+cropStyle(r.kr)+'"></div><div class="hud">REC</div></div><div class="q">Какая это крупность?</div>';}
+  if(G.id==='bl'){h+='<div class="q" style="margin-top:22px;font-size:20px">'+esc(r.bl[0])+'</div><div class="timer"><i id="tm"></i></div>';}
+  h+='<div class="opts'+(G.id==='bl'?' one':'')+'">'+r.opts.map(function(o){return '<button class="opt">'+esc(o.charAt(0).toUpperCase()+o.slice(1))+'</button>';}).join('')+'</div><div class="ex" id="ex"></div>';
+  box.innerHTML=h;window.scrollTo(0,0);$('#game').scrollTop=0;
+  $('#gx').onclick=gClose;
+  $$('.opt',box).forEach(function(b,i){b.onclick=function(){answer(r.opts[i],b);};});
+  if(G.id==='bl'){var T=10000,st=performance.now(),tm=$('#tm');(function tick(n){if(!G||G.i>=G.rounds.length||G.answered)return;var p=1-(n-st)/T;tm.style.width=Math.max(0,p*100)+'%';
+    if(p<=0){answer(null,null);return;}G.timer=requestAnimationFrame(tick);})(st);}
+  G.answered=false;}
+function answer(v,btn){if(!G||G.answered)return;G.answered=true;if(G.timer)cancelAnimationFrame(G.timer);
+  var r=G.rounds[G.i],ok=v===r.right;G.res.push(ok);hap(ok?'ok':'err');
+  $$('.opt').forEach(function(b,i){b.disabled=true;if(r.opts[i]===r.right)b.classList.add('ok');else if(b===btn)b.classList.add('no');});
+  var txt,link;if(G.id==='det'){txt=DEF[r.k].e;link=DEF[r.k].w;}else if(G.id==='kr'){txt=KR_E[r.right];link=G.i===0?'/wiki/praktika/krupnosti/':null;}else{txt=r.bl[2];link=r.bl[3];}
+  var ex=$('#ex');ex.innerHTML='<div class="v '+(ok?'ok':'no')+'">'+(ok?['Точно!','В яблочко!','Мур, верно!','Глаз-алмаз!'][Math.floor(Math.random()*4)]:v===null?'Время вышло':'Не совсем')+'</div><p>'+esc(txt)+'</p>'+(link?'<a href="#" id="exl">Подробнее в Wiki →</a>':'')+
+    '<button class="btn" id="nx">'+(G.i+1<G.rounds.length?'Дальше':'Результат')+'</button>';
+  ex.classList.add('on');if(link)$('#exl').onclick=function(e){e.preventDefault();open(link);};
+  $('#nx').onclick=function(){hap();G.i++;if(G.i<G.rounds.length)round();else result();};
+  setTimeout(function(){ex.scrollIntoView({behavior:RM?'auto':'smooth',block:'nearest'});},50);}
+function result(){var n=G.res.filter(Boolean).length,tot=G.rounds.length,id=G.id,gm=GAMES.filter(function(x){return x.id===id;})[0];
+  var xp=n*5+(n===tot?20:0),prev=S.best[id];if(prev==null||n>prev)S.best[id]=n;
+  var mood=n===tot?'ura':n>=6?'mur':n>=4?'think':'sad';
+  var line={ura:'Идеально! Ты видишь кадр как профи.',mur:'Отлично! Ещё чуть-чуть — и будет 8 из 8.',think:'Неплохо! Сыграй ещё раз — запомнится быстрее.',sad:'Ничего страшного: так и учатся. Попробуй ещё!'}[mood];
+  $('#gin').innerHTML='<div class="gtop"><button class="x" id="gx" aria-label="Закрыть">✕</button><div class="k">'+esc(gm.ttl)+'</div><div style="width:36px"></div></div>'+
+    '<div class="res"><svg viewBox="22 -14 76 108" id="rcat"></svg><div class="sc">'+n+' <span>из '+tot+'</span></div><div class="mut">'+esc(line)+'</div><div class="xp">+'+xp+' XP</div>'+
+    (prev!=null&&n>prev?'<p>Новый рекорд! Было '+prev+' из 8.</p>':'')+
+    '<button class="btn" id="share">Бросить вызов другу</button><button class="btn ghost" id="again">Сыграть ещё</button><button class="btn ghost" id="back">К играм</button></div>';
+  var o=mood==='ura'?{eyes:'happy',mouth:'open',armL:146,armR:214,armLlen:26,armRlen:26,armLy:-6,armRy:-6}:mood==='mur'?{eyes:'happy',blush:.8}:mood==='think'?{eyes:'look',pdx:1.3,pdy:-2,hrot:8,armR:162,armRlen:13,mouth:'flat'}:{eyes:'sad',mouth:'frown',earL:-40,earR:40,hdy:2};
+  $('#rcat').innerHTML=PX.cat(o)+(mood==='ura'?'<text x="58" y="2" text-anchor="middle" font-family="Russo One" font-size="11" fill="#fd7e2f">УРА!</text>':'');
+  hap(n>=6?'ok':'warn');addXP(xp,true);
+  if(n===tot)grant(id);
+  if(n===tot)scene.play('cheer');
+  $('#gx').onclick=gClose;$('#back').onclick=gClose;$('#again').onclick=function(){startGame(id);};
+  $('#share').onclick=function(){var t='Я набрал '+n+' из '+tot+' в игре «'+gm.ttl+'» у кота Пикселя из Matis Academy 🐈‍⬛ Сможешь лучше?';
+    open('https://t.me/share/url?url='+encodeURIComponent(CFG.appLink)+'&text='+encodeURIComponent(t));};}
+
+/* ---------- школа ---------- */
+function renderSchool(){
+  var C=[['🎬','Курс «Видеограф»','Полный курс: камера, свет, съёмка, монтаж и цвет. Все условия — на странице курса.','/videographer/',1],
+         ['🎁','Бесплатный мини-курс','Попробовать учёбу в школе: короткие уроки с тренажёрами.','/mini-course/'],
+         ['🧭','Все направления обучения','Посмотреть, что есть в школе сейчас.','/education/']];
+  var L=[['📖','Wiki — термины','Выдержка, FPS, Log, ND-фильтр и другие — простыми словами.','/wiki/'],
+         ['🕹️','Практика — тренажёры','Крупности, движение камеры, свет и время съёмки.','/wiki/praktika/'],
+         ['✍️','Блог','Статьи о съёмке, монтаже, цвете и профессии.','/blog/']];
+  function fill(box,arr){box.innerHTML='';arr.forEach(function(x){var b=el('button','lnk'+(x[4]?' hero':''),'<div class="ic">'+x[0]+'</div><div><b>'+esc(x[1])+'</b><span>'+esc(x[2])+'</span></div>');b.onclick=function(){open(x[3]);};box.appendChild(b);});}
+  fill($('#courses'),C);fill($('#learn'),L);
+  var t=$('#tops');t.innerHTML='';CFG.topics.forEach(function(x){var b=el('button','tp','<i>'+x[1]+'</i>'+esc(x[0]));b.onclick=function(){open(CFG.group+(x[2]?'/'+x[2]:''));};t.appendChild(b);});}
+
+/* ---------- чат ---------- */
+var chat=(function(){
+  var box=$('#msgs'),inp=$('#cinp'),btn=$('#csend'),busy=false,hist=[],loaded=false;
+  var CID=(function(){var k='mcat-cid',v=null;try{v=localStorage.getItem(k);}catch(e){}
+    if(!v||!/^[A-Za-z0-9_-]{16,64}$/.test(v)){var A='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_',r=new Uint8Array(22);try{crypto.getRandomValues(r);}catch(e){for(var i=0;i<22;i++)r[i]=Math.floor(Math.random()*256);}
+      v='';for(var j=0;j<22;j++)v+=A.charAt(r[j]&63);try{localStorage.setItem(k,v);}catch(e){}}return v;})();
+  var ERR={daily_limit:'На сегодня я наговорился — лимит вопросов закончился. Возвращайся завтра! А игры работают и сейчас.',budget_exhausted:'Я прилёг отдохнуть и пока не отвечаю на вопросы. Загляни чуть позже.',paused:'Я прилёг отдохнуть и пока не отвечаю на вопросы. Загляни чуть позже.'};
+  function api(path,data,done){var x=new XMLHttpRequest();x.open('POST','/navigator-api/pixel/'+path);x.setRequestHeader('Content-Type','application/json');x.setRequestHeader('X-Pixel-Request','1');x.timeout=45000;
+    x.onloadend=function(){var r=null;try{r=JSON.parse(x.responseText);}catch(e){}done(x.status,r);};x.send(JSON.stringify(data));}
+  function add(role,text,links){var m=el('div','m '+role);m.textContent=text;
+    if(links&&links.length){var ls=el('div','ls');links.forEach(function(l){var b=el('button','',esc(l.t)+' →');b.onclick=function(){open(l.u);};ls.appendChild(b);});m.appendChild(ls);}
+    box.appendChild(m);requestAnimationFrame(function(){m.scrollIntoView({block:'end',behavior:RM?'auto':'smooth'});});return m;}
+  function hello(){add('a',(NAME?NAME+', привет! ':'Привет! ')+'Я Пиксель, кот-помощник Matis Academy. Спрашивай про съёмку, монтаж, цвет и курсы школы — отвечу и подскажу, где почитать.');}
+  var SUG=['С чего начать новичку?','Какой курс мне подойдёт?','Что такое выдержка?','Как убрать мерцание ламп?','Какую камеру взять?'];
+  function sugg(){var s=$('#sugg');s.innerHTML='';SUG.forEach(function(q){var b=el('button','',esc(q));b.onclick=function(){send(q);};s.appendChild(b);});}
+  function init(){if(loaded)return;loaded=true;sugg();
+    if(IN_TG){api('app/history',{init:TG.initData},function(code,r){if(code===200&&r&&r.items&&r.items.length){r.items.forEach(function(x){add(x.r==='u'?'u':'a',x.t);hist.push(x);});}else hello();});}
+    else hello();}
+  function send(q){q=(q||inp.value).trim();if(!q||busy)return;if(q.length>600)q=q.slice(0,600);inp.value='';busy=true;btn.disabled=true;hap();
+    add('u',q);var ty=add('a typing','Пиксель печатает…');scene.think(true);
+    var done=function(code,r){busy=false;btn.disabled=false;ty.remove();scene.think(false);
+      if(code===200&&r&&typeof r.reply==='string'){add('a',r.reply,(r.links||[]).filter(function(l){return l&&typeof l.u==='string';}).map(function(l){return {t:l.t,u:l.u};}));
+        hist.push({r:'u',t:q},{r:'a',t:r.reply});hist=hist.slice(-6);S.asks++;save();if(S.asks<=10)addXP(3);if(S.asks>=5)grant('ask');}
+      else add('a',(r&&ERR[r.error])||'Что-то связь барахлит. Попробуй ещё раз чуть позже.');};
+    if(IN_TG)api('app/chat',{init:TG.initData,text:q},done);else api('chat',{cid:CID,text:q,history:hist},done);}
+  $('#cin').addEventListener('submit',function(e){e.preventDefault();send();});
+  return {init:init};
+})();
+
+/* ---------- навигация ---------- */
+function go(t){$$('.scr').forEach(function(s){s.classList.toggle('on',s.id==='s-'+t);});$$('.tabs button').forEach(function(b){b.classList.toggle('on',b.dataset.t===t);});
+  window.scrollTo(0,0);if(t==='chat'){chat.init();$('#chatdot').classList.remove('on');}hap('soft');}
+$$('.tabs button').forEach(function(b){b.addEventListener('click',function(){go(b.dataset.t);});});
+$('#stk').onclick=function(){open(CFG.stickers);};
+
+/* ---------- старт ---------- */
+$('#stkcat').innerHTML=PX.cat({eyes:'wink',mouth:'open',mouthOpen:.5,armR:212,armRlen:26,armRy:-6,hrot:-6});
+$('#cav').innerHTML=PX.head({eyes:'open'});
+renderTip();renderSchool();
+load(function(st){if(st&&st.v===1){S=st;S.best=S.best||{};S.ach=S.ach||[];}
+  var fresh=checkin();renderLvl();renderAch();renderGames();
+  var sp=(TG&&TG.initDataUnsafe&&TG.initDataUnsafe.start_param)||'';
+  if(/^g_(det|kr|bl)$/.test(sp))setTimeout(function(){startGame(sp.slice(2));},400);
+  else if(sp==='chat')go('chat');
+  setTimeout(function(){if(scene.sleeping()){scene.say('Тсс… Пиксель спит. Погладь, чтобы разбудить',4200);return;}
+    if(fresh&&S.streak>1){scene.say((NAME?NAME+', ':'')+'ты снова тут! День '+S.streak+' подряд 🔥 +10 XP',3800);scene.play('cheer');}
+    else if(fresh){scene.say((NAME?'Привет, '+NAME+'! ':'Привет! ')+'Я Пиксель. Погладь меня — или пошли играть!',4200);scene.play('wave');}
+    else scene.say(['Снова привет! 😺','Мур! Сыграем?','Я тут, снимаю кино 🎬'][Math.floor(Math.random()*3)],2600);},500);
+  setTimeout(function(){$('#chatdot').classList.add('on');},8000);
+});
+})();
+</script>
+</body>
+</html>
