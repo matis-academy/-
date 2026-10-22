@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Симулятор съёмки α7 IV</title>
+  <meta name="description" content="Учебный симулятор съёмки на Sony α7 IV: экспозиция, глубина резкости, фокусное расстояние, смаз, замер и баланс белого считаются по законам оптики.">
+  <link rel="stylesheet" href="shoot.css?v=5">
+  <script type="importmap">
+    { "imports": { "three": "../vendor/three.module.min.js" } }
+  </script>
+</head>
+<body>
+  <header class="top">
+    <a class="back" href="../">← 3D-модель</a>
+    <div class="top-title">
+      <h1>Симулятор съёмки <span>Sony α7 IV</span></h1>
+      <p id="sceneName">Загрузка сцены…</p>
+    </div>
+    <button class="tour-btn" id="tourBtn" title="Тур по симулятору"><span>?</span><em>Как пользоваться</em></button>
+  </header>
+
+  <div class="layout">
+    <section class="left">
+      <div class="vf-wrap" id="vfWrap">
+        <div class="vf" id="vf">
+          <canvas id="cv" aria-label="Изображение в видоискателе"></canvas>
+          <svg class="vf-grid" id="vfGrid" viewBox="0 0 150 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+          <div class="vf-ui" id="vfUi">
+            <div class="vf-top">
+              <span class="vf-mode" id="oMode">A</span>
+              <span id="oLens">85 мм</span>
+              <span id="oAf">AF-S</span>
+              <span id="oMeter">Мульти</span>
+              <span id="oWb">AWB</span>
+              <span id="oLook">ST</span>
+              <span id="oIs" class="vf-is">IS</span>
+              <span id="oAel" class="vf-ael" hidden>✱ AEL</span>
+            </div>
+            <canvas id="vfHist" class="vf-hist" width="144" height="64" hidden></canvas>
+            <div class="vf-level" id="oLevel" hidden><i></i><span></span></div>
+            <div class="vf-bottom">
+              <span id="oT" class="vf-v">1/250</span>
+              <span id="oN" class="vf-v">F1,8</span>
+              <span id="oEv" class="vf-v">±0,0</span>
+              <span id="oIso" class="vf-v">ISO 100</span>
+            </div>
+          </div>
+          <div class="vf-mask" id="vfMask" hidden></div>
+          <div class="vf-spot" id="oSpot" hidden></div>
+          <div class="vf-focus" id="oFocus"></div>
+          <div class="vf-flash" id="vfFlash"></div>
+          <div class="vf-count" id="vfCount" hidden></div>
+          <img class="vf-review" id="vfReview" alt="Только что сделанный снимок" hidden>
+          <div class="vf-toast" id="vfToast"></div>
+          <div class="vf-hint" id="vfHint">Нажмите в кадре — камера сфокусируется в этой точке. Перетаскивайте, чтобы повернуть камеру.</div>
+          <button class="shutter vf-shutter" id="shutter" aria-label="Сделать снимок (пробел)" title="Спуск затвора (пробел)"><span></span></button>
+          <div class="cam-menu" id="camMenu" hidden></div>
+        </div>
+        <div class="cam-bar" role="toolbar" aria-label="Кнопки камеры">
+          <button id="bMenu" title="Меню камеры">MENU</button>
+          <button id="bFn" title="Быстрое меню">Fn</button>
+          <button id="bAel" aria-pressed="false" title="Фиксация экспозиции">AEL</button>
+          <button id="bDisp" title="Что показывать на экране">DISP</button>
+          <button id="bPlay" class="cb-play" title="Просмотр снимков">▶</button>
+          <button id="bWhy" class="cb-why">Почему так?</button>
+        </div>
+      </div>
+
+      <section class="explain" id="explain" aria-label="Что происходит в кадре">
+        <h2>Что происходит в кадре</h2>
+        <div class="tiles">
+          <article class="tile" id="tExp"><h3>Экспозиция</h3><div class="big"></div><p></p></article>
+          <article class="tile" id="tDof"><h3>Глубина резкости</h3><div class="big"></div><p></p></article>
+          <article class="tile" id="tFov"><h3>Угол и перспектива</h3><div class="big"></div><p></p></article>
+          <article class="tile" id="tBlur"><h3>Смаз</h3><div class="big"></div><p></p></article>
+          <article class="tile" id="tNoise"><h3>Шум</h3><div class="big"></div><p></p></article>
+          <article class="tile" id="tWb"><h3>Цвет света</h3><div class="big"></div><p></p></article>
+        </div>
+        <div class="dofbar" id="dofBar" aria-label="Шкала глубины резкости">
+          <div class="dof-zone" id="dofZone"></div>
+          <div class="dof-focus" id="dofFocus"></div>
+          <div class="dof-marks" id="dofMarks"></div>
+          <div class="dof-scale" id="dofScale"></div>
+        </div>
+      </section>
+    </section>
+
+    <aside class="right" id="controls">
+      <section class="card missions-card" id="missionsCard">
+        <button class="card-head" id="missionsHead" aria-expanded="false" aria-controls="missions">
+          <h2>Задания <small id="missionsSum"></small></h2><span class="chev" aria-hidden="true">⌄</span>
+        </button>
+        <div id="missionCur"></div>
+        <div id="missions" hidden></div>
+      </section>
+
+      <section class="card">
+        <h2>Сцена</h2>
+        <div class="chips" id="scenes"></div>
+      </section>
+
+      <section class="card">
+        <h2>Режим съёмки <small>диск режимов</small></h2>
+        <div class="seg" id="modes" role="radiogroup">
+          <button data-mode="AUTO">AUTO</button><button data-mode="P">P</button><button data-mode="A">A</button><button data-mode="S">S</button><button data-mode="M">M</button>
+        </div>
+        <p class="note" id="modeNote"></p>
+      </section>
+
+      <section class="card">
+        <h2>Экспозиция <small>замер, ББ, стиль — в Fn / MENU</small></h2>
+        <div class="ctl" id="cN"></div>
+        <div class="ctl" id="cT"></div>
+        <div class="ctl" id="cIso"></div>
+        <div class="ctl" id="cEc"></div>
+      </section>
+
+      <section class="card">
+        <h2>Объектив</h2>
+        <div class="chips lenses" id="lenses"></div>
+        <p class="note" id="lensNote"></p>
+        <div class="ctl" id="cZoom"></div>
+      </section>
+
+      <section class="card">
+        <h2>Фокус</h2>
+        <div class="seg small" id="focusModes"><button data-fm="AF-S">AF-S</button><button data-fm="AF-C">AF-C</button><button data-fm="MF">MF</button></div>
+        <div class="seg small" id="focusAreas"><button data-area="wide">Широкая</button><button data-area="point">Точка</button><button data-area="track">Трекинг</button></div>
+        <label class="sw"><input type="checkbox" id="swEye" checked> <span>Глаз AF — камера сама находит глаз человека</span></label>
+        <div class="ctl" id="cFocus"></div>
+      </section>
+
+      <section class="card">
+        <h2>Положение фотографа</h2>
+        <div class="ctl" id="cDist"></div>
+        <label class="sw"><input type="checkbox" id="swSteady" checked> <span>SteadyShot — стабилизатор матрицы (до 5,5 ступени)</span></label>
+        <label class="sw"><input type="checkbox" id="swTripod"> <span>Камера на штативе</span></label>
+        <label class="sw"><input type="checkbox" id="swPan"> <span id="panLabel">Проводка</span></label>
+      </section>
+
+      <section class="card">
+        <h2>Снимки <small id="shotCount"></small></h2>
+        <div class="gallery" id="gallery"><p class="note">Здесь появятся ваши кадры с разбором настроек.</p></div>
+      </section>
+    </aside>
+  </div>
+
+  <dialog id="photo" class="photo">
+    <div class="ph-inner">
+      <div class="ph-img"><img id="phImg" alt="Снимок"></div>
+      <div class="ph-side">
+        <div class="ph-exif" id="phExif"></div>
+        <div id="phMission"></div>
+        <canvas id="phHist" width="256" height="80" aria-label="Гистограмма"></canvas>
+        <ul class="ph-notes" id="phNotes"></ul>
+        <div class="ph-btns">
+          <button id="phPrev">←</button><button id="phNext">→</button>
+          <a id="phDl" download>Скачать</a>
+          <button id="phClose">Закрыть</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <div class="loading" id="loading">Готовлю сцену…</div>
+  <script type="module" src="app.js?v=5"></script>
+</body>
+</html>
