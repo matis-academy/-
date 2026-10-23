@@ -6,6 +6,7 @@
 <meta name="robots" content="noindex,nofollow">
 <title>Студия Пикселя · Matis Academy</title>
 <script src="https://telegram.org/js/telegram-web-app.js?59"></script>
+<script>/* язык RU/UA: выбор пользователя, иначе язык Telegram/браузера (Claude, 23.10.2026) */(function(){try{var L=document.documentElement.lang==="uk"?"uk":"ru",p=null;try{p=localStorage.getItem("px_lang");}catch(e){}if(!p&&L==="ru"){var w=window.Telegram&&Telegram.WebApp,u=w&&w.initDataUnsafe&&w.initDataUnsafe.user,lc=(u&&u.language_code)||navigator.language||"";if(/^uk/i.test(lc))p="uk";}if(p&&p!==L)location.replace((p==="uk"?"/app/uk/":"/app/")+location.search+location.hash);}catch(e){}})();</script>
 <style>
 @font-face{font-family:'Russo One';src:url(/wp-content/uploads/2026/10/RussoOne-Regular.ttf) format('truetype');font-display:swap}
 @font-face{font-family:'Montserrat';font-weight:400;src:url(/wp-content/uploads/2026/10/Montserrat-Regular-cyrillic.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
@@ -28,6 +29,9 @@ h1,h2,h3{font-family:'Russo One',Montserrat,sans-serif;font-weight:400;margin:0;
 .h h2{font-size:20px}
 .mut{color:var(--mut)}
 .card{background:var(--card);border-radius:20px;padding:16px}
+.lng{display:flex;justify-content:flex-end;gap:4px;margin:0 2px 8px}
+.lng button{font:600 11px/1 Montserrat,sans-serif;letter-spacing:.08em;color:var(--dim);padding:6px 10px;border-radius:12px;background:transparent}
+.lng button.on{background:var(--card);color:var(--tx)}
 /* ---------- студия ---------- */
 .scene{position:relative;border-radius:24px;overflow:hidden;background:radial-gradient(120% 90% at 50% 18%,#4a2f1e 0%,#2b1c13 48%,#1b1410 100%);aspect-ratio:1/1;max-height:420px;width:100%;user-select:none;touch-action:manipulation}
 .scene .floor{position:absolute;left:0;right:0;bottom:0;height:24%;background:linear-gradient(#24170f,#1a120d);border-top:1px solid #54392a}
@@ -161,6 +165,7 @@ h1,h2,h3{font-family:'Russo One',Montserrat,sans-serif;font-weight:400;margin:0;
 
 <!-- ===== СТУДИЯ ===== -->
 <section class="scr on" id="s-home" aria-label="Студия">
+  <div class="lng" id="lng" role="group" aria-label="Язык"><button data-l="ru">RU</button><button data-l="uk">UA</button></div>
   <div class="scene" id="scene">
     <div class="light"></div>
     <svg class="clap" viewBox="0 0 50 40" aria-hidden="true"><rect x="2" y="12" width="46" height="26" rx="3" fill="#2a2a2e"/><path d="M2 12 L46 4 L47.5 10 L3.5 18 Z" fill="#f2efe8"/><path d="M9 10.8 L14 4.2 M19 9 L24 2.4 M29 7.2 L34 .6 M39 5.4 L44 -1" stroke="#2a2a2e" stroke-width="3.2"/><rect x="7" y="22" width="36" height="2" fill="#54392a"/><rect x="7" y="29" width="24" height="2" fill="#54392a"/></svg>
@@ -364,15 +369,17 @@ var CFG={
   group:'https://t.me/academy_matis',
   // ID тем группы (число из ссылки на тему t.me/academy_matis/<ID>); 4-й элемент 1 — пометка «скоро»
   topics:[['General','#',null],['Обучение','🎓',16],['WIKI','📖',11],['Wedding','💍',15],['Color','🎨',14],['Разборы','🎬',12],['Q&A','✍️',10],['Монтаж','✂️',13],['Подкасты','🎙',128,1]],
-  up:'/wp-content/uploads/2026/10/'
+  up:'/wp-content/uploads/2026/10/',
+  site:'' // префикс страниц сайта: '' для RU, '/uk' для UA
 };
+var LANG=document.documentElement.lang==='uk'?'uk':'ru';
 var $=function(s,r){return (r||document).querySelector(s);}, $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));};
 function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e;}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function hap(k){try{if(!TG||!TG.HapticFeedback)return;if(k==='ok'||k==='err'||k==='warn')TG.HapticFeedback.notificationOccurred(k==='ok'?'success':k==='err'?'error':'warning');else TG.HapticFeedback.impactOccurred(k||'light');}catch(e){}}
 function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
 function open(u){hap();if(/^https:\/\/t\.me\//.test(u)){if(TG&&TG.openTelegramLink)TG.openTelegramLink(u);else window.open(u,'_blank');return;}
-  if(u.charAt(0)==='/')u=location.origin+u;
+  if(u.charAt(0)==='/')u=location.origin+(CFG.site&&!/^\/(wp-content|app|navigator-api)\//.test(u)?CFG.site:'')+u;
   if(TG&&TG.openLink&&IN_TG)TG.openLink(u);else window.open(u,'_blank');}
 function toast(t){var e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(function(){e.classList.remove('on');},2400);}
 var RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -615,7 +622,7 @@ var chat=(function(){
       v='';for(var j=0;j<22;j++)v+=A.charAt(r[j]&63);try{localStorage.setItem(k,v);}catch(e){}}return v;})();
   var ERR={daily_limit:'На сегодня я наговорился — лимит вопросов закончился. Возвращайся завтра! А игры работают и сейчас.',budget_exhausted:'Я прилёг отдохнуть и пока не отвечаю на вопросы. Загляни чуть позже.',paused:'Я прилёг отдохнуть и пока не отвечаю на вопросы. Загляни чуть позже.'};
   function api(path,data,done){var x=new XMLHttpRequest();x.open('POST','/navigator-api/pixel/'+path);x.setRequestHeader('Content-Type','application/json');x.setRequestHeader('X-Pixel-Request','1');x.timeout=45000;
-    x.onloadend=function(){var r=null;try{r=JSON.parse(x.responseText);}catch(e){}done(x.status,r);};x.send(JSON.stringify(data));}
+    x.onloadend=function(){var r=null;try{r=JSON.parse(x.responseText);}catch(e){}done(x.status,r);};data.lang=LANG;x.send(JSON.stringify(data));}
   function add(role,text,links){var m=el('div','m '+role);m.textContent=text;
     if(links&&links.length){var ls=el('div','ls');links.forEach(function(l){var b=el('button','',esc(l.t)+' →');b.onclick=function(){open(l.u);};ls.appendChild(b);});m.appendChild(ls);}
     box.appendChild(m);requestAnimationFrame(function(){m.scrollIntoView({block:'end',behavior:RM?'auto':'smooth'});});return m;}
@@ -641,6 +648,7 @@ function go(t){$$('.scr').forEach(function(s){s.classList.toggle('on',s.id==='s-
   window.scrollTo(0,0);if(t==='chat'){chat.init();$('#chatdot').classList.remove('on');}hap('soft');}
 $$('.tabs button').forEach(function(b){b.addEventListener('click',function(){go(b.dataset.t);});});
 $('#stk').onclick=function(){open(CFG.stickers);};
+$$('#lng button').forEach(function(b){b.classList.toggle('on',b.dataset.l===LANG);b.onclick=function(){if(b.dataset.l===LANG)return;hap();try{localStorage.setItem('px_lang',b.dataset.l);}catch(e){}location.replace((b.dataset.l==='uk'?'/app/uk/':'/app/')+location.search+location.hash);};});
 
 /* ---------- старт ---------- */
 $('#stkcat').innerHTML=PX.cat({eyes:'wink',mouth:'open',mouthOpen:.5,armR:212,armRlen:26,armRy:-6,hrot:-6});
