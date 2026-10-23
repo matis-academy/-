@@ -168,5 +168,22 @@
       '<rect x="40" y="466" width="432" height="10" rx="5" fill="#2b1c13"/>';
   } });
 
+  // 17. Табличка MATIS ACADEMY над головой (Claude, 23.10.2026)
+  L.push({ id: 'tablichka', emoji: '🎓', dur: 2.4, draw: function (t) {
+    var j = sin(t, 2), w = sin(t, 1);
+    var lenL = 42 + 2.2 * j + 1.6 * w, lenR = 42 + 2.2 * j - 1.6 * w, aL = 151, aR = 209, yS = 60;
+    function end(x, a, len) { var r = a * Math.PI / 180; return [x - len * Math.sin(r), yS + len * Math.cos(r)]; }
+    var pL = end(46, aL, lenL), pR = end(64, aR, lenR);
+    var cx = (pL[0] + pR[0]) / 2, cy = (pL[1] + pR[1]) / 2, rot = Math.atan2(pR[1] - pL[1], pR[0] - pL[0]) * 180 / Math.PI;
+    var sign = '<g transform="translate(' + f(cx) + ' ' + f(cy - 1.5) + ') rotate(' + f(rot) + ')">' +
+      '<rect x="-38" y="-35" width="76" height="35" rx="4.5" fill="#2b1c13" stroke="#f2efe8" stroke-width="1.6"/>' +
+      '<text x="0" y="-20" text-anchor="middle" font-family="Russo One" font-size="14.5" letter-spacing=".6" fill="#fd7e2f">MATIS</text>' +
+      '<text x="0" y="-6.2" text-anchor="middle" font-family="Russo One" font-size="11.2" letter-spacing=".5" fill="#f2efe8">ACADEMY</text></g>';
+    var o = { eyes: 'happy', mouth: 'open', mouthOpen: .7 + .2 * Math.abs(j), hdy: 3, hrot: 3 * w, armL: aL, armR: aR, armLlen: lenL, armRlen: lenR, armLy: -6, armRy: -6,
+      earL: -4 + 3 * j, earR: 4 - 3 * j, tail: 10 * sin(t, 2), behindHead: sign, breath: 1 + .015 * j };
+    var sp = '<g opacity="' + f(.5 + .5 * Math.max(0, sin(t, 1))) + '">' + sparkle(8, -24, .55) + '</g><g opacity="' + f(.5 + .5 * Math.max(0, sin(t, 1, .5))) + '">' + sparkle(104, -20, .5, '#fd7e2f') + '</g>';
+    return place(PX.cat(o) + sp, 0, 0, .84);
+  } });
+
   G.PXS = { list: L, X: X, Y: Y, S: S };
 })(typeof window !== 'undefined' ? window : globalThis);
