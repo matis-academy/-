@@ -109,7 +109,8 @@ h1,h2,h3{font-family:'Russo One',Montserrat,sans-serif;font-weight:400;margin:0;
 .lnk:after{content:'›';color:var(--dim);font-size:22px;line-height:1}
 .lnk.hero{background:linear-gradient(135deg,#3a271b,#2b1c13);border:1px solid var(--line)}
 .lnk.hero .ic{background:var(--acc);color:#fff}
-.tops{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.tops{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tp .soon{display:block;margin-top:4px;font-size:10px;font-weight:600;opacity:.6;text-transform:lowercase}
 .tp{background:var(--card);border-radius:16px;padding:12px 4px 10px;text-align:center;font-size:12px;font-weight:600;line-height:1.2}
 .tp i{display:block;font-style:normal;font-size:24px;line-height:1.2;margin-bottom:6px}
 /* ---------- чат ---------- */
@@ -361,8 +362,8 @@ var CFG={
   web:'https://matis.academy/app/',
   stickers:'https://t.me/addstickers/pixel_matis_by_Claude_tel_matis_bot',
   group:'https://t.me/academy_matis',
-  // ID тем группы (число из ссылки на тему t.me/academy_matis/<ID>); пока не заданы — открывается вся группа
-  topics:[['General','#',null],['Обучение','🎓',null],['WIKI','📖',null],['Wedding','💍',null],['Color','🎨',null],['Разборы','🎬',null],['Q&A','✍️',null],['Монтаж','✂️',null]],
+  // ID тем группы (число из ссылки на тему t.me/academy_matis/<ID>); 4-й элемент 1 — пометка «скоро»
+  topics:[['General','#',null],['Обучение','🎓',16],['WIKI','📖',11],['Wedding','💍',15],['Color','🎨',14],['Разборы','🎬',12],['Q&A','✍️',10],['Монтаж','✂️',13],['Подкасты','🎙',128,1]],
   up:'/wp-content/uploads/2026/10/'
 };
 var $=function(s,r){return (r||document).querySelector(s);}, $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));};
@@ -604,7 +605,7 @@ function renderSchool(){
          ['✍️','Блог','Статьи о съёмке, монтаже, цвете и профессии.','/blog/']];
   function fill(box,arr){box.innerHTML='';arr.forEach(function(x){var b=el('button','lnk'+(x[4]?' hero':''),'<div class="ic">'+x[0]+'</div><div><b>'+esc(x[1])+'</b><span>'+esc(x[2])+'</span></div>');b.onclick=function(){open(x[3]);};box.appendChild(b);});}
   fill($('#courses'),C);fill($('#learn'),L);
-  var t=$('#tops');t.innerHTML='';CFG.topics.forEach(function(x){var b=el('button','tp','<i>'+x[1]+'</i>'+esc(x[0]));b.onclick=function(){open(CFG.group+(x[2]?'/'+x[2]:''));};t.appendChild(b);});}
+  var t=$('#tops');t.innerHTML='';CFG.topics.forEach(function(x){var b=el('button','tp','<i>'+x[1]+'</i>'+esc(x[0])+(x[3]?'<span class="soon">скоро</span>':''));b.onclick=function(){open(CFG.group+(x[2]?'/'+x[2]:''));};t.appendChild(b);});}
 
 /* ---------- чат ---------- */
 var chat=(function(){
