@@ -105,6 +105,48 @@ h1,h2,h3{font-family:'Russo One',Montserrat,sans-serif;font-weight:400;margin:0;
 .res .sc span{color:var(--dim);font-size:26px}
 .res .xp{display:inline-block;margin-top:10px;font-weight:600;color:var(--acc);background:var(--card);border-radius:20px;padding:6px 14px}
 .res p{color:var(--mut);margin:10px auto 0;max-width:340px}
+.gc{cursor:pointer}
+.gc .lvs{display:flex;gap:6px;margin-top:8px}
+.gc .lvs button{font:600 11px/1 Montserrat,sans-serif;padding:6px 10px;border-radius:12px;background:var(--surf);color:var(--dim)}
+.gc .lvs button.on{background:var(--acc);color:#fff}
+.gc .lvs button.lock{opacity:.7}
+.gday{display:grid;grid-template-columns:88px 1fr 12px;gap:14px;align-items:center;width:100%;text-align:left;background:linear-gradient(135deg,#3a271b,#2b1c13);border:1px solid var(--line);border-radius:20px;padding:12px}
+.gday .ph{width:88px;height:88px;border-radius:14px;background:#000 center/cover}
+.gday h3{font-size:16px;margin:6px 0 4px}
+.gday p{margin:0;font-size:13px;color:var(--mut);line-height:1.4}
+.gday:after{content:'›';color:var(--dim);font-size:22px;line-height:1}
+.gday.done{border-color:transparent;background:var(--card)}
+.gday.done .ph{opacity:.6}
+.frame img.im,.frame img.okim{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.frame img.okim{clip-path:inset(0 0 0 100%);-webkit-clip-path:inset(0 0 0 100%)}
+.frame .lbl{position:absolute;bottom:10px;font:600 11px/1 Montserrat,sans-serif;color:#fff;background:rgba(0,0,0,.55);border-radius:8px;padding:5px 8px;opacity:0;transition:opacity .3s;pointer-events:none}
+.frame .lbl.l{left:10px}
+.frame .lbl.r{right:10px;background:rgba(46,58,31,.9)}
+.frame .hnd{position:absolute;top:0;bottom:0;left:100%;width:0;opacity:0;transition:opacity .3s;pointer-events:none}
+.frame .hnd:before{content:'';position:absolute;top:0;bottom:0;left:-1px;width:2px;background:#fff;box-shadow:0 0 6px rgba(0,0,0,.45)}
+.frame .hnd i{position:absolute;top:50%;left:-17px;width:34px;height:34px;margin-top:-17px;border-radius:50%;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.4)}
+.frame .hnd i:before,.frame .hnd i:after{content:'';position:absolute;top:12px;border:5px solid transparent}
+.frame .hnd i:before{left:5px;border-right:6px solid #2b1c13;border-left:0}
+.frame .hnd i:after{right:5px;border-left:6px solid #2b1c13;border-right:0}
+.frame.rev{cursor:ew-resize;touch-action:pan-y}
+.frame.rev .lbl,.frame.rev .hnd,.frame.clean .lbl.r{opacity:1}
+.cmb{font:600 12px/1 Montserrat,sans-serif;color:var(--acc);background:var(--card);border-radius:12px;padding:6px 9px;opacity:0;transform:scale(.8);transition:.25s;white-space:nowrap}
+.cmb.on{opacity:1;transform:none}
+.gtop .k{white-space:nowrap}
+.ex .vr{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.ex .vr .v{margin:0}
+.ex .pxa{width:40px;height:40px;border-radius:50%;background:var(--cream);display:grid;place-items:center;flex:none;overflow:hidden}
+.ex .pxa svg{width:38px;height:38px}
+.ex .gx{margin-left:auto;font:600 12px/1 Montserrat,sans-serif;color:var(--acc);background:var(--card);border-radius:12px;padding:6px 9px;white-space:nowrap}
+.ex .sl{font-size:12px;color:var(--dim);margin:-2px 0 8px}
+.lad{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px;margin:4px 0 10px}
+.lad figure{margin:0;text-align:center;opacity:.5}
+.lad figure.on{opacity:1}
+.lad img{width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:8px;display:block;border:2px solid transparent;background:#000}
+.lad figure.on img{border-color:var(--acc)}
+.lad figcaption{font-size:10px;line-height:1.2;margin-top:4px;color:var(--mut)}
+.opts.six .opt{min-height:48px;padding:11px 12px;font-size:13.5px}
+.res .po{color:var(--ok);font-weight:600}
 /* ---------- школа ---------- */
 .lnk{display:grid;grid-template-columns:44px 1fr 16px;gap:14px;align-items:center;background:var(--card);border-radius:18px;padding:14px;margin-bottom:10px;text-decoration:none;width:100%;text-align:left}
 .lnk .ic{width:44px;height:44px;border-radius:12px;background:var(--surf);display:grid;place-items:center;font-size:22px}
@@ -225,7 +267,7 @@ h1,h2,h3{font-family:'Russo One',Montserrat,sans-serif;font-weight:400;margin:0;
 <section class="scr" id="s-games" aria-label="Игры">
   <div class="h" style="margin-top:6px"><div><div class="k">Тренируй глаз</div><h2 style="margin-top:6px;font-size:24px">Игры Пикселя</h2></div></div>
   <div class="gl" id="gl"></div>
-  <p class="mut" style="font-size:13px;margin:16px 4px 0">За каждый верный ответ — XP. Пройди без ошибок и получи достижение. Результатом можно похвастаться в чате.</p>
+  <p class="mut" id="ghint" style="font-size:13px;margin:16px 4px 0">За каждый верный ответ — XP. Пройди без ошибок и получи достижение. Результатом можно похвастаться в чате.</p>
 </section>
 
 <!-- ===== ШКОЛА ===== -->
@@ -410,7 +452,10 @@ var scene=(function(){
   return {say:say,play:play,think:function(v){think=v;},sleeping:function(){return sleeping;}};
 })();
 
-/* ---------- игры ---------- */
+/* ---------- игры v2 (Claude, 01.11.2026): настоящие кадры, уровни «Новичок/Профи», до/после, комбо, кадр дня ---------- */
+var UKG=LANG==='uk';function gt(r,u){return UKG?u:r;}
+var GM='/app/games/',GV='?v=1';  // кадры лежат в репозитории app/games/, deploy-app.sh копирует их на сайт
+var MAN={det:[],kr:[],cov:0};/*MAN*/
 var DEF={
   ok:{l:'Всё в порядке',e:'Экспозиция, баланс белого и фокус в норме. Иногда лучший ответ — «ничего не трогать».'},
   over:{l:'Пересвет',e:'Светлые участки «выбиты» в белое — деталей там уже нет, и на монтаже их не вернуть. Снизь ISO, прикрой диафрагму или поставь ND-фильтр.',w:'/wiki/video/peresvet/',css:'brightness(1.75) contrast(1.4) saturate(.8)'},
@@ -422,20 +467,30 @@ var DEF={
   tilt:{l:'Завален горизонт',e:'Линии зданий и земли наклонены — у зрителя ощущение «крена». Включи сетку или уровень в камере, а на монтаже можно выровнять.',tr:'rotate(8deg) scale(1.3)'},
   noise:{l:'Шум от высокого ISO',e:'В тёмной сцене ISO задрано — в кадре зерно и грязь в тенях. Добавь света, открой диафрагму, а ISO держи пониже.',w:'/wiki/video/ekspozitsiya/',css:'brightness(.62) saturate(.7) contrast(1.05)',noise:1}
 };
-var DET_PH=['foto-garderob-2-park.webp','foto-krupnost-2-srednii.webp','foto-u3-kompoziciya-treti-vozduh.webp','foto-polden-2-otkrytaya-ten.webp','foto-u3-kompoziciya-linii.webp','foto-garderob-1-urban.webp','foto-u3-kompoziciya-tri-plana.webp','lokatsiya-kadr-b-reshenie.webp','lesson2-mb-15.jpg','lesson2-ref-01.jpg','foto-krupnost-3-krupnyi.webp','foto-garderob-3-kafe.webp'];
-var NOISE_OLD='url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27240%27 height=%27240%27%3E%3Cfilter id=%27n%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%27.95%27 numOctaves=%272%27 stitchTiles=%27stitch%27/%3E%3CfeColorMatrix values=%270 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 1.4 -.35%27/%3E%3C/filter%3E%3Crect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23n)%27/%3E%3C/svg%3E")';
-var NOISE=(function(){try{var c=document.createElement('canvas');c.width=360;c.height=240;var x=c.getContext('2d'),d=x.createImageData(360,240),a=d.data;
-  for(var i=0;i<a.length;i+=4){var v=Math.random()*255|0,ch=Math.random()<.35;a[i]=ch?v:v;a[i+1]=ch?(Math.random()*255|0):v;a[i+2]=ch?(Math.random()*255|0):v;a[i+3]=255;}
-  x.putImageData(d,0,0);return 'url('+c.toDataURL('image/png')+')';}catch(e){return 'none';}})();
-var TILT_PH=['foto-garderob-1-urban.webp','foto-u3-kompoziciya-linii.webp','lokatsiya-kadr-b-reshenie.webp','foto-polden-2-otkrytaya-ten.webp','foto-krupnost-2-srednii.webp','foto-u3-kompoziciya-tri-plana.webp'];
-// крупности: [файл, ответ, соотношение сторон w/h, обрезка [cx,cy,w] долями кадра или null]
-var KR=[['foto-krupnost-1-obshchii.webp','общий',1.5],['foto-krupnost-2-srednii.webp','средний',1.5],['foto-krupnost-3-krupnyi.webp','крупный',1.5],['foto-krupnost-4-detal.webp','деталь',1.5],
-  ['lesson2-mb-11.jpg','общий',.8],['lesson2-ref-05.jpg','общий',.8],['svet-zolotoi-chas-dlinnaya-ten.webp','общий',1.5],['foto-u3-kompoziciya-linii.webp','общий',1.5],['lesson3-pose-07-natural-step-good.webp','общий',.667],
-  ['lesson2-mb-15.jpg','средний',.8],['foto-polden-2-otkrytaya-ten.webp','средний',1.5],
-  ['lesson2-ref-01.jpg','крупный',.8],['lesson2-mb-13.jpg','крупный',.8],['foto-polden-2-otkrytaya-ten.webp','крупный',1.5,[.35,.27,.24]],['foto-garderob-3-kafe.webp','крупный',1.5,[.4,.3,.34]],
-  ['foto-krupnost-2-srednii.webp','деталь',1.5,[.52,.5,.24]],['lesson2-mb-01.jpg','деталь',.8,[.66,.6,.42]]];
-var KR_E={'общий':'Общий план — человек виден целиком и много окружения. Он рассказывает, где мы находимся.','средний':'Средний план — человек примерно по пояс. Видны жесты и эмоции, но ещё понятно окружение.',
-  'крупный':'Крупный план — лицо и плечи. Всё внимание на эмоции героя.','деталь':'Деталь — один предмет или часть тела: руки, чашка, цветы. Детали добавляют атмосферу и «склеивают» монтаж.'};
+var DLABS=['Всё в порядке','Пересвет','Недосвет','Баланс белого','Мимо фокуса','Смаз от движения','Завален горизонт','Шум от высокого ISO'];
+function detSrc(sc,k,lv){var p=lv==='pro'&&/^(over|under|cold|warm|noise|tilt)$/.test(k);return GM+'det-'+sc+'-'+k+(p?'-pro':'')+'.webp'+GV;}
+// крупности
+var KP=['obshchii','sredne-obshchii','srednii','sredne-krupnyi','krupnyi','detal'],KB=['obshchii','srednii','krupnyi','detal'];
+var KL=UKG?{obshchii:'Загальний','sredne-obshchii':'Середньо-загальний',srednii:'Середній','sredne-krupnyi':'Середньо-великий',krupnyi:'Великий',detal:'Деталь'}
+  :{obshchii:'Общий','sredne-obshchii':'Средне-общий',srednii:'Средний','sredne-krupnyi':'Средне-крупный',krupnyi:'Крупный',detal:'Деталь'};
+var KX=UKG?{obshchii:'Загальний план — людина повністю і багато оточення. Він розповідає, де ми.',
+  'sredne-obshchii':'Середньо-загальний — людина приблизно від колін. Видно фігуру й рух, оточення ще читається.',
+  srednii:'Середній план — людина приблизно до пояса. Видно жести й емоції, але ще зрозуміло оточення.',
+  'sredne-krupnyi':'Середньо-великий — від грудей і вище. Головне — обличчя, але видно плечі й трохи рук.',
+  krupnyi:'Великий план — обличчя і плечі. Уся увага на емоціях героя.',
+  detal:'Деталь — один предмет або частина тіла: руки, чашка, квіти. Деталі додають атмосферу й «склеюють» монтаж.'}
+ :{obshchii:'Общий план — человек целиком и много окружения. Он рассказывает, где мы находимся.',
+  'sredne-obshchii':'Средне-общий — человек примерно от колен. Видна фигура и движение, окружение ещё читается.',
+  srednii:'Средний план — человек примерно по пояс. Видны жесты и эмоции, но ещё понятно окружение.',
+  'sredne-krupnyi':'Средне-крупный — от груди и выше. Главное — лицо, но видны плечи и немного рук.',
+  krupnyi:'Крупный план — лицо и плечи. Всё внимание на эмоции героя.',
+  detal:'Деталь — один предмет или часть тела: руки, чашка, цветы. Детали добавляют атмосферу и «склеивают» монтаж.'};
+// запасной набор, пока нет новых серий крупностей: [файл, план, соотношение сторон, обрезка]
+var OLDKR=[['foto-krupnost-1-obshchii.webp','obshchii',1.5],['foto-krupnost-2-srednii.webp','srednii',1.5],['foto-krupnost-3-krupnyi.webp','krupnyi',1.5],['foto-krupnost-4-detal.webp','detal',1.5],
+  ['lesson2-mb-11.jpg','obshchii',.8],['lesson2-ref-05.jpg','obshchii',.8],['svet-zolotoi-chas-dlinnaya-ten.webp','obshchii',1.5],['foto-u3-kompoziciya-linii.webp','obshchii',1.5],
+  ['lesson2-mb-15.jpg','srednii',.8],['foto-polden-2-otkrytaya-ten.webp','srednii',1.5],
+  ['lesson2-ref-01.jpg','krupnyi',.8],['lesson2-mb-13.jpg','krupnyi',.8],['foto-polden-2-otkrytaya-ten.webp','krupnyi',1.5,[.35,.27,.24]],['foto-garderob-3-kafe.webp','krupnyi',1.5,[.4,.3,.34]],
+  ['foto-krupnost-2-srednii.webp','detal',1.5,[.52,.5,.24]],['lesson2-mb-01.jpg','detal',.8,[.66,.6,.42]]];
 var BL=[
  ['Снимаешь 25 к/с. Какую выдержку поставить по правилу 1/(2×FPS)?',['1/50','1/25','1/200','1/1000'],'Двойная частота кадров: 25 × 2 = 50, значит 1/50. Движение выглядит естественно.','/wiki/video/vyderzhka/'],
  ['А если снимаешь 50 к/с?',['1/100','1/50','1/25','1/500'],'50 × 2 = 100 → выдержка 1/100.','/wiki/video/vyderzhka/'],
@@ -454,71 +509,147 @@ var BL=[
  ['Как называют дополнительные кадры — детали, атмосферу — для монтажа?',['Перебивки (B-roll)','Дубли','Тайм-лапс','Хромакей'],'Перебивки помогают склеить историю и скрыть неудачные места.','/wiki/video/b-roll/'],
  ['Мелкая клетка на рубашке «рябит» в кадре. Как это называется?',['Муар','Фликер','Перешарп','Виньетка'],'Муар — интерференция мелкого узора с сеткой матрицы.','/wiki/video/muar/']
 ];
+var GT=UKG?{det:'Що не так із кадром?',detS:'Знайди помилку: пересвіт, баланс білого, фокус, шум…',kr:'Крупності',krS:'Загальний, середній, великий чи деталь? Вгадай план.',
+  bl:'Бліц за термінами',blS:'FPS, витримка, ISO, Log — на час.',tag8:'8 кадрів',tagT:'на час',base:'Новачок',pro:'Профі',best:'Рекорд',none:'Ще не грав',
+  lock:'Профі — після 8 з 8',qDet:'Що не так із цим кадром?',qKr:'Яка це крупність?',right:['Точно!','В яблучко!','Мур, правильно!','Око-діамант!'],wrong:'Не зовсім',time:'Час вийшов',
+  more:'Детальніше у Wiki →',next:'Далі',res:'Результат',done:'Готово',err:'Помилка',good:'Як треба',clean:'Без помилок ✓',combo:'Комбо',slide:'Потягни повзунок — порівняй з правильним кадром',
+  day:'Кадр дня',dayQ:'Що не так із цим кадром?',dayGo:'Відповідай сьогодні — збережи серію',dayDone:'Готово ✓ Новий кадр завтра',dayAgain:'Новий кадр буде завтра 😺',
+  of:'з',newRec:'Новий рекорд! Було ',maxc:'Найкраще комбо',proOpen:'Відкрито рівень «Профі»!',playPro:'Грати на «Профі»',share:'Кинути виклик другові',again:'Зіграти ще',back:'До ігор',close:'Закрити',
+  lines:{ura:'Ідеально! Ти бачиш кадр як профі.',mur:'Чудово! Ще трохи — і буде 8 з 8.',think:'Непогано! Зіграй ще раз — запам’ятається швидше.',sad:'Нічого страшного: так і вчаться. Спробуй ще!'},
+  shareT:function(n,t,g,l){return 'Я набрав '+n+' з '+t+' у грі «'+g+'»'+(l?' (Профі)':'')+' у кота Пікселя з Matis Academy 🐈‍⬛ Зможеш краще?';},
+  hint:'За кожну правильну відповідь — XP, за серію з 3 — подвійний. Пройди без помилок, відкрий «Профі» й отримай досягнення.'}
+ :{det:'Что не так с кадром?',detS:'Найди ошибку: пересвет, баланс белого, фокус, шум…',kr:'Крупности',krS:'Общий, средний, крупный или деталь? Угадай план.',
+  bl:'Блиц по терминам',blS:'FPS, выдержка, ISO, Log — на время.',tag8:'8 кадров',tagT:'на время',base:'Новичок',pro:'Профи',best:'Рекорд',none:'Ещё не играл',
+  lock:'Профи — после 8 из 8',qDet:'Что не так с этим кадром?',qKr:'Какая это крупность?',right:['Точно!','В яблочко!','Мур, верно!','Глаз-алмаз!'],wrong:'Не совсем',time:'Время вышло',
+  more:'Подробнее в Wiki →',next:'Дальше',res:'Результат',done:'Готово',err:'Ошибка',good:'Как надо',clean:'Без ошибок ✓',combo:'Комбо',slide:'Потяни ползунок — сравни с правильным кадром',
+  day:'Кадр дня',dayQ:'Что не так с этим кадром?',dayGo:'Ответь сегодня — сохрани серию',dayDone:'Готово ✓ Новый кадр завтра',dayAgain:'Новый кадр будет завтра 😺',
+  of:'из',newRec:'Новый рекорд! Было ',maxc:'Лучшее комбо',proOpen:'Открыт уровень «Профи»!',playPro:'Играть на «Профи»',share:'Бросить вызов другу',again:'Сыграть ещё',back:'К играм',close:'Закрыть',
+  lines:{ura:'Идеально! Ты видишь кадр как профи.',mur:'Отлично! Ещё чуть-чуть — и будет 8 из 8.',think:'Неплохо! Сыграй ещё раз — запомнится быстрее.',sad:'Ничего страшного: так и учатся. Попробуй ещё!'},
+  shareT:function(n,t,g,l){return 'Я набрал '+n+' из '+t+' в игре «'+g+'»'+(l?' (Профи)':'')+' у кота Пикселя из Matis Academy 🐈‍⬛ Сможешь лучше?';},
+  hint:'За каждый верный ответ — XP, за серию из 3 — двойной. Пройди без ошибок, открой «Профи» и получи достижение.'};
+ACH.push(['pdet','🔬',gt('Профи кадра','Профі кадру')],['pkr','🎬',gt('Профи крупностей','Профі крупностей')],['d3','📸',gt('Кадр дня ×3','Кадр дня ×3')],['d7','🏆',gt('Неделя кадров','Тиждень кадрів')]);
+ACH_HOW.pdet=gt('8 из 8 на «Профи» в «Что не так с кадром?»','8 з 8 на «Профі» у «Що не так із кадром?»');
+ACH_HOW.pkr=gt('8 из 8 на «Профи» в «Крупностях»','8 з 8 на «Профі» у «Крупностях»');
+ACH_HOW.d3=gt('3 дня подряд отвечать на «Кадр дня»','3 дні поспіль відповідати на «Кадр дня»');
+ACH_HOW.d7=gt('7 дней подряд отвечать на «Кадр дня»','7 днів поспіль відповідати на «Кадр дня»');
 var GAMES=[
- {id:'det',ttl:'Что не так с кадром?',sub:'Найди ошибку: пересвет, баланс белого, фокус, шум…',img:'foto-garderob-2-park.webp',tag:'8 кадров'},
- {id:'kr',ttl:'Крупности',sub:'Общий, средний, крупный или деталь? Угадай план.',img:'foto-krupnost-3-krupnyi.webp',tag:'8 кадров'},
- {id:'bl',ttl:'Блиц по терминам',sub:'FPS, выдержка, ISO, Log — 10 секунд на ответ.',img:'lesson2-ref-07.jpg',tag:'на время'}
+ {id:'det',ttl:GT.det,sub:GT.detS,img:MAN.cov?GM+'cover-det.webp'+GV:CFG.up+'foto-garderob-2-park.webp',tag:GT.tag8,lv:1},
+ {id:'kr',ttl:GT.kr,sub:GT.krS,img:MAN.cov?GM+'cover-kr.webp'+GV:CFG.up+'foto-krupnost-3-krupnyi.webp',tag:GT.tag8,lv:1},
+ {id:'bl',ttl:GT.bl,sub:GT.blS,img:MAN.cov?GM+'cover-bl.webp'+GV:CFG.up+'lesson2-ref-07.jpg',tag:GT.tagT,lv:1}
 ];
-function renderGames(){var box=$('#gl');box.innerHTML='';GAMES.forEach(function(g){var b=S.best[g.id];
-  var c=el('button','gc','<div class="ph" style="background-image:url('+CFG.up+g.img+')"><em>'+g.tag+'</em></div><div><h3>'+esc(g.ttl)+'</h3><p>'+esc(g.sub)+'</p><div class="best">'+(b!=null?'Лучший результат: '+b+' из 8':'Ещё не играл')+'</div></div>');
-  c.addEventListener('click',function(){startGame(g.id);});box.appendChild(c);});}
+GAMES=GAMES.filter(function(g){return g.id!=='det'||MAN.det.length;});
+function lvOf(id){return (S.lv&&S.lv[id])==='pro'&&proOpen(id)?'pro':'base';}
+function proOpen(id){return S.best[id]===8||S.best[id+'_pro']!=null;}
+function dayNum(){var d=new Date();return Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5);}
+function dayRound(){var n=dayNum(),ks=['over','focus','cold','tilt','noise','under','motion','warm','ok'],k=ks[(n*5+1)%ks.length],sc=MAN.det[(n*3)%MAN.det.length];
+  var right=DEF[k].l;return {t:'det',k:k,sc:sc,src:detSrc(sc,k,'base'),ok:detSrc(sc,'ok','base'),opts:shuffle([right].concat(shuffle(DLABS.filter(function(x){return x!==right;})).slice(0,3))),right:right};}
+function dayState(){var d=S.day||{last:'',streak:0,done:''},y=today(new Date(Date.now()-864e5));if(d.last&&d.last!==today()&&d.last!==y)d.streak=0;return d;}
+function renderGames(){var box=$('#gl');box.innerHTML='';
+  if(MAN.det.length){var ds=dayState(),dn=ds.done===today(),r=dayRound();
+    var c=el('button','gday'+(dn?' done':''),'<div class="ph" style="background-image:url('+r.src+')"></div><div><div class="k">'+GT.day+(ds.streak?' · 🔥 '+ds.streak:'')+'</div><h3>'+esc(GT.dayQ)+'</h3><p>'+esc(dn?GT.dayDone:GT.dayGo)+'</p></div>');
+    c.addEventListener('click',function(){if(dayState().done===today()){toast(GT.dayAgain);hap();return;}startGame('day');});box.appendChild(c);}
+  GAMES.forEach(function(g){var b=S.best[g.id],bp=S.best[g.id+'_pro'],lv=lvOf(g.id),po=proOpen(g.id);
+    var bt=b!=null?GT.best+': '+b+' '+GT.of+' 8'+(bp!=null?' · '+GT.pro+': '+bp+' '+GT.of+' 8':''):GT.none;
+    var c=el('div','gc','<div class="ph" style="background-image:url('+g.img+')"><em>'+esc(g.tag)+'</em></div><div><h3>'+esc(g.ttl)+'</h3><p>'+esc(g.sub)+'</p><div class="best">'+esc(bt)+'</div>'+
+      '<div class="lvs"><button data-l="base" class="'+(lv==='base'?'on':'')+'">'+GT.base+'</button><button data-l="pro" class="'+(lv==='pro'?'on':'')+(po?'':' lock')+'">'+GT.pro+(po?'':' 🔒')+'</button></div></div>');
+    c.setAttribute('role','button');c.tabIndex=0;
+    c.addEventListener('click',function(){startGame(g.id);});
+    $$('.lvs button',c).forEach(function(x){x.addEventListener('click',function(e){e.stopPropagation();var l=x.dataset.l;
+      if(l==='pro'&&!proOpen(g.id)){toast(GT.lock);hap('warn');return;}S.lv=S.lv||{};S.lv[g.id]=l;save();hap();renderGames();});});
+    box.appendChild(c);});}
 
 var G=null;
 function gOpen(){$('#game').classList.add('on');document.body.style.overflow='hidden';if(TG&&TG.BackButton){TG.BackButton.show();}}
 function gClose(){$('#game').classList.remove('on');document.body.style.overflow='';if(TG&&TG.BackButton)TG.BackButton.hide();if(G&&G.timer)cancelAnimationFrame(G.timer);G=null;renderGames();}
 if(TG&&TG.BackButton)TG.BackButton.onClick(function(){gClose();});
-function startGame(id){hap('medium');var rounds=[];
-  if(id==='det'){var kinds=shuffle(['over','under',Math.random()<.5?'cold':'warm','focus','motion','tilt','noise','ok']),ph=shuffle(DET_PH);
-    ph=ph.filter(function(x){return x!==TILT_PH[0];});var tph=TILT_PH[Math.floor(Math.random()*TILT_PH.length)];ph=ph.filter(function(x){return x!==tph;});
-    rounds=kinds.map(function(k,i){var labs=['Всё в порядке','Пересвет','Недосвет','Баланс белого','Мимо фокуса','Смаз от движения','Завален горизонт','Шум от высокого ISO'];
-      var right=DEF[k].l,opts=shuffle([right].concat(shuffle(labs.filter(function(x){return x!==right;})).slice(0,3)));return {k:k,ph:k==='tilt'?tph:ph[i%ph.length],opts:opts,right:right};});}
-  if(id==='kr'){var pool=shuffle(KR),need={'общий':2,'средний':2,'крупный':2,'деталь':2},pick=[];
-    pool.forEach(function(x){if(need[x[1]]>0&&pick.length<8){need[x[1]]--;pick.push(x);}});pool.forEach(function(x){if(pick.length<8&&pick.indexOf(x)<0)pick.push(x);});
-    rounds=shuffle(pick).map(function(x){return {kr:x,opts:['общий','средний','крупный','деталь'],right:x[1]};});}
-  if(id==='bl'){rounds=shuffle(BL).slice(0,8).map(function(q){return {bl:q,opts:shuffle(q[1]),right:q[1][0]};});}
-  G={id:id,rounds:rounds,i:0,res:[],timer:0};gOpen();round();}
+function mkDet(lv){var ks=shuffle(['over','under',Math.random()<.5?'cold':'warm','focus','motion','tilt','noise','ok']),sc=shuffle(MAN.det),n=lv==='pro'?6:4;
+  return ks.map(function(k,i){var s=sc[i%sc.length],right=DEF[k].l;
+    return {t:'det',k:k,sc:s,src:detSrc(s,k,lv),ok:detSrc(s,'ok',lv),opts:shuffle([right].concat(shuffle(DLABS.filter(function(x){return x!==right;})).slice(0,n-1))),right:right};});}
+function mkKr(lv){var plans=lv==='pro'&&MAN.kr.length?KP:KB;
+  if(!MAN.kr.length){var pool=shuffle(OLDKR),need={obshchii:2,srednii:2,krupnyi:2,detal:2},pick=[];
+    pool.forEach(function(x){if(need[x[1]]>0&&pick.length<8){need[x[1]]--;pick.push(x);}});
+    return shuffle(pick).map(function(x){return {t:'kr',old:x,right:x[1],opts:KB.slice(),plans:null};});}
+  var ps=shuffle(lv==='pro'?KP.concat(shuffle(KP).slice(0,2)):KB.concat(KB)),sc=shuffle(MAN.kr);
+  return ps.map(function(p,i){var s=sc[i%sc.length];return {t:'kr',sc:s,src:GM+'kr-'+s+'-'+p+'.webp'+GV,right:p,opts:plans.slice(),plans:plans};});}
+function startGame(id,lvf){hap('medium');var lv=id==='day'?'base':(lvf||lvOf(id)),rounds=[];
+  if(id==='det')rounds=mkDet(lv);
+  if(id==='day')rounds=[dayRound()];
+  if(id==='kr')rounds=mkKr(lv);
+  if(id==='bl'){rounds=shuffle(BL).slice(0,8).map(function(q){return {t:'bl',bl:q,opts:shuffle(q[1]),right:q[1][0]};});}
+  G={id:id,lv:lv,rounds:rounds,i:0,res:[],timer:0,c:0,maxc:0,xp:0};gOpen();round();}
 function cropStyle(x){var ar=x[2],c=x[3];if(!c)return 'background-image:url('+CFG.up+x[0]+');background-size:cover;background-position:center';
   var box=1.5,w=c[2],h=w*ar/box;if(h>1){h=1;w=box/ar;}var px=(c[0]-w/2)/(1-w),py=(c[1]-h/2)/(1-h);
   return 'background-image:url('+CFG.up+x[0]+');background-size:'+(100/w).toFixed(1)+'% auto;background-position:'+(Math.max(0,Math.min(1,px))*100).toFixed(1)+'% '+(Math.max(0,Math.min(1,py))*100).toFixed(1)+'%';}
-function round(){var r=G.rounds[G.i],box=$('#gin'),gm=GAMES.filter(function(x){return x.id===G.id;})[0];
-  var dots='';for(var i=0;i<G.rounds.length;i++)dots+='<i class="'+(i<G.res.length?(G.res[i]?'ok':'no'):i===G.i?'cur':'')+'"></i>';
-  var h='<div class="gtop"><button class="x" id="gx" aria-label="Закрыть">✕</button><div class="dots">'+dots+'</div><div class="k">'+(G.i+1)+' / '+G.rounds.length+'</div></div>';
-  if(G.id==='det'){var d=DEF[r.k];h+='<div class="frame"><div class="img" style="background-image:url('+CFG.up+r.ph+');'+(d.css?'filter:'+d.css+';':'')+(d.tr?'transform:'+d.tr+';':'')+'"></div>'+(d.noise?'<div class="noise" style="background-image:'+NOISE+'"></div>':'')+'<div class="hud">REC</div></div><div class="q">Что не так с этим кадром?</div>';}
-  if(G.id==='kr'){var tall=r.kr[2]<1&&!r.kr[3];h+='<div class="frame"'+(tall?' style="aspect-ratio:'+r.kr[2]+';max-width:'+Math.round(380*r.kr[2])+'px;margin:0 auto"':'')+'><div class="img" style="'+cropStyle(r.kr)+'"></div><div class="hud">REC</div></div><div class="q">Какая это крупность?</div>';}
-  if(G.id==='bl'){h+='<div class="q" style="margin-top:22px;font-size:20px">'+esc(r.bl[0])+'</div><div class="timer"><i id="tm"></i></div>';}
-  h+='<div class="opts'+(G.id==='bl'?' one':'')+'">'+r.opts.map(function(o){return '<button class="opt">'+esc(o.charAt(0).toUpperCase()+o.slice(1))+'</button>';}).join('')+'</div><div class="ex" id="ex"></div>';
+function optLab(o){return KL[o]||(o.charAt(0).toUpperCase()+o.slice(1));}
+function preload(r){if(!r)return;[r.src,r.ok].forEach(function(u){if(u){var i=new Image();i.src=u;}});}
+function round(){var r=G.rounds[G.i],box=$('#gin');
+  var dots='';if(G.rounds.length>1)for(var i=0;i<G.rounds.length;i++)dots+='<i class="'+(i<G.res.length?(G.res[i]?'ok':'no'):i===G.i?'cur':'')+'"></i>';
+  var h='<div class="gtop"><button class="x" id="gx" aria-label="'+GT.close+'">✕</button><div class="dots">'+dots+'</div><span class="cmb'+(G.c>=3?' on':'')+'" id="cmb">'+GT.combo+' ×'+G.c+' 🔥</span><div class="k">'+
+    (G.id==='day'?GT.day:(G.i+1)+' / '+G.rounds.length)+(G.lv==='pro'?' · '+GT.pro:'')+'</div></div>';
+  if(r.t==='det')h+='<div class="frame cmp" id="fr"><img class="im" src="'+r.src+'" alt="" draggable="false"><img class="okim" src="'+r.ok+'" alt="" draggable="false"><div class="hud">REC</div>'+
+    '<div class="lbl l">'+GT.err+'</div><div class="lbl r">'+GT.good+'</div><div class="hnd"><i></i></div></div><div class="q">'+esc(G.id==='day'?GT.dayQ:GT.qDet)+'</div>';
+  if(r.t==='kr'){if(r.old){var tall=r.old[2]<1&&!r.old[3];h+='<div class="frame"'+(tall?' style="aspect-ratio:'+r.old[2]+';max-width:'+Math.round(380*r.old[2])+'px;margin:0 auto"':'')+'><div class="img" style="'+cropStyle(r.old)+'"></div><div class="hud">REC</div></div>';}
+    else h+='<div class="frame"><img class="im" src="'+r.src+'" alt="" draggable="false"><div class="hud">REC</div></div>';
+    h+='<div class="q">'+esc(GT.qKr)+'</div>';}
+  if(r.t==='bl')h+='<div class="q" style="margin-top:22px;font-size:20px">'+esc(r.bl[0])+'</div><div class="timer"><i id="tm"></i></div>';
+  h+='<div class="opts'+(r.t==='bl'?' one':'')+(r.opts.length>4?' six':'')+'">'+r.opts.map(function(o){return '<button class="opt">'+esc(optLab(o))+'</button>';}).join('')+'</div><div class="ex" id="ex"></div>';
   box.innerHTML=h;window.scrollTo(0,0);$('#game').scrollTop=0;
   $('#gx').onclick=gClose;
   $$('.opt',box).forEach(function(b,i){b.onclick=function(){answer(r.opts[i],b);};});
-  if(G.id==='bl'){var T=10000,st=performance.now(),tm=$('#tm');(function tick(n){if(!G||G.i>=G.rounds.length||G.answered)return;var p=1-(n-st)/T;tm.style.width=Math.max(0,p*100)+'%';
+  preload(G.rounds[G.i+1]);
+  if(r.t==='bl'){var T=G.lv==='pro'?6000:10000,st=performance.now(),tm=$('#tm');(function tick(n){if(!G||G.i>=G.rounds.length||G.answered)return;var p=1-(n-st)/T;tm.style.width=Math.max(0,p*100)+'%';
     if(p<=0){answer(null,null);return;}G.timer=requestAnimationFrame(tick);})(st);}
   G.answered=false;}
+function compare(fr){var ok=fr.querySelector('.okim'),hn=fr.querySelector('.hnd');fr.classList.add('rev');
+  function set(p){p=Math.max(0,Math.min(100,p));ok.style.clipPath='inset(0 0 0 '+p+'%)';ok.style.webkitClipPath='inset(0 0 0 '+p+'%)';hn.style.left=p+'%';}
+  if(RM)set(50);else{var t0=performance.now();(function a(n){var k=Math.min(1,(n-t0)/800),e=1-Math.pow(1-k,3);set(100-50*e);if(k<1)requestAnimationFrame(a);})(t0);}
+  function mv(e){var b=fr.getBoundingClientRect();set((e.clientX-b.left)/b.width*100);}
+  fr.addEventListener('pointerdown',function(e){try{fr.setPointerCapture(e.pointerId);}catch(x){}mv(e);fr.onpointermove=mv;});
+  fr.addEventListener('pointerup',function(){fr.onpointermove=null;});fr.addEventListener('pointercancel',function(){fr.onpointermove=null;});}
 function answer(v,btn){if(!G||G.answered)return;G.answered=true;if(G.timer)cancelAnimationFrame(G.timer);
   var r=G.rounds[G.i],ok=v===r.right;G.res.push(ok);hap(ok?'ok':'err');
+  if(ok){G.c++;if(G.c>G.maxc)G.maxc=G.c;}else G.c=0;
+  var u=G.lv==='pro'?8:5,gain=ok?(G.c>=3?u*2:u):0;G.xp+=gain;
+  var cm=$('#cmb');cm.textContent=GT.combo+' ×'+G.c+' 🔥';cm.classList.toggle('on',G.c>=3);
   $$('.opt').forEach(function(b,i){b.disabled=true;if(r.opts[i]===r.right)b.classList.add('ok');else if(b===btn)b.classList.add('no');});
-  var txt,link;if(G.id==='det'){txt=DEF[r.k].e;link=DEF[r.k].w;}else if(G.id==='kr'){txt=KR_E[r.right];link=G.i===0?'/wiki/praktika/krupnosti/':null;}else{txt=r.bl[2];link=r.bl[3];}
-  var ex=$('#ex');ex.innerHTML='<div class="v '+(ok?'ok':'no')+'">'+(ok?['Точно!','В яблочко!','Мур, верно!','Глаз-алмаз!'][Math.floor(Math.random()*4)]:v===null?'Время вышло':'Не совсем')+'</div><p>'+esc(txt)+'</p>'+(link?'<a href="#" id="exl">Подробнее в Wiki →</a>':'')+
-    '<button class="btn" id="nx">'+(G.i+1<G.rounds.length?'Дальше':'Результат')+'</button>';
+  var txt,link,extra='';
+  if(r.t==='det'){txt=DEF[r.k].e;link=DEF[r.k].w;var fr=$('#fr');if(r.k==='ok'){fr.classList.add('clean');fr.querySelector('.lbl.r').textContent=GT.clean;}else{compare(fr);extra='<div class="sl">'+esc(GT.slide)+'</div>';}}
+  else if(r.t==='kr'){txt=KX[r.right];link=G.i===0?'/wiki/praktika/krupnosti/':null;
+    if(r.plans)extra='<div class="lad">'+r.plans.map(function(p){return '<figure class="'+(p===r.right?'on':'')+'"><img src="'+GM+'kr-'+r.sc+'-'+p+'.webp'+GV+'" alt="" loading="lazy"><figcaption>'+esc(KL[p])+'</figcaption></figure>';}).join('')+'</div>';}
+  else{txt=r.bl[2];link=r.bl[3];}
+  var px='<span class="pxa"><svg viewBox="-27 -29 54 50">'+PX.head(ok?{eyes:'happy'}:{eyes:'sad'})+'</svg></span>';
+  var vt=ok?GT.right[Math.floor(Math.random()*GT.right.length)]:v===null?GT.time:GT.wrong;
+  var ex=$('#ex');ex.innerHTML='<div class="vr">'+px+'<div class="v '+(ok?'ok':'no')+'">'+esc(vt)+'</div>'+(gain?'<span class="gx">+'+gain+' XP'+(G.c>=3?' · ×2':'')+'</span>':'')+'</div>'+extra+'<p>'+esc(txt)+'</p>'+(link?'<a href="#" id="exl">'+GT.more+'</a>':'')+
+    '<button class="btn" id="nx">'+(G.id==='day'?GT.done:G.i+1<G.rounds.length?GT.next:GT.res)+'</button>';
   ex.classList.add('on');if(link)$('#exl').onclick=function(e){e.preventDefault();open(link);};
-  $('#nx').onclick=function(){hap();G.i++;if(G.i<G.rounds.length)round();else result();};
-  setTimeout(function(){ex.scrollIntoView({behavior:RM?'auto':'smooth',block:'nearest'});},50);}
-function result(){var n=G.res.filter(Boolean).length,tot=G.rounds.length,id=G.id,gm=GAMES.filter(function(x){return x.id===id;})[0];
-  var xp=n*5+(n===tot?20:0),prev=S.best[id];if(prev==null||n>prev)S.best[id]=n;
+  $('#nx').onclick=function(){hap();if(G.id==='day'){dayFinish(ok);return;}G.i++;if(G.i<G.rounds.length)round();else result();};
+  setTimeout(function(){ex.scrollIntoView({behavior:RM?'auto':'smooth',block:'nearest'});},r.t==='det'&&r.k!=='ok'?850:50);}
+function dayFinish(ok){var d=dayState(),y=today(new Date(Date.now()-864e5));d.streak=(d.last===y)?d.streak+1:1;d.last=today();d.done=today();S.day=d;
+  var xp=ok?15:5;gClose();addXP(xp,true);
+  if(d.streak>=3)grant('d3');if(d.streak>=7)grant('d7');
+  toast('+'+xp+' XP · '+GT.day+' 🔥 '+d.streak);scene.play(ok?'cheer':'sad');}
+function result(){var n=G.res.filter(Boolean).length,tot=G.rounds.length,id=G.id,lv=G.lv,gm=GAMES.filter(function(x){return x.id===id;})[0];
+  var key=id+(lv==='pro'?'_pro':''),prev=S.best[key],wasOpen=proOpen(id);
+  var xp=G.xp+(n===tot?(lv==='pro'?40:20):0);if(prev==null||n>prev)S.best[key]=n;
+  var opened=lv==='base'&&!wasOpen&&proOpen(id)&&id!=='day';
   var mood=n===tot?'ura':n>=6?'mur':n>=4?'think':'sad';
-  var line={ura:'Идеально! Ты видишь кадр как профи.',mur:'Отлично! Ещё чуть-чуть — и будет 8 из 8.',think:'Неплохо! Сыграй ещё раз — запомнится быстрее.',sad:'Ничего страшного: так и учатся. Попробуй ещё!'}[mood];
-  $('#gin').innerHTML='<div class="gtop"><button class="x" id="gx" aria-label="Закрыть">✕</button><div class="k">'+esc(gm.ttl)+'</div><div style="width:36px"></div></div>'+
-    '<div class="res"><svg viewBox="22 -14 76 108" id="rcat"></svg><div class="sc">'+n+' <span>из '+tot+'</span></div><div class="mut">'+esc(line)+'</div><div class="xp">+'+xp+' XP</div>'+
-    (prev!=null&&n>prev?'<p>Новый рекорд! Было '+prev+' из 8.</p>':'')+
-    '<button class="btn" id="share">Бросить вызов другу</button><button class="btn ghost" id="again">Сыграть ещё</button><button class="btn ghost" id="back">К играм</button></div>';
+  $('#gin').innerHTML='<div class="gtop"><button class="x" id="gx" aria-label="'+GT.close+'">✕</button><div class="k">'+esc(gm.ttl)+(lv==='pro'?' · '+GT.pro:'')+'</div><div style="width:36px"></div></div>'+
+    '<div class="res"><svg viewBox="22 -14 76 108" id="rcat"></svg><div class="sc">'+n+' <span>'+GT.of+' '+tot+'</span></div><div class="mut">'+esc(GT.lines[mood])+'</div><div class="xp">+'+xp+' XP</div>'+
+    (G.maxc>=3?'<p>'+GT.maxc+': ×'+G.maxc+' 🔥</p>':'')+
+    (prev!=null&&n>prev?'<p>'+GT.newRec+prev+' '+GT.of+' 8.</p>':'')+
+    (opened?'<p class="po">🔓 '+GT.proOpen+'</p><button class="btn" id="gopro">'+GT.playPro+'</button>':'')+
+    '<button class="btn'+(opened?' ghost':'')+'" id="share">'+GT.share+'</button><button class="btn ghost" id="again">'+GT.again+'</button><button class="btn ghost" id="back">'+GT.back+'</button></div>';
   var o=mood==='ura'?{eyes:'happy',mouth:'open',armL:146,armR:214,armLlen:26,armRlen:26,armLy:-6,armRy:-6}:mood==='mur'?{eyes:'happy',blush:.8}:mood==='think'?{eyes:'look',pdx:1.3,pdy:-2,hrot:8,armR:162,armRlen:13,mouth:'flat'}:{eyes:'sad',mouth:'frown',earL:-40,earR:40,hdy:2};
-  $('#rcat').innerHTML=PX.cat(o)+(mood==='ura'?'<text x="58" y="2" text-anchor="middle" font-family="Russo One" font-size="11" fill="#fd7e2f">УРА!</text>':'');
+  $('#rcat').innerHTML=PX.cat(o)+(mood==='ura'?'<text x="58" y="2" text-anchor="middle" font-family="Russo One" font-size="11" fill="#fd7e2f">'+'УРА!'+'</text>':'');
   hap(n>=6?'ok':'warn');addXP(xp,true);
-  if(n===tot)grant(id);
-  if(n===tot)scene.play('cheer');
-  $('#gx').onclick=gClose;$('#back').onclick=gClose;$('#again').onclick=function(){startGame(id);};
-  $('#share').onclick=function(){var t='Я набрал '+n+' из '+tot+' в игре «'+gm.ttl+'» у кота Пикселя из Matis Academy 🐈‍⬛ Сможешь лучше?';
+  if(n===tot){if(lv==='pro'){if(id==='det')grant('pdet');if(id==='kr')grant('pkr');}grant(id);scene.play('cheer');}
+  if(opened)setTimeout(function(){toast('🔓 '+GT.proOpen);hap('ok');},1200);
+  $('#gx').onclick=gClose;$('#back').onclick=gClose;$('#again').onclick=function(){startGame(id,lv);};
+  if(opened)$('#gopro').onclick=function(){S.lv=S.lv||{};S.lv[id]='pro';save();startGame(id,'pro');};
+  $('#share').onclick=function(){var t=GT.shareT(n,tot,gm.ttl,lv==='pro');
     var u=CFG.mainApp?'https://t.me/'+CFG.bot+'?startapp=g_'+id:CFG.web+'?g='+id;
     open('https://t.me/share/url?url='+encodeURIComponent(u)+'&text='+encodeURIComponent(t));};}
+$('#ghint')&&($('#ghint').textContent=GT.hint);
 
 /* ---------- школа ---------- */
 function renderSchool(){
@@ -670,9 +801,9 @@ renderTip();renderSchool();
 load(function(st){if(st&&st.v===1){S=st;S.best=S.best||{};S.ach=S.ach||[];}
   var fresh=checkin();renderLvl();renderAch();renderGames();
   var sp=(TG&&TG.initDataUnsafe&&TG.initDataUnsafe.start_param)||'';
-  if(!sp){var qm=/[?&]g=(det|kr|bl)\b/.exec(location.search);if(qm)sp='g_'+qm[1];}
+  if(!sp){var qm=/[?&]g=(det|kr|bl|day)\b/.exec(location.search);if(qm)sp='g_'+qm[1];}
   if(!IN_TG){var bn=el('a','tgban','<b>Открой студию в Telegram</b> — там прогресс сохраняется, а Пиксель помнит разговор →');bn.href='https://t.me/'+CFG.bot;bn.target='_blank';bn.rel='noopener';$('.app').insertBefore(bn,$('.app').firstChild);}
-  if(/^g_(det|kr|bl)$/.test(sp))setTimeout(function(){startGame(sp.slice(2));},400);
+  if(/^g_(det|kr|bl|day)$/.test(sp))setTimeout(function(){startGame(sp.slice(2));},400);
   else if(sp==='chat')go('chat');
   else if(sp==='cab')go('cab');
   cab.peek();
