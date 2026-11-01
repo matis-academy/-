@@ -112,7 +112,7 @@
     function render() {
       if (!active) {
         pane.innerHTML = '<p class="hint">Каждое задание задаёт условия съёмки и цель. Настройте камеру, запишите дубль красной кнопкой — тренажёр проверит его и объяснит ошибки.</p>' +
-          TASKS.map(function (t) { return '<button type="button" class="mlbm-task' + (done[t.id] ? ' done' : '') + '" data-t="' + t.id + '"><div class="tn">' + esc(t.title) + '<i>' + t.level + '</i></div><div class="td">' + esc(sceneById(t.scene).name) + '</div></button>'; }).join('') +
+          '<div class="mlbm-tlist">' + TASKS.map(function (t) { return '<button type="button" class="mlbm-task' + (done[t.id] ? ' done' : '') + '" data-t="' + t.id + '"><div class="tn">' + esc(t.title) + '<i>' + t.level + '</i></div><div class="td">' + esc(sceneById(t.scene).name) + '</div></button>'; }).join('') + '</div>' +
           '<div class="mlbm-foot">Выполнено: ' + Object.keys(done).filter(function (k) { return done[k]; }).length + ' из ' + TASKS.length + '. Прогресс хранится в этом браузере.</div>';
         return;
       }

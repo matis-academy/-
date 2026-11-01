@@ -55,7 +55,7 @@
     var phone = h('div', { cls: 'mlbm-phone' }); stage.appendChild(phone);
     var box = h('div', { cls: 'mlbm-screenbox' }); phone.appendChild(box);
     var scr = h('div', { cls: 'mlbm-screen' }); box.appendChild(scr); app.scr = scr;
-    box.appendChild(h('div', { cls: 'mlbm-island' }));
+    scr.appendChild(h('div', { cls: 'mlbm-island' }));   /* 01.11: внутри масштабируемого экрана, иначе «вырез» съезжал вниз при уменьшении */
     stage.appendChild(h('div', { cls: 'mlbm-rotate' }, 'Поверните телефон горизонтально или нажмите «Во весь экран» — так кнопки будут крупнее.'));
     var side = h('div', { cls: 'mlbm-side' }); main.appendChild(side); app.side = side;
 
@@ -66,7 +66,7 @@
       var availH = fs ? window.innerHeight : Infinity;
       var pad = fs ? 0 : 28;
       var s = Math.min((avail - pad) / 932, (availH - pad) / 430);
-      if (!fs) { s = Math.min(s, 1.25); if (window.innerHeight < 620 && window.innerWidth > window.innerHeight) s = Math.min(s, (window.innerHeight - 24) / 430); }
+      if (!fs) { s = Math.min(s, 1.1);   /* 01.11: телефон на всю ширину блока, но не крупнее 1025 px */ if (window.innerHeight < 620 && window.innerWidth > window.innerHeight) s = Math.min(s, (window.innerHeight - 24) / 430); }
       s = Math.max(s, 0.25);
       app.scale = s;
       scr.style.transform = 'scale(' + s + ')';

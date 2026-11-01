@@ -1453,6 +1453,87 @@
     '.mlbm-act button{padding:7px 12px;border-radius:8px;background:var(--panel2);border:1px solid var(--line)!important;font-size:13px}',
     '.mlbm-act button.pri{background:var(--blue);border-color:var(--blue)!important;color:#fff}',
     '.mlbm-foot{margin-top:12px;font-size:11.5px;color:var(--pmut);line-height:1.5}',
+    /* ===== Стиль MVC (01.11.2026, Claude, BRAND_KIT сайта matis.academy) =====
+       Экран телефона повторяет настоящее приложение и остаётся как есть; перекрашена рамка вокруг
+       (фон, верхняя строка, панель, кнопки), панель перенесена под телефон. */
+    '.mlbm.mlbm{--page:#151311;--panel:#1d1a17;--panel2:rgba(241,236,226,.06);--ptxt:#cfc6b8;--pmut:#9d9488;--line:rgba(241,236,226,.14);--ok:#6fbf8a;--bad:#e5735f;--warn:#fd7e2f;--or:#fd7e2f;--hd:"Russo One",sans-serif;font-family:Montserrat,system-ui,sans-serif;background:radial-gradient(55% 70% at 92% 0%,rgba(253,126,47,.14),transparent 70%),radial-gradient(45% 60% at 0% 100%,rgba(137,74,31,.30),transparent 70%),#151311;border-radius:20px;padding:24px;line-height:1.5}',
+    '.mlbm.mlbm .mlbm-screen{font-family:Lato,"Helvetica Neue",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.35}',
+    '.mlbm.mlbm button:focus-visible,.mlbm.mlbm [tabindex]:focus-visible,.mlbm.mlbm select:focus-visible,.mlbm.mlbm input:focus-visible{outline:2px solid var(--or);outline-offset:2px}',
+    '.mlbm.mlbm .mlbm-top{gap:10px 10px;margin-bottom:18px}',
+    '.mlbm.mlbm .mlbm-title{font-family:var(--hd);font-weight:400;font-size:22px;line-height:1.1;letter-spacing:0;text-transform:uppercase;color:#fff;text-wrap:balance}',
+    '.mlbm.mlbm .mlbm-title small{font-family:Montserrat,system-ui,sans-serif;font-size:12.5px;line-height:1.45;color:var(--pmut);text-transform:none;margin-top:6px}',
+    '.mlbm.mlbm .mlbm-sel{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pmut);gap:10px}',
+    '.mlbm.mlbm .mlbm-sel select{-webkit-appearance:none;appearance:none;font:600 13.5px/1.2 Montserrat,system-ui,sans-serif;letter-spacing:0;text-transform:none;color:#f1ece2;background:rgba(241,236,226,.06) url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'8\' viewBox=\'0 0 12 8\'%3E%3Cpath d=\'M1 1.5l5 5 5-5\' fill=\'none\' stroke=\'%23fd7e2f\' stroke-width=\'1.8\' stroke-linecap=\'round\' stroke-linejoin=\'round\'/%3E%3C/svg%3E") no-repeat right 14px center;border:1px solid rgba(241,236,226,.22);border-radius:999px;padding:10px 38px 10px 16px;max-width:250px;cursor:pointer;transition:border-color .2s}',
+    '.mlbm.mlbm .mlbm-sel select:hover{border-color:rgba(241,236,226,.4)}',
+    '.mlbm.mlbm .mlbm-sel select option{background:#1d1a17;color:#f1ece2}',
+    '.mlbm.mlbm .mlbm-tbtn{gap:8px;font:600 13.5px/1.2 Montserrat,system-ui,sans-serif;padding:10px 18px;border-radius:999px;background:transparent;border:1px solid rgba(241,236,226,.22)!important;color:#f1ece2;transition:border-color .2s,background .2s,color .2s}',
+    '.mlbm.mlbm .mlbm-tbtn:hover{border-color:var(--or)!important}',
+    '.mlbm.mlbm .mlbm-tbtn.on{background:var(--or);border-color:var(--or)!important;color:#151311}',
+    '.mlbm.mlbm .mlbm-main{gap:16px}',
+    '.mlbm.mlbm .mlbm-phone{background:#0e0d0c;box-shadow:0 0 0 1.5px rgba(241,236,226,.16) inset,0 18px 40px -12px rgba(0,0,0,.7)}',
+    '.mlbm.mlbm .mlbm-rotate{font-size:13px;color:var(--pmut)}',
+    '.mlbm.mlbm.helpmode .mlbm-screen{outline-color:rgba(253,126,47,.7)}',
+    '.mlbm.mlbm .bm-hl{border-color:var(--or)}',
+    '.mlbm.mlbm .mlbm-side{background:#1d1a17;border:1px solid var(--line);border-radius:16px}',
+    '.mlbm.mlbm .mlbm-tabs{gap:4px;margin:16px 18px 0;width:max-content;max-width:calc(100% - 36px);padding:4px;border:1px solid var(--line)!important;border-radius:999px;background:rgba(241,236,226,.06)}',
+    '.mlbm.mlbm .mlbm-tabs button{flex:1 1 auto;padding:9px 18px;border:0!important;border-radius:999px;font:600 12.5px/1.2 Montserrat,system-ui,sans-serif;white-space:nowrap;color:#cfc6b8;transition:background .2s,color .2s}',
+    '.mlbm.mlbm .mlbm-tabs button:hover{color:#fff}',
+    '.mlbm.mlbm .mlbm-tabs button.on{background:var(--or);color:#151311;font-weight:600}',
+    '.mlbm.mlbm .mlbm-pane{padding:18px 18px 22px;font-size:14px;line-height:1.55;color:#cfc6b8}',
+    '.mlbm.mlbm .mlbm-pane h3{font-family:var(--hd)!important;font-weight:400!important;font-size:19px!important;line-height:1.15!important;text-transform:uppercase!important;letter-spacing:0!important;color:#fff!important;margin:0 0 8px!important}',
+    '.mlbm.mlbm .mlbm-pane .en{font-size:11.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--or);margin:0 0 10px}',
+    '.mlbm.mlbm .mlbm-pane p{line-height:1.55;margin:0 0 10px!important}',
+    '.mlbm.mlbm .mlbm-pane b,.mlbm.mlbm .mlbm-pane strong{color:#fff!important;font-weight:600!important}',
+    '.mlbm.mlbm .mlbm-pane .hint{color:#cfc6b8;font-size:14px;line-height:1.55}',
+    '.mlbm.mlbm .mlbm-pane .vals{font-size:12.5px;color:var(--pmut)}',
+    '.mlbm.mlbm .mlbm-pane .tip{background:rgba(253,126,47,.08);border-left:3px solid var(--or);border-radius:0 12px 12px 0;padding:10px 12px!important;margin:10px 0!important;max-width:none!important;font-size:13.5px!important;line-height:1.5;color:#f1ece2}',
+    '.mlbm.mlbm .mlbm-pane .tip::before,.mlbm.mlbm .mlbm-pane .tip::after{content:none!important;display:none!important}',
+    '.mlbm.mlbm .mlbm-pane .sim{background:none;border:1px dashed rgba(241,236,226,.22);border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.5;color:#cfc6b8}',
+    '.mlbm.mlbm .mlbm-pane .live{gap:6px 12px;font-size:13px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}',
+    '.mlbm.mlbm .mlbm-pane .live dt{color:var(--pmut)}',
+    '.mlbm.mlbm .mlbm-pane .live dd{color:#f1ece2}',
+    '.mlbm.mlbm input.mlbm-search:not(#mlbm-x){font:400 13.5px/1.3 Montserrat,system-ui,sans-serif!important;background:rgba(241,236,226,.06)!important;border:1px solid rgba(241,236,226,.22)!important;border-radius:999px!important;color:#f1ece2!important;padding:10px 16px!important;margin:0 0 14px!important;height:auto!important;box-shadow:none!important}',
+    '.mlbm.mlbm .mlbm-search::placeholder{color:#8d8478}',
+    '.mlbm.mlbm input.mlbm-search:not(#mlbm-x):focus{border-color:var(--or)!important;outline:0}',
+    '.mlbm.mlbm .mlbm-gl h4{font-family:Montserrat,system-ui,sans-serif!important;font-weight:600!important;font-size:11.5px!important;line-height:1.3!important;letter-spacing:.14em!important;text-transform:uppercase!important;color:var(--or)!important;margin:18px 0 6px!important}',
+    '.mlbm.mlbm .mlbm-gl button{padding:7px 10px;border-radius:10px;font-size:13.5px;color:#f1ece2}',
+    '.mlbm.mlbm .mlbm-gl button:hover{background:rgba(241,236,226,.06)}',
+    '.mlbm.mlbm .mlbm-task{background:rgba(241,236,226,.04);border:1px solid var(--line);border-radius:12px;padding:12px 14px;transition:border-color .2s}',
+    '.mlbm.mlbm .mlbm-task:hover{border-color:rgba(241,236,226,.3)}',
+    '.mlbm.mlbm .mlbm-task .tn{font-weight:600;font-size:14px;color:#f1ece2}',
+    '.mlbm.mlbm .mlbm-task .td{font-size:12.5px;line-height:1.45}',
+    '.mlbm.mlbm .mlbm-task.act{border-color:var(--or)}',
+    '.mlbm.mlbm .mlbm-chk li{font-size:13.5px}',
+    '.mlbm.mlbm .mlbm-score{font-family:var(--hd);font-weight:400;font-size:28px;line-height:1.1;color:#fff}',
+    '.mlbm.mlbm .mlbm-score.ok{color:var(--ok)}',
+    '.mlbm.mlbm .mlbm-act{gap:8px;margin-top:14px}',
+    '.mlbm.mlbm .mlbm-act button{padding:9px 16px;border-radius:999px;background:transparent;border:1px solid rgba(241,236,226,.22)!important;font:600 13px/1.2 Montserrat,system-ui,sans-serif;color:#f1ece2;transition:border-color .2s}',
+    '.mlbm.mlbm .mlbm-act button:hover{border-color:var(--or)!important}',
+    '.mlbm.mlbm .mlbm-act button.pri{background:var(--or);border-color:var(--or)!important;color:#151311}',
+    '.mlbm.mlbm .mlbm-foot{font-size:12px;color:#8d8478}',
+    '/* раскладка: телефон сверху на всю ширину, панель под ним (просьба владельца 01.11) */',
+    '.mlbm.mlbm{container-type:inline-size}',
+    '.mlbm.mlbm .mlbm-main{grid-template-columns:minmax(0,1fr);gap:16px}',
+    '.mlbm.mlbm .mlbm-side{max-height:none;overflow:hidden}',
+    '.mlbm.mlbm .mlbm-pane{overflow:visible}',
+    '.mlbm.mlbm .mlbm-pane .hbody{min-width:0;max-width:720px}',
+    '.mlbm.mlbm .mlbm-tlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin:14px 0 4px}',
+    '.mlbm.mlbm .mlbm-tlist .mlbm-task{margin:0}',
+    '.mlbm.mlbm .mlbm-pane[data-pane=tasks]>p,.mlbm.mlbm .mlbm-pane[data-pane=tasks]>.mlbm-chk,.mlbm.mlbm .mlbm-pane[data-pane=tasks]>.tip{max-width:720px}',
+    '.mlbm.mlbm .mlbm-pane[data-pane=index]{max-height:440px;overflow-y:auto}',
+    '.mlbm.mlbm .mlbm-search{max-width:420px;display:block}',
+    '.mlbm.mlbm .mlbm-gl{columns:3 210px;column-gap:28px}',
+    '.mlbm.mlbm .mlbm-gl h4{break-after:avoid;column-span:none}',
+    '.mlbm.mlbm .mlbm-gl h4:first-child{margin-top:4px}',
+    '.mlbm.mlbm .mlbm-gl button{break-inside:avoid}',
+    '.mlbm.mlbm .mlbm-side,.mlbm.mlbm .mlbm-side *{scrollbar-width:thin;scrollbar-color:rgba(241,236,226,.24) transparent}',
+    '.mlbm.mlbm .mlbm-side ::-webkit-scrollbar,.mlbm.mlbm .mlbm-side::-webkit-scrollbar{width:8px;height:8px}',
+    '.mlbm.mlbm .mlbm-side ::-webkit-scrollbar-track,.mlbm.mlbm .mlbm-side::-webkit-scrollbar-track{background:transparent}',
+    '.mlbm.mlbm .mlbm-side ::-webkit-scrollbar-thumb,.mlbm.mlbm .mlbm-side::-webkit-scrollbar-thumb{background:rgba(241,236,226,.22);border-radius:999px;border:2px solid #1d1a17}',
+    '.mlbm.mlbm .mlbm-side ::-webkit-scrollbar-thumb:hover{background:rgba(253,126,47,.6)}',
+    '.mlbm.mlbm .mlbm-side ::-webkit-scrollbar-button{display:none;width:0;height:0}',
+    '@container (min-width:700px){.mlbm.mlbm .mlbm-pane[data-pane=help]{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:0 32px;align-items:start}.mlbm.mlbm .mlbm-pane[data-pane=help][style*="none"]{display:none}.mlbm.mlbm .mlbm-pane .live{margin-top:0!important;padding:2px 0 0 24px;border-top:0;border-left:1px solid var(--line)}}',
+    '@media (max-width:640px){.mlbm.mlbm .mlbm-tabs{width:auto;max-width:none;margin:14px 14px 0}.mlbm.mlbm .mlbm-tabs button{flex:1 1 0;min-width:0;padding:9px 4px;font-size:12px}.mlbm.mlbm .mlbm-pane{padding:16px 16px 20px}.mlbm.mlbm{padding:16px;border-radius:16px}.mlbm.mlbm .mlbm-title{font-size:19px}.mlbm.mlbm .mlbm-sel{width:100%}.mlbm.mlbm .mlbm-sel select{flex:1;max-width:none}}',
     '@media (prefers-reduced-motion:reduce){.mlbm *{transition:none!important}}'
   ].join('\n');
 
@@ -1521,7 +1602,7 @@
     var phone = h('div', { cls: 'mlbm-phone' }); stage.appendChild(phone);
     var box = h('div', { cls: 'mlbm-screenbox' }); phone.appendChild(box);
     var scr = h('div', { cls: 'mlbm-screen' }); box.appendChild(scr); app.scr = scr;
-    box.appendChild(h('div', { cls: 'mlbm-island' }));
+    scr.appendChild(h('div', { cls: 'mlbm-island' }));   /* 01.11: внутри масштабируемого экрана, иначе «вырез» съезжал вниз при уменьшении */
     stage.appendChild(h('div', { cls: 'mlbm-rotate' }, 'Поверните телефон горизонтально или нажмите «Во весь экран» — так кнопки будут крупнее.'));
     var side = h('div', { cls: 'mlbm-side' }); main.appendChild(side); app.side = side;
 
@@ -1532,7 +1613,7 @@
       var availH = fs ? window.innerHeight : Infinity;
       var pad = fs ? 0 : 28;
       var s = Math.min((avail - pad) / 932, (availH - pad) / 430);
-      if (!fs) { s = Math.min(s, 1.25); if (window.innerHeight < 620 && window.innerWidth > window.innerHeight) s = Math.min(s, (window.innerHeight - 24) / 430); }
+      if (!fs) { s = Math.min(s, 1.1);   /* 01.11: телефон на всю ширину блока, но не крупнее 1025 px */ if (window.innerHeight < 620 && window.innerWidth > window.innerHeight) s = Math.min(s, (window.innerHeight - 24) / 430); }
       s = Math.max(s, 0.25);
       app.scale = s;
       scr.style.transform = 'scale(' + s + ')';
@@ -2631,7 +2712,19 @@
     };
 
     /* живые значения (что сейчас выставлено и что получается) */
-    var lastLive = 0;
+    var lastLive = 0, lastLiveHtml = '';
+    /* 01.11 (Claude): на украинской версии TranslatePress переводил этот блок заново при каждом обновлении (4 раза в секунду) —
+       высота прыгала, страница «колбасилась». Переводим сами и закрываем блок от TranslatePress. */
+    var LIVE_UK = /^uk/i.test(document.documentElement.lang || '') ? [
+      ['Улица, солнечный день', 'Вулиця, сонячний день'], ['Улица, пасмурно', 'Вулиця, похмуро'], ['Закат, золотой час', 'Захід сонця, золота година'],
+      ['Ночная улица, фонари', 'Нічна вулиця, ліхтарі'], ['Комната, лампы накаливания', 'Кімната, лампи розжарювання'],
+      ['Офис, светодиодные лампы', 'Офіс, світлодіодні лампи'], ['Интервью у окна', 'Інтерв’ю біля вікна'],
+      ['>Условия<', '>Умови<'], ['>Выдержка<', '>Витримка<'], ['>Экспозиция<', '>Експозиція<'], ['>Пересвет<', '>Пересвіт<'],
+      ['>Мерцание ламп<', '>Мерехтіння ламп<'], ['>Свет сцены<', '>Світло сцени<'], ['>Осталось записи<', '>Залишилося запису<'],
+      [' — светлее нормы', ' — світліше норми'], [' — темнее нормы', ' — темніше норми'], ['% кадра', '% кадру'],
+      ['>нет<', '>немає<'], [', зелёный сдвиг', ', зелений зсув']
+    ] : null;
+    if (LIVE_UK) live.setAttribute('data-no-translation', '');
     app.sideTick = function () {
       if (tab !== 'help') return;
       var now = performance.now(); if (now - lastLive < 250) return; lastLive = now;
@@ -2645,7 +2738,9 @@
         ['Пересвет', (eng.stat.clip * 100).toFixed(1) + '% кадра'], ['Мерцание ламп', eng.stat.flickerAmp > 0.02 ? 'видно (' + Math.round(eng.stat.flickerAmp * 100) + '%)' : 'нет'],
         ['Свет сцены', sc.K + ' K' + (sc.tint ? ', зелёный сдвиг' : '')], ['Осталось записи', fmtDur(app.free * 8 / (totalRate(S) * 1e6))]
       ];
-      live.innerHTML = rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('');
+      var html = rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('');
+      if (LIVE_UK) LIVE_UK.forEach(function (p) { html = html.split(p[0]).join(p[1]); });
+      if (html !== lastLiveHtml) { lastLiveHtml = html; live.innerHTML = html; }   /* 01.11: не пересобирать без изменений */
     };
 
     /* справочник */
@@ -2832,7 +2927,7 @@
     function render() {
       if (!active) {
         pane.innerHTML = '<p class="hint">Каждое задание задаёт условия съёмки и цель. Настройте камеру, запишите дубль красной кнопкой — тренажёр проверит его и объяснит ошибки.</p>' +
-          TASKS.map(function (t) { return '<button type="button" class="mlbm-task' + (done[t.id] ? ' done' : '') + '" data-t="' + t.id + '"><div class="tn">' + esc(t.title) + '<i>' + t.level + '</i></div><div class="td">' + esc(sceneById(t.scene).name) + '</div></button>'; }).join('') +
+          '<div class="mlbm-tlist">' + TASKS.map(function (t) { return '<button type="button" class="mlbm-task' + (done[t.id] ? ' done' : '') + '" data-t="' + t.id + '"><div class="tn">' + esc(t.title) + '<i>' + t.level + '</i></div><div class="td">' + esc(sceneById(t.scene).name) + '</div></button>'; }).join('') + '</div>' +
           '<div class="mlbm-foot">Выполнено: ' + Object.keys(done).filter(function (k) { return done[k]; }).length + ' из ' + TASKS.length + '. Прогресс хранится в этом браузере.</div>';
         return;
       }
