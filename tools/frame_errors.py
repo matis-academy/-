@@ -128,9 +128,13 @@ def variants(ok_srgb, seed):
     rng = np.random.default_rng(seed)
     lin = to_lin(ok_srgb)
     out = {}
+    # пересвет подбираем по яркости кадра: светлая сцена «выбивается» раньше тёмной
+    med = float(np.median((lin * np.array([0.2126, 0.7152, 0.0722])).sum(-1)))
+    ob = float(np.clip(math.log2(0.6 / max(med, 1e-3)), 1.4, LEVELS['base']['over']))
+    over_st = {'base': ob, 'pro': max(0.7, min(LEVELS['pro']['over'], ob * 0.45))}
     for lv, P in LEVELS.items():
         sfx = '' if lv == 'base' else '-pro'
-        out['over' + sfx] = to_srgb(exposure(lin, P['over']))
+        out['over' + sfx] = to_srgb(exposure(lin, over_st[lv]))
         u = exposure(lin, P['under'])
         u = u + rng.normal(0, 0.0006, u.shape) * np.sqrt(np.maximum(u, 0) + 1e-4)
         out['under' + sfx] = to_srgb(u)
