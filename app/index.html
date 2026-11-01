@@ -142,7 +142,36 @@ h1,h2,h3{font-family:'Russo One',Montserrat,sans-serif;font-weight:400;margin:0;
 .note{font-size:11.5px;color:var(--dim);text-align:center;margin-top:8px}
 /* ---------- таббар ---------- */
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:10;background:rgba(21,19,17,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid #2b1c13;padding:6px 8px calc(6px + var(--bot))}
-.tabs .w{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.tabs .w{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+/* ---------- кабинет (Claude, 01.11.2026) ---------- */
+.cb-card{background:var(--card);border-radius:20px;padding:18px;margin-bottom:12px}
+.cb-name{font-family:'Russo One',Montserrat,sans-serif;font-size:20px;line-height:1.2}
+.cb-chip{display:inline-flex;align-items:center;gap:8px;margin-top:10px;padding:7px 12px;border-radius:999px;background:var(--surf);font-size:13px;font-weight:600}
+.cb-chip i{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+.cb-chip.ok i{background:var(--ok)}.cb-chip.wait i{background:var(--acc);animation:cbp 1.6s ease-in-out infinite}.cb-chip.bad i{background:var(--bad)}
+@keyframes cbp{50%{opacity:.25}}
+.cb-p{margin:10px 0 0;color:var(--mut);font-size:14px}
+.cb-acts{display:grid;gap:8px;margin-top:14px}
+.cb-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px 16px;border-radius:16px;background:var(--acc);color:#151311;font-weight:600;font-size:15px}
+.cb-btn.g{background:var(--surf);color:var(--tx)}
+.cb-btn[disabled]{opacity:.6}
+.cb-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.cb-h h3{font-size:16px}
+.cb-badge{min-width:22px;height:22px;padding:0 7px;border-radius:11px;background:var(--acc);color:#151311;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.cb-msgs{display:grid;gap:8px;max-height:320px;overflow:auto;margin-bottom:12px}
+.cb-m{padding:10px 12px;border-radius:14px;background:var(--surf);font-size:14px;white-space:pre-wrap;word-wrap:break-word}
+.cb-m.in{background:#47301f;justify-self:end;max-width:88%}
+.cb-m small{display:block;margin-bottom:3px;color:var(--dim);font-size:11.5px}
+.cb-m a{color:var(--acc)}
+.cb-empty{color:var(--dim);font-size:13.5px;margin:0 0 12px}
+.cb-f{display:block;margin-bottom:10px}
+.cb-f span{display:block;font-size:12.5px;font-weight:600;color:var(--mut);margin-bottom:4px}
+.cb-f input,.cb-ta{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:#1d1612;color:var(--tx);font:inherit;font-size:15px;outline:none}
+.cb-f input:focus,.cb-ta:focus{border-color:var(--acc)}
+.cb-ta{min-height:86px;resize:vertical;margin-bottom:8px}
+.cb-f small{display:block;margin-top:4px;font-size:12px;color:var(--dim)}
+.cb-f small.ok{color:var(--ok)}.cb-f small.err{color:var(--bad)}
+.cb-note{font-size:12.5px;color:var(--dim);margin:8px 2px 0}
 .tabs button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;font-size:11px;font-weight:600;color:var(--dim);position:relative}
 .tabs button svg{width:24px;height:24px}
 .tabs button.on{color:var(--acc)}
@@ -222,6 +251,12 @@ h1,h2,h3{font-family:'Russo One',Montserrat,sans-serif;font-weight:400;margin:0;
     <div class="note">Пиксель — AI и может ошибаться. Сложный вопрос — смело в группу школы.</div>
   </div>
 </section>
+
+<!-- ===== КАБИНЕТ (01.11.2026) ===== -->
+<section class="scr" id="s-cab" aria-label="Кабинет">
+  <div class="h" style="margin-top:6px"><div><div class="k">Matis Academy</div><h2 style="margin-top:6px;font-size:24px">Кабинет</h2></div></div>
+  <div id="cab"></div>
+</section>
 </div>
 
 <!-- ===== ИГРА (оверлей) ===== -->
@@ -232,6 +267,7 @@ h1,h2,h3{font-family:'Russo One',Montserrat,sans-serif;font-weight:400;margin:0;
   <button data-t="games"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="12" rx="4"/><path d="M8 11v4M6 13h4"/><circle cx="15.5" cy="12" r=".6" fill="currentColor"/><circle cx="17.5" cy="14.5" r=".6" fill="currentColor"/></svg>Игры</button>
   <button data-t="school"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="13" height="11" rx="2.5"/><path d="m16 11 5-3v9l-5-3"/></svg>Школа</button>
   <button data-t="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg>Чат<span class="dot" id="chatdot"></span></button>
+  <button data-t="cab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.2-4 4.3-6 8-6s6.8 2 8 6"/></svg>Кабинет<span class="dot" id="cabdot"></span></button>
 </div></nav>
 <div class="toast" id="toast"></div>
 
@@ -645,9 +681,102 @@ var chat=(function(){
   return {init:init};
 })();
 
+/* ---------- кабинет ученика (Claude, 01.11.2026): вход в курсы, заявка, сообщения школы, контакты ---------- */
+var cab=(function(){
+  var UK=LANG==='uk';
+  var T=UK?{load:'Завантажую…',err:'Не вдалося завантажити кабінет.',retry:'Спробувати ще',
+    noTg:'Кабінет працює в Telegram: там Піксель знає, хто ти, і відкриє доступ до курсів.',openTg:'Відкрити в Telegram',
+    hi:function(n){return (n?n+', привіт!':'Привіт!');},guest:'Ти поки не учень школи. Візьми безкоштовний міні-курс — або, якщо вже оплатив курс, натисни «Я купив курс».',
+    mini:'🎬 Отримати безкоштовний міні-курс',buy:'💳 Я купив курс',login:'Увійти в кабінет на сайті',
+    sOk:'Доступ відкрито',sWait:'Антон перевіряє оплату',sBad:'Доступ закрито',sMini:'Міні-курс відкрито',sNone:'Курсів поки немає',
+    pWait:'Заявка на «Професію Відеограф» уже в Антона. Щойно він підтвердить — я напишу тобі в Telegram, а курс з’явиться в кабінеті.',
+    pBad:'Якщо це помилка — напиши Антону нижче, розберетеся.',pOk:function(p){return '«Професія Відеограф»'+(p?' · тариф «'+p+'»':'');},
+    pkg:{self:'Самостійний',feedback:'Зі зворотним зв’язком',mentor:'Наставництво'},
+    msgs:'Повідомлення школи',noMsgs:'Поки повідомлень немає. Коли школа щось напише — побачиш тут і в чаті з Пікселем.',
+    school:'Школа',you:'Ти',write:'Напиши Антону: питання, уточнення, будь-що…',send:'Надіслати Антону',sent:'Надіслано — Антон отримає сповіщення',
+    limit:'На сьогодні повідомлень забагато — спробуй завтра',contacts:'Контакти',cNote:'Бачить тільки Антон. Допоможуть не втратити зв’язок, якщо щось станеться з Telegram.',
+    email:'Email',phone:'Телефон',country:'Країна',ig:'Instagram',save:'Зберегти контакти',saved:'Збережено ✓',
+    eOk:'✓ Підтверджено',ePend:function(e){return 'Чекаємо підтвердження: лист надіслано на '+e;},eNew:'Надішлемо лист для підтвердження',
+    mailFail:'Контакти збережено, але лист поки не надіслався — спробуй пізніше.',link:'Відкрити посилання →',
+    linkNote:'Посилання одноразове й відкриється у браузері Telegram.',paidNew:'Заявку передано Антону 🐾',gen:'Щось зв’язок барахлить. Спробуй ще раз.'}
+  :{load:'Загружаю…',err:'Не получилось загрузить кабинет.',retry:'Попробовать ещё',
+    noTg:'Кабинет работает в Telegram: там Пиксель знает, кто ты, и откроет доступ к курсам.',openTg:'Открыть в Telegram',
+    hi:function(n){return (n?n+', привет!':'Привет!');},guest:'Ты пока не ученик школы. Возьми бесплатный мини-курс — или, если уже оплатил курс, нажми «Я купил курс».',
+    mini:'🎬 Получить бесплатный мини-курс',buy:'💳 Я купил курс',login:'Войти в кабинет на сайте',
+    sOk:'Доступ открыт',sWait:'Антон проверяет оплату',sBad:'Доступ закрыт',sMini:'Мини-курс открыт',sNone:'Курсов пока нет',
+    pWait:'Заявка на «Профессию Видеограф» уже у Антона. Как только он подтвердит — я напишу тебе в Telegram, а курс появится в кабинете.',
+    pBad:'Если это ошибка — напиши Антону ниже, разберётесь.',pOk:function(p){return '«Профессия Видеограф»'+(p?' · тариф «'+p+'»':'');},
+    pkg:{self:'Самостоятельный',feedback:'С обратной связью',mentor:'Наставничество'},
+    msgs:'Сообщения школы',noMsgs:'Пока сообщений нет. Когда школа что-то напишет — увидишь здесь и в чате с Пикселем.',
+    school:'Школа',you:'Ты',write:'Напиши Антону: вопрос, уточнение, что угодно…',send:'Отправить Антону',sent:'Отправлено — Антон получит уведомление',
+    limit:'На сегодня сообщений слишком много — попробуй завтра',contacts:'Контакты',cNote:'Видит только Антон. Помогут не потерять связь, если что-то случится с Telegram.',
+    email:'Email',phone:'Телефон',country:'Страна',ig:'Instagram',save:'Сохранить контакты',saved:'Сохранено ✓',
+    eOk:'✓ Подтверждён',ePend:function(e){return 'Ждём подтверждения: письмо отправлено на '+e;},eNew:'Пришлём письмо для подтверждения',
+    mailFail:'Контакты сохранены, но письмо пока не отправилось — попробуй позже.',link:'Открыть ссылку →',
+    linkNote:'Ссылка одноразовая и откроется в браузере Telegram.',paidNew:'Заявка передана Антону 🐾',gen:'Что-то связь барахлит. Попробуй ещё раз.'};
+  var box=null,st=null,busy=false;
+  function req(path,data,cb){data=data||{};data.init=TG.initData;api(path,data,cb);}
+  function api(path,data,done){var x=new XMLHttpRequest();x.open('POST','/navigator-api/pixel/app/'+path);x.setRequestHeader('Content-Type','application/json');x.setRequestHeader('X-Pixel-Request','1');x.timeout=45000;
+    x.onloadend=function(){var r=null;try{r=JSON.parse(x.responseText);}catch(e){}done(x.status,r);};x.send(JSON.stringify(data));}
+  function btn(cls,txt,fn){var b=el('button','cb-btn'+(cls?' '+cls:''),esc(txt));b.onclick=function(){if(busy)return;fn(b);};return b;}
+  function access(kind,b){busy=true;b.disabled=true;hap();
+    req('access',{kind:kind},function(code,r){busy=false;b.disabled=false;
+      if(code!==200||!r||!r.url){toast(T.gen);hap('err');return;}
+      if(kind==='paid'&&r.new){toast(T.paidNew);hap('ok');}
+      open(r.url);setTimeout(function(){load(false);},1500);});}
+  function chip(cls,t){return '<span class="cb-chip '+cls+'"><i></i>'+esc(t)+'</span>';}
+  function render(){box.innerHTML='';
+    if(!st.exists){var c=el('div','cb-card');c.innerHTML='<div class="cb-name">'+esc(T.hi(NAME))+'</div><p class="cb-p">'+esc(T.guest)+'</p>';
+      var a=el('div','cb-acts');a.appendChild(btn('',T.mini,function(b){access('mini',b);}));a.appendChild(btn('g',T.buy,function(b){access('paid',b);}));c.appendChild(a);box.appendChild(c);return;}
+    var c=el('div','cb-card'),p=st.paid,h='<div class="cb-name">'+esc(st.name||NAME||'')+'</div>';
+    if(p==='approved')h+=chip('ok',T.sOk)+'<p class="cb-p">'+esc(T.pOk(T.pkg[st.package]||''))+'</p>';
+    else if(p==='pending')h+=chip('wait',T.sWait)+'<p class="cb-p">'+esc(T.pWait)+'</p>';
+    else if(p==='rejected'||p==='revoked')h+=chip('bad',T.sBad)+'<p class="cb-p">'+esc(T.pBad)+'</p>';
+    else h+=chip(st.mini?'ok':'',st.mini?T.sMini:T.sNone);
+    c.innerHTML=h;var a=el('div','cb-acts');
+    a.appendChild(btn('',T.login,function(b){access('login',b);}));
+    if(!p&&!st.mini)a.appendChild(btn('g',T.mini,function(b){access('mini',b);}));
+    if(!p||p==='rejected'||p==='revoked')a.appendChild(btn('g',T.buy,function(b){access('paid',b);}));
+    c.appendChild(a);c.appendChild(el('p','cb-note',esc(T.linkNote)));box.appendChild(c);
+    /* сообщения */
+    var m=el('div','cb-card');m.innerHTML='<div class="cb-h"><h3>'+esc(T.msgs)+'</h3>'+(st.unread?'<span class="cb-badge">'+st.unread+'</span>':'')+'</div>';
+    var list=el('div','cb-msgs');
+    if(!st.messages||!st.messages.length)m.appendChild(el('p','cb-empty',esc(T.noMsgs)));
+    (st.messages||[]).forEach(function(x){var d=el('div','cb-m '+(x.dir==='in'?'in':'out'));d.innerHTML='<small>'+esc((x.dir==='in'?T.you:T.school)+' · '+x.at)+'</small>'+esc(x.body)+(x.link?'<br><a href="#">'+esc(T.link)+'</a>':'');
+      if(x.link){var l=d.querySelector('a');l.onclick=function(e){e.preventDefault();open(x.link);};}list.appendChild(d);});
+    m.appendChild(list);
+    var ta=el('textarea','cb-ta');ta.placeholder=T.write;ta.maxLength=4000;m.appendChild(ta);
+    m.appendChild(btn('g',T.send,function(b){var v=ta.value.trim();if(!v)return;busy=true;b.disabled=true;
+      req('write',{text:v},function(code,r){busy=false;b.disabled=false;
+        if(code===200&&r&&r.ok){ta.value='';toast(T.sent);hap('ok');load(false);}else{toast(r&&r.error==='limit'?T.limit:T.gen);hap('err');}});}));
+    box.appendChild(m);
+    setTimeout(function(){list.scrollTop=list.scrollHeight;},0);
+    /* контакты */
+    var k=el('div','cb-card'),ct=st.contacts||{};
+    k.innerHTML='<div class="cb-h"><h3>'+esc(T.contacts)+'</h3></div><p class="cb-empty" style="margin-bottom:12px">'+esc(T.cNote)+'</p>';
+    function fld(id,label,type,val,hint){var f=el('label','cb-f');f.innerHTML='<span>'+esc(label)+'</span><input id="'+id+'" type="'+type+'" autocomplete="off" value="'+esc(val||'')+'">'+(hint||'<small></small>');k.appendChild(f);}
+    fld('cbe',T.email,'email',ct.pending||ct.email,'<small class="'+(ct.email&&!ct.pending?'ok':'')+'">'+esc(ct.pending?T.ePend(ct.pending):ct.email?T.eOk:T.eNew)+'</small>');
+    fld('cbp',T.phone,'tel',ct.phone);fld('cbc',T.country,'text',ct.country);fld('cbi',T.ig,'text',ct.instagram?'@'+ct.instagram:'');
+    k.appendChild(btn('g',T.save,function(b){busy=true;b.disabled=true;
+      req('contacts',{email:$('#cbe').value.trim(),phone:$('#cbp').value.trim(),country:$('#cbc').value.trim(),instagram:$('#cbi').value.trim()},function(code,r){busy=false;b.disabled=false;
+        if(code!==200||!r){toast(T.gen);hap('err');return;}
+        var errs=r.errors||{},keys=Object.keys(errs);
+        if(keys.length){toast(errs[keys[0]]);hap('err');}else{toast(r.sent===false?T.mailFail:T.saved);hap('ok');}
+        if(r.contacts){st.contacts=r.contacts;render();}});}));
+    box.appendChild(k);}
+  function load(read){box=$('#cab');
+    if(!IN_TG){box.innerHTML='';var c=el('div','cb-card');c.innerHTML='<p class="cb-p" style="margin-top:0">'+esc(T.noTg)+'</p>';var a=el('div','cb-acts');a.appendChild(btn('',T.openTg,function(){open('https://t.me/'+CFG.bot);}));c.appendChild(a);box.appendChild(c);return;}
+    if(!st)box.innerHTML='<div class="cb-card mut">'+esc(T.load)+'</div>';
+    req('cabinet',{read:!!read},function(code,r){
+      if(code!==200||!r){if(!st){box.innerHTML='';var c=el('div','cb-card');c.innerHTML='<p class="cb-p" style="margin-top:0">'+esc(T.err)+'</p>';var a=el('div','cb-acts');a.appendChild(btn('g',T.retry,function(){load(read);}));c.appendChild(a);box.appendChild(c);}return;}
+      st=r;render();if(read){st.unread=0;$('#cabdot').classList.remove('on');}});}
+  function peek(){if(!IN_TG)return;req('cabinet',{},function(code,r){if(code===200&&r&&r.unread)$('#cabdot').classList.add('on');});}
+  return {load:load,peek:peek};
+})();
+
 /* ---------- навигация ---------- */
 function go(t){$$('.scr').forEach(function(s){s.classList.toggle('on',s.id==='s-'+t);});$$('.tabs button').forEach(function(b){b.classList.toggle('on',b.dataset.t===t);});
-  window.scrollTo(0,0);if(t==='chat'){chat.init();$('#chatdot').classList.remove('on');}hap('soft');}
+  window.scrollTo(0,0);if(t==='chat'){chat.init();$('#chatdot').classList.remove('on');}if(t==='cab')cab.load(true);hap('soft');}
 $$('.tabs button').forEach(function(b){b.addEventListener('click',function(){go(b.dataset.t);});});
 $('#stk').onclick=function(){open(CFG.stickers);};
 $$('#lng button').forEach(function(b){b.classList.toggle('on',b.dataset.l===LANG);b.onclick=function(){if(b.dataset.l===LANG)return;hap();try{localStorage.setItem('px_lang',b.dataset.l);}catch(e){}location.replace((b.dataset.l==='uk'?'/app/uk/':'/app/')+location.search+location.hash);};});
@@ -663,6 +792,8 @@ load(function(st){if(st&&st.v===1){S=st;S.best=S.best||{};S.ach=S.ach||[];}
   if(!IN_TG){var bn=el('a','tgban','<b>Открой студию в Telegram</b> — там прогресс сохраняется, а Пиксель помнит разговор →');bn.href='https://t.me/'+CFG.bot;bn.target='_blank';bn.rel='noopener';$('.app').insertBefore(bn,$('.app').firstChild);}
   if(/^g_(det|kr|bl)$/.test(sp))setTimeout(function(){startGame(sp.slice(2));},400);
   else if(sp==='chat')go('chat');
+  else if(sp==='cab')go('cab');
+  cab.peek();
   setTimeout(function(){if(scene.sleeping()){scene.say('Тсс… Пиксель спит. Погладь, чтобы разбудить',4200);return;}
     if(fresh&&S.streak>1){scene.say((NAME?NAME+', ':'')+'ты снова тут! День '+S.streak+' подряд 🔥 +10 XP',3800);scene.play('cheer');}
     else if(fresh){scene.say((NAME?'Привет, '+NAME+'! ':'Привет! ')+'Я Пиксель. Погладь меня — или пошли играть!',4200);scene.play('wave');}
