@@ -758,8 +758,8 @@ const tip = document.getElementById('tip');
 const dot = document.createElement('div');
 dot.className = 'anchor-dot';
 Object.assign(dot.style, {
-  position: 'absolute', width: '12px', height: '12px', borderRadius: '50%', background: '#ff8a2a',
-  boxShadow: '0 0 0 5px rgba(255,138,42,.25)', transform: 'translate(-50%,-50%)', pointerEvents: 'none', display: 'none', zIndex: 4,
+  position: 'absolute', width: '12px', height: '12px', borderRadius: '50%', background: '#fd7e2f',
+  boxShadow: '0 0 0 5px rgba(253,126,47,.25)', transform: 'translate(-50%,-50%)', pointerEvents: 'none', display: 'none', zIndex: 4,
 });
 stage.appendChild(dot);
 
