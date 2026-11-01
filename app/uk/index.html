@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <title>Студія Пікселя · Matis Academy</title>
 <script src="https://telegram.org/js/telegram-web-app.js?59"></script>
@@ -16,6 +16,12 @@
 :root{--bg:#151311;--card:#2b1c13;--surf:#3a271b;--line:#54392a;--tx:#f2efe8;--mut:#cfc6b8;--dim:#9c8f80;--acc:#fd7e2f;--ok:#a8d86a;--bad:#ef8a7a;--cream:#e8e3d7;
   --top:0px;--bot:0px;--tabh:64px}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* фиксированный масштаб (1.11.2026): без щипка, двойного тапа и автозума iOS на полях ввода; без сдвига вбок */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:pan-x pan-y}
+body{touch-action:pan-x pan-y}
+.app,.game{overflow-x:clip}
+button,a,input,.gc,.frame{touch-action:manipulation}
+.frame.rev{touch-action:pan-y}
 html,body{margin:0;background:var(--bg);color:var(--tx);font:400 15px/1.5 Montserrat,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
 a{color:inherit}
@@ -177,7 +183,7 @@ h1,h2,h3{font-family:'Russo One',Montserrat,sans-serif;font-weight:400;margin:0;
 .sugg::-webkit-scrollbar{display:none}
 .sugg button{flex:none;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:8px 12px;font-size:13px;font-weight:600;color:var(--mut)}
 .cin{position:sticky;bottom:calc(var(--tabh) + var(--bot) + 8px);display:flex;gap:8px;background:var(--bg);padding-top:6px}
-.cin input{flex:1;min-width:0;background:var(--card);border:1.5px solid var(--line);border-radius:24px;color:var(--tx);font:500 15px Montserrat;padding:12px 16px;outline:none}
+.cin input{flex:1;min-width:0;background:var(--card);border:1.5px solid var(--line);border-radius:24px;color:var(--tx);font:500 16px Montserrat;padding:12px 16px;outline:none}
 .cin input:focus{border-color:#894a1f}
 .cin button{width:48px;height:48px;border-radius:50%;background:var(--acc);display:grid;place-items:center;flex:none}
 .cin button[disabled]{opacity:.5}
@@ -208,7 +214,7 @@ h1,h2,h3{font-family:'Russo One',Montserrat,sans-serif;font-weight:400;margin:0;
 .cb-empty{color:var(--dim);font-size:13.5px;margin:0 0 12px}
 .cb-f{display:block;margin-bottom:10px}
 .cb-f span{display:block;font-size:12.5px;font-weight:600;color:var(--mut);margin-bottom:4px}
-.cb-f input,.cb-ta{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:#1d1612;color:var(--tx);font:inherit;font-size:15px;outline:none}
+.cb-f input,.cb-ta{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:#1d1612;color:var(--tx);font:inherit;font-size:16px;outline:none}
 .cb-f input:focus,.cb-ta:focus{border-color:var(--acc)}
 .cb-ta{min-height:86px;resize:vertical;margin-bottom:8px}
 .cb-f small{display:block;margin-top:4px;font-size:12px;color:var(--dim)}
@@ -460,6 +466,7 @@ function open(u){hap();if(/^https:\/\/t\.me\//.test(u)){if(TG&&TG.openTelegramLi
   if(u.charAt(0)==='/')u=location.origin+(CFG.site&&!/^\/(wp-content|app|navigator-api)\//.test(u)?CFG.site:'')+u;
   if(TG&&TG.openLink&&IN_TG)TG.openLink(u);else window.open(u,'_blank');}
 function toast(t){var e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(function(){e.classList.remove('on');},2400);}
+/* запрет масштабирования страницы (Claude, 1.11.2026) */(function(){function no(e){e.preventDefault();}['gesturestart','gesturechange','gestureend'].forEach(function(t){document.addEventListener(t,no,{passive:false});});document.addEventListener('touchmove',function(e){if(e.touches&&e.touches.length>1||(e.scale&&e.scale!==1))e.preventDefault();},{passive:false});window.addEventListener('wheel',function(e){if(e.ctrlKey)e.preventDefault();},{passive:false});window.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&/^(=|\+|-|_|0)$/.test(e.key))e.preventDefault();});})();
 var RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------- Telegram ---------- */
