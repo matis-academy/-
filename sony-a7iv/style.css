@@ -224,3 +224,9 @@ input[type=range] { accent-color: var(--accent); }
 .tip-name { font-family: var(--head); font-weight: 400; text-transform: uppercase; letter-spacing: 0; }
 .src a { color: #f1ece2; text-decoration-color: var(--accent); }
 .title h1 .alpha { font-style: normal; text-transform: none; }
+@media (max-width: 860px) {
+  .sim-link { padding: 7px 12px; font-size: 12px; }
+  .title h1 { font-size: 20px; }
+  .title h1 span { display: none; }
+  .hint-m { padding-right: 150px; }
+}
