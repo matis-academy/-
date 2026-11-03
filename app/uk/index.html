@@ -217,6 +217,13 @@ h1,h2,h3{font-family:'Russo One',Montserrat,sans-serif;font-weight:400;margin:0;
 .cb-f input,.cb-ta{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:#1d1612;color:var(--tx);font:inherit;font-size:16px;outline:none}
 .cb-f input:focus,.cb-ta:focus{border-color:var(--acc)}
 .cb-ta{min-height:86px;resize:vertical;margin-bottom:8px}
+/* вложения и «только чтение» (02.11.2026) */
+.cb-row{display:flex;gap:8px;flex-wrap:wrap}.cb-row .cb-btn{flex:1 1 auto}
+.cb-att{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.cb-att:empty{display:none}
+.cb-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 6px 4px 10px;border-radius:999px;background:var(--surf);font-size:12.5px;max-width:100%;overflow:hidden}
+.cb-chip button{border:0;background:var(--line);color:var(--tx);width:20px;height:20px;border-radius:50%;font-size:14px;line-height:1;cursor:pointer;flex:none}
+.cb-fls{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.cb-fl{font-size:12px;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,.06);color:var(--dim);white-space:normal}
+.cb-ro{margin:4px 0 0;padding:12px 14px;border-radius:14px;background:var(--surf);color:var(--dim);font-size:13.5px}
 .cb-f small{display:block;margin-top:4px;font-size:12px;color:var(--dim)}
 .cb-f small.ok{color:var(--ok)}.cb-f small.err{color:var(--bad)}
 .cb-note{font-size:12.5px;color:var(--dim);margin:8px 2px 0}
@@ -797,7 +804,7 @@ var chat=(function(){
     if(!v||!/^[A-Za-z0-9_-]{16,64}$/.test(v)){var A='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_',r=new Uint8Array(22);try{crypto.getRandomValues(r);}catch(e){for(var i=0;i<22;i++)r[i]=Math.floor(Math.random()*256);}
       v='';for(var j=0;j<22;j++)v+=A.charAt(r[j]&63);try{localStorage.setItem(k,v);}catch(e){}}return v;})();
   var ERR={daily_limit:'На сьогодні я наговорився — ліміт запитань закінчився. Повертайся завтра! А ігри працюють і зараз.',budget_exhausted:'Я приліг відпочити й поки не відповідаю на запитання. Зазирни трохи пізніше.',paused:'Я приліг відпочити й поки не відповідаю на запитання. Зазирни трохи пізніше.'};
-  function api(path,data,done){var x=new XMLHttpRequest();x.open('POST','/navigator-api/pixel/'+path);x.setRequestHeader('Content-Type','application/json');x.setRequestHeader('X-Pixel-Request','1');x.timeout=45000;
+  function api(path,data,done){var x=new XMLHttpRequest();x.open('POST','/navigator-api/pixel/'+path);x.setRequestHeader('Content-Type','application/json');x.setRequestHeader('X-Pixel-Request','1');x.timeout=path==='write'?120000:45000;
     x.onloadend=function(){var r=null;try{r=JSON.parse(x.responseText);}catch(e){}done(x.status,r);};data.lang=LANG;x.send(JSON.stringify(data));}
   function add(role,text,links){var m=el('div','m '+role);m.textContent=text;
     if(links&&links.length){var ls=el('div','ls');links.forEach(function(l){var b=el('button','',esc(l.t)+' →');b.onclick=function(){open(l.u);};ls.appendChild(b);});m.appendChild(ls);}
@@ -831,7 +838,7 @@ var cab=(function(){
     pBad:'Якщо це помилка — напиши Антону нижче, розберетеся.',pOk:function(p){return '«Професія Відеограф»'+(p?' · тариф «'+p+'»':'');},
     pkg:{self:'Самостійний',feedback:'Зі зворотним зв’язком',mentor:'Наставництво'},
     msgs:'Повідомлення школи',noMsgs:'Поки повідомлень немає. Коли школа щось напише — побачиш тут і в чаті з Пікселем.',
-    school:'Школа',you:'Ти',write:'Напиши Антону: питання, уточнення, будь-що…',send:'Надіслати Антону',sent:'Надіслано — Антон отримає сповіщення',
+    school:'Школа',you:'Ти',attach:'📎 Файл',ro:'Доступ до курсу закінчився — листування збережене, але писати сюди вже не можна. Щоб продовжити навчання, натисни «Я купив курс».',fmax:'Не більше 3 файлів',fbig:'Завеликий файл (до 10 МБ, разом до 12 МБ) — надішли посилання на хмару',fvid:'Відео й аудіо — посиланням на хмару',ftype:'Такий файл не приймаємо: можна фото, скриншоти, PDF і документи',write:'Напиши Антону: питання, уточнення, будь-що…',send:'Надіслати Антону',sent:'Надіслано — Антон отримає сповіщення',
     limit:'На сьогодні повідомлень забагато — спробуй завтра',contacts:'Контакти',cNote:'Бачить тільки Антон. Допоможуть не втратити зв’язок, якщо щось станеться з Telegram.',
     email:'Email',phone:'Телефон',country:'Країна',ig:'Instagram',save:'Зберегти контакти',saved:'Збережено ✓',
     eOk:'✓ Підтверджено',ePend:function(e){return 'Чекаємо підтвердження: лист надіслано на '+e;},eNew:'Надішлемо лист для підтвердження',
@@ -846,7 +853,7 @@ var cab=(function(){
     pBad:'Если это ошибка — напиши Антону ниже, разберётесь.',pOk:function(p){return '«Профессия Видеограф»'+(p?' · тариф «'+p+'»':'');},
     pkg:{self:'Самостоятельный',feedback:'С обратной связью',mentor:'Наставничество'},
     msgs:'Сообщения школы',noMsgs:'Пока сообщений нет. Когда школа что-то напишет — увидишь здесь и в чате с Пикселем.',
-    school:'Школа',you:'Ты',write:'Напиши Антону: вопрос, уточнение, что угодно…',send:'Отправить Антону',sent:'Отправлено — Антон получит уведомление',
+    school:'Школа',you:'Ты',attach:'📎 Файл',ro:'Доступ к курсу закончился — переписка сохранена, но писать сюда уже нельзя. Чтобы продлить обучение, нажми «Я купил курс».',fmax:'Не больше 3 файлов',fbig:'Слишком большой файл (до 10 МБ, всего до 12 МБ) — пришли ссылку на облако',fvid:'Видео и аудио — ссылкой на облако',ftype:'Такой файл не принимаем: можно фото, скриншоты, PDF и документы',write:'Напиши Антону: вопрос, уточнение, что угодно…',send:'Отправить Антону',sent:'Отправлено — Антон получит уведомление',
     limit:'На сегодня сообщений слишком много — попробуй завтра',contacts:'Контакты',cNote:'Видит только Антон. Помогут не потерять связь, если что-то случится с Telegram.',
     email:'Email',phone:'Телефон',country:'Страна',ig:'Instagram',save:'Сохранить контакты',saved:'Сохранено ✓',
     eOk:'✓ Подтверждён',ePend:function(e){return 'Ждём подтверждения: письмо отправлено на '+e;},eNew:'Пришлём письмо для подтверждения',
@@ -854,7 +861,7 @@ var cab=(function(){
     linkNote:'Ссылка одноразовая и откроется в браузере Telegram.',paidNew:'Заявка передана Антону 🐾',gen:'Что-то связь барахлит. Попробуй ещё раз.'};
   var box=null,st=null,busy=false;
   function req(path,data,cb){data=data||{};data.init=TG.initData;api(path,data,cb);}
-  function api(path,data,done){var x=new XMLHttpRequest();x.open('POST','/navigator-api/pixel/app/'+path);x.setRequestHeader('Content-Type','application/json');x.setRequestHeader('X-Pixel-Request','1');x.timeout=45000;
+  function api(path,data,done){var x=new XMLHttpRequest();x.open('POST','/navigator-api/pixel/app/'+path);x.setRequestHeader('Content-Type','application/json');x.setRequestHeader('X-Pixel-Request','1');x.timeout=path==='write'?120000:45000;
     x.onloadend=function(){var r=null;try{r=JSON.parse(x.responseText);}catch(e){}done(x.status,r);};x.send(JSON.stringify(data));}
   function btn(cls,txt,fn){var b=el('button','cb-btn'+(cls?' '+cls:''),esc(txt));b.onclick=function(){if(busy)return;fn(b);};return b;}
   function access(kind,b){busy=true;b.disabled=true;hap();
@@ -862,6 +869,8 @@ var cab=(function(){
       if(code!==200||!r||!r.url){toast(T.gen);hap('err');return;}
       if(kind==='paid'&&r.new){toast(T.paidNew);hap('ok');}
       open(r.url);setTimeout(function(){load(false);},1500);});}
+  function shrinkF(file){return new Promise(function(ok){if(!/^image\/(jpeg|png|webp)$/.test(file.type)||file.size<1.5e6)return ok(file);var u=URL.createObjectURL(file),im=new Image();im.onload=function(){var k=Math.min(1,2560/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(function(b){ok(b&&b.size<file.size?new File([b],file.name.replace(/\.\w+$/,'')+'.jpg',{type:'image/jpeg'}):file);},'image/jpeg',.85);};im.onerror=function(){ok(file);};im.src=u;});}
+  function toB64(list){return Promise.all(list.map(function(f){return new Promise(function(ok){var r=new FileReader();r.onload=function(){ok({name:f.name,b64:String(r.result).split(',')[1]||''});};r.onerror=function(){ok(null);};r.readAsDataURL(f);});})).then(function(a){return a.filter(Boolean);});}
   function chip(cls,t){return '<span class="cb-chip '+cls+'"><i></i>'+esc(t)+'</span>';}
   function render(){box.innerHTML='';
     if(!st.exists){var c=el('div','cb-card');c.innerHTML='<div class="cb-name">'+esc(T.hi(NAME))+'</div><p class="cb-p">'+esc(T.guest)+'</p>';
@@ -880,13 +889,19 @@ var cab=(function(){
     var m=el('div','cb-card');m.innerHTML='<div class="cb-h"><h3>'+esc(T.msgs)+'</h3>'+(st.unread?'<span class="cb-badge">'+st.unread+'</span>':'')+'</div>';
     var list=el('div','cb-msgs');
     if(!st.messages||!st.messages.length)m.appendChild(el('p','cb-empty',esc(T.noMsgs)));
-    (st.messages||[]).forEach(function(x){var d=el('div','cb-m '+(x.dir==='in'?'in':'out'));d.innerHTML='<small>'+esc((x.dir==='in'?T.you:T.school)+' · '+x.at)+'</small>'+esc(x.body)+(x.link?'<br><a href="#">'+esc(T.link)+'</a>':'');
+    (st.messages||[]).forEach(function(x){var d=el('div','cb-m '+(x.dir==='in'?'in':'out'));d.innerHTML='<small>'+esc((x.dir==='in'?T.you:(x.who||T.school))+' · '+x.at)+'</small>'+esc(x.body)+((x.files||[]).length?'<span class="cb-fls">'+x.files.map(function(f){return '<span class="cb-fl">'+(f.img?'🖼 ':'📎 ')+esc(f.n)+' · '+esc(f.s)+'</span>';}).join('')+'</span>':'')+(x.link?'<br><a href="#">'+esc(T.link)+'</a>':'');
       if(x.link){var l=d.querySelector('a');l.onclick=function(e){e.preventDefault();open(x.link);};}list.appendChild(d);});
     m.appendChild(list);
+    if(st.can_reply===false){m.appendChild(el('p','cb-ro',esc(T.ro)));}else{
     var ta=el('textarea','cb-ta');ta.placeholder=T.write;ta.maxLength=4000;m.appendChild(ta);
-    m.appendChild(btn('g',T.send,function(b){var v=ta.value.trim();if(!v)return;busy=true;b.disabled=true;
-      req('write',{text:v},function(code,r){busy=false;b.disabled=false;
-        if(code===200&&r&&r.ok){ta.value='';toast(T.sent);hap('ok');load(false);}else{toast(r&&r.error==='limit'?T.limit:T.gen);hap('err');}});}));
+    var FL=[],att=el('div','cb-att'),fi=document.createElement('input');fi.type='file';fi.multiple=true;fi.accept='image/*,.heic,.heif,.pdf,.doc,.docx,.txt';fi.style.display='none';m.appendChild(fi);m.appendChild(att);
+    var drawA=function(){att.innerHTML='';FL.forEach(function(x,i){var s=el('span','cb-chip',esc(x.name)+' <button type="button" aria-label="×">×</button>');s.querySelector('button').onclick=function(){FL.splice(i,1);drawA();};att.appendChild(s);});};
+    fi.onchange=function(){[].slice.call(fi.files).forEach(function(x){if(/^(video|audio)\//.test(x.type)){toast(T.fvid);return;}shrinkF(x).then(function(y){var tot=FL.reduce(function(a,z){return a+z.size;},0)+y.size;if(FL.length>=3){toast(T.fmax);return;}if(y.size>10485760||tot>12582912){toast(T.fbig);return;}FL.push(y);drawA();});});fi.value='';};
+    var row=el('div','cb-row');row.appendChild(btn('g',T.attach,function(){fi.click();}));
+    row.appendChild(btn('g',T.send,function(b){var v=ta.value.trim();if(!v&&!FL.length)return;busy=true;b.disabled=true;
+      toB64(FL).then(function(files){req('write',{text:v,files:files},function(code,r){busy=false;b.disabled=false;var e=(r&&r.error)||'';
+        if(code===200&&r&&r.ok){ta.value='';FL=[];drawA();toast(T.sent);hap('ok');load(false);}else{toast(e==='limit'?T.limit:e==='closed'?T.ro:/^file_(type|bad)/.test(e)?T.ftype:(code===413||e==='file_big')?T.fbig:T.gen);hap('err');}});});}));
+    m.appendChild(row);}
     box.appendChild(m);
     setTimeout(function(){list.scrollTop=list.scrollHeight;},0);
     /* контакты */
