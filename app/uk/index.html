@@ -224,6 +224,25 @@ h1,h2,h3{font-family:'Russo One',Montserrat,sans-serif;font-weight:400;margin:0;
 .cb-chip button{border:0;background:var(--line);color:var(--tx);width:20px;height:20px;border-radius:50%;font-size:14px;line-height:1;cursor:pointer;flex:none}
 .cb-fls{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.cb-fl{font-size:12px;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,.06);color:var(--dim);white-space:normal}
 .cb-ro{margin:4px 0 0;padding:12px 14px;border-radius:14px;background:var(--surf);color:var(--dim);font-size:13.5px}
+/* чаты школы (03.11.2026) */
+.cr-it{display:block;width:100%;text-align:left;position:relative;padding:12px 44px 12px 14px;border-radius:14px;background:var(--surf);margin-bottom:8px;color:var(--tx)}
+.cr-it b{display:block;font-size:14.5px}.cr-it span{display:block;font-size:12.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.cr-it em{display:inline-block;font-style:normal;font-size:11px;padding:1px 8px;border-radius:999px;background:var(--card);color:var(--acc);margin:4px 4px 0 0}
+.cr-it .cb-badge{position:absolute;right:12px;top:12px}
+.cr-hd{display:flex;align-items:center;gap:10px;margin-bottom:10px}.cr-hd h3{flex:1;font-size:17px;line-height:1.25}
+.cr-back{color:var(--acc);font-weight:600;font-size:14px;padding:4px 0}
+.cr-sel{width:100%;margin-bottom:10px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#1d1612;color:var(--tx);font:inherit;font-size:14px}
+.cr-pin{padding:9px 12px;border-radius:12px;background:#4a2c16;color:#fdd0ac;font-size:13px;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cr-hint{font-size:12.5px;color:var(--dim);margin:0 0 10px}
+.cr-feed{display:grid;gap:8px;max-height:56vh;overflow:auto;margin-bottom:12px;padding-right:2px}
+.cr-m{padding:9px 12px;border-radius:14px;background:var(--surf);font-size:14px;max-width:88%;justify-self:start;word-wrap:break-word;white-space:pre-wrap}
+.cr-m.mine{justify-self:end;background:#47301f}.cr-m.team{background:#1d1612;border:1px solid var(--line)}.cr-m.team small b{color:var(--acc)}.cr-m.pinned{box-shadow:0 0 0 2px var(--acc)}
+.cr-m small{display:flex;justify-content:space-between;gap:8px;margin-bottom:3px;color:var(--dim);font-size:11.5px;white-space:normal}.cr-m small b{color:var(--mut)}
+.cr-m .q{display:block;border-left:3px solid var(--acc);padding:2px 8px;margin:0 0 5px;font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cr-m a{color:var(--acc)}.cr-m i{color:var(--dim)}
+.cr-ma{display:flex;gap:12px;margin-top:5px;white-space:normal}.cr-ma button{font-size:12px;color:var(--acc);padding:0}
+.cr-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--dim);background:var(--surf);border-radius:10px;padding:6px 10px;margin-bottom:8px}
+.cr-bar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-bar button{width:22px;height:22px;border-radius:50%;background:var(--line);color:var(--tx);flex:none}
 .cb-f small{display:block;margin-top:4px;font-size:12px;color:var(--dim)}
 .cb-f small.ok{color:var(--ok)}.cb-f small.err{color:var(--bad)}
 .cb-note{font-size:12.5px;color:var(--dim);margin:8px 2px 0}
@@ -859,7 +878,15 @@ var cab=(function(){
     eOk:'✓ Подтверждён',ePend:function(e){return 'Ждём подтверждения: письмо отправлено на '+e;},eNew:'Пришлём письмо для подтверждения',
     mailFail:'Контакты сохранены, но письмо пока не отправилось — попробуй позже.',link:'Открыть ссылку →',
     linkNote:'Ссылка одноразовая и откроется в браузере Telegram.',paidNew:'Заявка передана Антону 🐾',gen:'Что-то связь барахлит. Попробуй ещё раз.'};
-  var box=null,st=null,busy=false;
+  var R=UK?{chats:'Чати',support:'підтримка',ro_chip:'лише читання',back:'← Назад',pinned:'Закріплено',noMsgs:'Повідомлень поки немає — напиши першим!',
+    ro:'Доступ до курсу закінчився — чат доступний лише для читання.',ph:'Повідомлення…',send:'Надіслати',save:'Зберегти',reply:'Відповісти',edit:'Змінити',del:'Видалити',
+    delQ:'Видалити повідомлення?',deleted:'Повідомлення видалено',edited:'змінено',replyTo:'Відповідь',editing:'Редагування',
+    nAll:'🔔 Сповіщення: усі повідомлення',nImp:'🔔 Сповіщення: відповіді мені, школа, закріплені',nOff:'🔕 Сповіщення вимкнені'}
+   :{chats:'Чаты',support:'поддержка',ro_chip:'только чтение',back:'← Назад',pinned:'Закреплено',noMsgs:'Сообщений пока нет — напиши первым!',
+    ro:'Доступ к курсу закончился — чат доступен только для чтения.',ph:'Сообщение…',send:'Отправить',save:'Сохранить',reply:'Ответить',edit:'Изменить',del:'Удалить',
+    delQ:'Удалить сообщение?',deleted:'Сообщение удалено',edited:'изменено',replyTo:'Ответ',editing:'Редактирование',
+    nAll:'🔔 Уведомления: все сообщения',nImp:'🔔 Уведомления: ответы мне, школа, закрепы',nOff:'🔕 Уведомления выключены'};
+  var box=null,st=null,busy=false,room=null,rf=null,rsig='',rt=null,rrep=null,redit=null,rfiles=[];
   function req(path,data,cb){data=data||{};data.init=TG.initData;api(path,data,cb);}
   function api(path,data,done){var x=new XMLHttpRequest();x.open('POST','/navigator-api/pixel/app/'+path);x.setRequestHeader('Content-Type','application/json');x.setRequestHeader('X-Pixel-Request','1');x.timeout=path==='write'?120000:45000;
     x.onloadend=function(){var r=null;try{r=JSON.parse(x.responseText);}catch(e){}done(x.status,r);};x.send(JSON.stringify(data));}
@@ -872,7 +899,7 @@ var cab=(function(){
   function shrinkF(file){return new Promise(function(ok){if(!/^image\/(jpeg|png|webp)$/.test(file.type)||file.size<1.5e6)return ok(file);var u=URL.createObjectURL(file),im=new Image();im.onload=function(){var k=Math.min(1,2560/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(function(b){ok(b&&b.size<file.size?new File([b],file.name.replace(/\.\w+$/,'')+'.jpg',{type:'image/jpeg'}):file);},'image/jpeg',.85);};im.onerror=function(){ok(file);};im.src=u;});}
   function toB64(list){return Promise.all(list.map(function(f){return new Promise(function(ok){var r=new FileReader();r.onload=function(){ok({name:f.name,b64:String(r.result).split(',')[1]||''});};r.onerror=function(){ok(null);};r.readAsDataURL(f);});})).then(function(a){return a.filter(Boolean);});}
   function chip(cls,t){return '<span class="cb-chip '+cls+'"><i></i>'+esc(t)+'</span>';}
-  function render(){box.innerHTML='';
+  function render(){if(room){drawRoom();return;}box.innerHTML='';
     if(!st.exists){var c=el('div','cb-card');c.innerHTML='<div class="cb-name">'+esc(T.hi(NAME))+'</div><p class="cb-p">'+esc(T.guest)+'</p>';
       var a=el('div','cb-acts');a.appendChild(btn('',T.mini,function(b){access('mini',b);}));a.appendChild(btn('g',T.buy,function(b){access('paid',b);}));c.appendChild(a);box.appendChild(c);return;}
     var c=el('div','cb-card'),p=st.paid,h='<div class="cb-name">'+esc(st.name||NAME||'')+'</div>';
@@ -885,6 +912,11 @@ var cab=(function(){
     if(!p&&!st.mini)a.appendChild(btn('g',T.mini,function(b){access('mini',b);}));
     if(!p||p==='rejected'||p==='revoked')a.appendChild(btn('g',T.buy,function(b){access('paid',b);}));
     c.appendChild(a);c.appendChild(el('p','cb-note',esc(T.linkNote)));box.appendChild(c);
+    /* чаты школы (03.11.2026) */
+    if(st.chats&&st.chats.length){var ch=el('div','cb-card');ch.innerHTML='<div class="cb-h"><h3>'+esc(R.chats)+'</h3></div>';
+      st.chats.forEach(function(x){var b=el('button','cr-it','<b>'+esc(x.title)+'</b>'+(x.mode==='support'?'<em>'+esc(R.support)+'</em>':'')+(x.state==='read'?'<em>'+esc(R.ro_chip)+'</em>':'')
+        +'<span>'+(x.last?esc(x.last.who+': '+x.last.text):'&nbsp;')+'</span>'+(x.unread?'<span class="cb-badge">'+x.unread+'</span>':''));b.onclick=function(){openRoom(x.id);};ch.appendChild(b);});
+      box.appendChild(ch);}
     /* сообщения */
     var m=el('div','cb-card');m.innerHTML='<div class="cb-h"><h3>'+esc(T.msgs)+'</h3>'+(st.unread?'<span class="cb-badge">'+st.unread+'</span>':'')+'</div>';
     var list=el('div','cb-msgs');
@@ -917,14 +949,63 @@ var cab=(function(){
         if(keys.length){toast(errs[keys[0]]);hap('err');}else{toast(r.sent===false?T.mailFail:T.saved);hap('ok');}
         if(r.contacts){st.contacts=r.contacts;render();}});}));
     box.appendChild(k);}
-  function load(read){box=$('#cab');
+  /* ---------- комната чата ---------- */
+  function rq(op,data,cb){data=data||{};data.op=op;if(room)data.chat=room;req('room',data,cb);}
+  function openRoom(id){room=+id;rf=null;rsig='';rrep=null;redit=null;rfiles=[];box=$('#cab');box.innerHTML='<div class="cb-card mut">'+esc(T.load)+'</div>';window.scrollTo(0,0);
+    pull(true);clearInterval(rt);rt=setInterval(function(){if(document.visibilityState==='visible'&&$('#s-cab').classList.contains('on'))pull(false);},8000);}
+  function closeRoom(){room=null;clearInterval(rt);load(false);}
+  function pull(first){var id=room;rq('get',{},function(code,r){if(id!==room)return;
+    if(code!==200||!r||!r.ok){if(first){room=null;toast(T.gen);load(false);}return;}
+    var sg=JSON.stringify([r.messages,r.pinned,r.state]);if(!first&&sg===rsig)return;rsig=sg;rf=r;if(first||!box.querySelector('.cr-feed'))drawRoom();else drawFeed();});}
+  function linky(t){return esc(t).replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?)\]»])/g,'<a href="#" data-u="$1">$1</a>');}
+  function drawRoom(){if(!rf)return;box.innerHTML='';var c=el('div','cb-card');
+    var hd=el('div','cr-hd');var bk=el('button','cr-back',esc(R.back));bk.onclick=closeRoom;hd.appendChild(bk);hd.appendChild(el('h3','',esc(rf.chat.title)));c.appendChild(hd);
+    var sel=el('select','cr-sel');[['important',R.nImp],['all',R.nAll],['off',R.nOff]].forEach(function(o){var op=el('option','',esc(o[1]));op.value=o[0];if(rf.notify===o[0])op.selected=true;sel.appendChild(op);});
+    sel.onchange=function(){rq('notify',{value:sel.value},function(code,r){if(code!==200||!r||!r.ok)toast(T.gen);else hap('ok');});};c.appendChild(sel);
+    c.appendChild(el('div','cr-pin'));if(rf.hint)c.appendChild(el('p','cr-hint',esc(rf.hint)));c.appendChild(el('div','cr-feed'));box.appendChild(c);
+    drawFeed(true);
+    if(rf.state!=='write'){c.appendChild(el('p','cb-ro',esc(R.ro)));return;}
+    var bar=el('div','cr-bar');bar.style.display='none';c.appendChild(bar);
+    var ta=el('textarea','cb-ta');ta.placeholder=R.ph;ta.maxLength=4000;c.appendChild(ta);
+    var att=el('div','cb-att'),fi=document.createElement('input');fi.type='file';fi.multiple=true;fi.accept='image/*,.heic,.heif,.pdf,.doc,.docx,.txt';fi.style.display='none';c.appendChild(fi);c.appendChild(att);
+    var row=el('div','cb-row'),sb;
+    function upd(){bar.innerHTML='';bar.style.display=(rrep||redit)?'':'none';
+      if(rrep||redit){bar.innerHTML='<span>'+(redit?'✏️ '+esc(R.editing):'↩ '+esc(R.replyTo+': '+rrep.who+': '+(rrep.text||'📎').slice(0,60)))+'</span>';var x=el('button','','×');x.onclick=function(){if(redit)ta.value='';rrep=null;redit=null;upd();};bar.appendChild(x);}
+      sb.textContent=redit?R.save:R.send;att.innerHTML='';rfiles.forEach(function(f,i){var s=el('span','cb-chip',esc(f.name)+' <button type="button">×</button>');s.querySelector('button').onclick=function(){rfiles.splice(i,1);upd();};att.appendChild(s);});}
+    box._upd=upd;box._ta=ta;
+    fi.onchange=function(){[].slice.call(fi.files).forEach(function(x){if(/^(video|audio)\//.test(x.type)){toast(T.fvid);return;}shrinkF(x).then(function(y){var tot=rfiles.reduce(function(a,z){return a+z.size;},0)+y.size;if(rfiles.length>=3){toast(T.fmax);return;}if(y.size>10485760||tot>12582912){toast(T.fbig);return;}rfiles.push(y);upd();});});fi.value='';};
+    row.appendChild(btn('g',T.attach,function(){fi.click();}));
+    sb=btn('',R.send,function(b){var v=ta.value.trim();
+      if(redit){if(!v)return;busy=true;b.disabled=true;rq('act',{act:'edit',msg:redit.id,text:v},function(code,r){busy=false;b.disabled=false;if(code===200&&r&&r.ok){rf=r;rsig='';redit=null;ta.value='';upd();drawFeed();}else toast(T.gen);});return;}
+      if(!v&&!rfiles.length)return;busy=true;b.disabled=true;
+      toB64(rfiles).then(function(files){rq('send',{text:v,files:files,reply_to:rrep?rrep.id:0},function(code,r){busy=false;b.disabled=false;var e=(r&&r.error)||'';
+        if(code===200&&r&&r.ok){rf=r;rsig='';ta.value='';rfiles=[];rrep=null;upd();drawFeed(true);hap('ok');}
+        else{toast(e==='limit'?T.limit:e==='closed'?R.ro:/^file_(type|bad)/.test(e)?T.ftype:(code===413||e==='file_big')?T.fbig:T.gen);hap('err');}});});});
+    row.appendChild(sb);c.appendChild(row);upd();}
+  function drawFeed(force){var f=box.querySelector('.cr-feed'),pin=box.querySelector('.cr-pin');if(!f)return;var bottom=force||f.scrollHeight-f.scrollTop-f.clientHeight<80;
+    pin.style.display=rf.pinned?'':'none';pin.textContent=rf.pinned?'📌 '+R.pinned+' · '+rf.pinned.who+': '+(rf.pinned.text||'📎'):'';
+    pin.onclick=function(){if(rf.pinned){var e=document.getElementById('cr'+rf.pinned.id);if(e)e.scrollIntoView({block:'center'});}};
+    f.innerHTML='';if(!rf.messages.length)f.appendChild(el('p','cb-empty',esc(R.noMsgs)));
+    rf.messages.forEach(function(m){var d=el('div','cr-m'+(m.mine?' mine':'')+(m.team?' team':'')+(m.pinned?' pinned':''));d.id='cr'+m.id;
+      var h='<small><b>'+esc(m.who)+'</b><span>'+esc(m.at)+(m.edited&&!m.deleted?' · '+esc(R.edited):'')+'</span></small>';
+      if(m.reply)h+='<span class="q">↩ '+esc(m.reply.who+': '+m.reply.text)+'</span>';
+      if(m.deleted)h+='<i>'+esc(R.deleted)+'</i>';else{h+=linky(m.text);if(m.files.length)h+='<span class="cb-fls">'+m.files.map(function(x){return '<span class="cb-fl">'+(x.img?'🖼 ':'📎 ')+esc(x.n)+' · '+esc(x.s)+'</span>';}).join('')+'</span>';}
+      d.innerHTML=h;[].forEach.call(d.querySelectorAll('a[data-u]'),function(a){a.onclick=function(e){e.preventDefault();open(a.getAttribute('data-u'));};});
+      if(!m.deleted&&rf.state==='write'){var a=el('div','cr-ma');
+        var b1=el('button','',esc(R.reply));b1.onclick=function(){rrep=m;redit=null;box._upd();box._ta.focus();};a.appendChild(b1);
+        if(m.can_edit&&m.text){var b2=el('button','',esc(R.edit));b2.onclick=function(){redit=m;rrep=null;box._ta.value=m.text;box._upd();box._ta.focus();};a.appendChild(b2);}
+        if(m.can_edit){var b3=el('button','',esc(R.del));b3.onclick=function(){if(!confirm(R.delQ))return;rq('act',{act:'delete',msg:m.id},function(code,r){if(code===200&&r&&r.ok){rf=r;rsig='';drawFeed();}else toast(T.gen);});};a.appendChild(b3);}
+        d.appendChild(a);}
+      f.appendChild(d);});
+    if(bottom)f.scrollTop=f.scrollHeight;}
+  function load(read){box=$('#cab');if(room){openRoom(room);return;}
     if(!IN_TG){box.innerHTML='';var c=el('div','cb-card');c.innerHTML='<p class="cb-p" style="margin-top:0">'+esc(T.noTg)+'</p>';var a=el('div','cb-acts');a.appendChild(btn('',T.openTg,function(){open('https://t.me/'+CFG.bot);}));c.appendChild(a);box.appendChild(c);return;}
     if(!st)box.innerHTML='<div class="cb-card mut">'+esc(T.load)+'</div>';
     req('cabinet',{read:!!read},function(code,r){
       if(code!==200||!r){if(!st){box.innerHTML='';var c=el('div','cb-card');c.innerHTML='<p class="cb-p" style="margin-top:0">'+esc(T.err)+'</p>';var a=el('div','cb-acts');a.appendChild(btn('g',T.retry,function(){load(read);}));c.appendChild(a);box.appendChild(c);}return;}
       st=r;render();if(read){st.unread=0;$('#cabdot').classList.remove('on');}});}
-  function peek(){if(!IN_TG)return;req('cabinet',{},function(code,r){if(code===200&&r&&r.unread)$('#cabdot').classList.add('on');});}
-  return {load:load,peek:peek};
+  function peek(){if(!IN_TG)return;req('cabinet',{},function(code,r){if(code===200&&r&&(r.unread||(r.chats||[]).some(function(x){return x.unread;})))$('#cabdot').classList.add('on');});}
+  return {load:load,peek:peek,openRoom:function(id){if(!IN_TG)return;go('cab');openRoom(id);}};
 })();
 
 /* ---------- навигация ---------- */
@@ -946,6 +1027,7 @@ load(function(st){if(st&&st.v===1){S=st;S.best=S.best||{};S.ach=S.ach||[];}
   if(/^g_(det|kr|bl|day)$/.test(sp))setTimeout(function(){startGame(sp.slice(2));},400);
   else if(sp==='chat')go('chat');
   else if(sp==='cab')go('cab');
+  else{var cm=/^c_(\d+)$/.exec(sp)||/[?&]c=(\d+)/.exec(location.search);if(cm)setTimeout(function(){cab.openRoom(+cm[1]);},300);}
   cab.peek();
   setTimeout(function(){if(scene.sleeping()){scene.say('Тсс… Піксель спить. Погладь, щоб розбудити',4200);return;}
     if(fresh&&S.streak>1){scene.say((NAME?NAME+', ':'')+'ти знову тут! День '+S.streak+' поспіль 🔥 +10 XP',3800);scene.play('cheer');}
