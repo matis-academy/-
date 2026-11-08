@@ -39,7 +39,7 @@
     '.bm-img canvas.bm-cv{position:absolute;left:0;top:0;width:705px;height:397px;transform-origin:50% 50%}',
     '.bm-img.rec:after{content:"";position:absolute;inset:0;border:2px solid var(--red);pointer-events:none;z-index:4}',
     '.bm-ov{position:absolute;inset:0;pointer-events:none}',
-    '.bm-ov svg{position:absolute;inset:0;width:100%;height:100%}',
+    '.bm-ov > svg{position:absolute;inset:0;width:100%;height:100%}',   /* 08.11 Claude: только слой оверлея; иконки кнопок диска (замок, пресеты WB) — в потоке, не на весь размер кнопки */
     '.bm-hud{position:absolute;inset:0;pointer-events:none;transition:opacity .25s}',
     '.bm-hud.hidden{opacity:0}',
     '.bm-hud .it{position:absolute;top:14px;pointer-events:auto;padding:3px 4px;border-radius:4px;text-shadow:0 1px 2px rgba(0,0,0,.6)}',
@@ -87,7 +87,8 @@
     '.bm-recb.rec i{width:24px;height:24px;border-radius:5px;background:#ff3b30}',
     /* колёса */
     '.bm-dial{position:absolute;right:0;top:0;width:110px;height:397px;background:linear-gradient(90deg,rgba(0,0,0,0) 0,rgba(10,12,16,.55) 28px,rgba(10,12,16,.7) 100%);pointer-events:auto;touch-action:none}',
-    '.bm-dial canvas{position:absolute;left:28px;top:0;width:40px;height:397px}',
+    '.bm-dial canvas{position:absolute;left:12px;top:0;width:56px;height:397px}',   /* 08.11: шкала шире слева — подписи «6500K» не теряют первую цифру */
+    '.bm-img:has(.bm-dial) .bm-fmt,.bm-img:has(.bm-dial) .bm-bat{visibility:hidden}',   /* 08.11: открыт диск — AUTO и замок стоят на месте значков 4K и батареи; значки прячем, пока диск открыт */
     '.bm-bub{position:absolute;right:120px;top:182px;min-width:48px;height:32px;padding:0 9px;background:rgba(32,36,44,.9);border-radius:5px;font-size:15px;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums;pointer-events:none;white-space:nowrap}',
     '.bm-bub:after{content:"";position:absolute;right:-30px;top:15.5px;width:28px;height:1.5px;background:var(--blue2)}',
     '.bm-qc{position:absolute;right:0;top:0;width:44px;height:397px;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly}',
@@ -318,6 +319,7 @@
        Экран телефона повторяет настоящее приложение и остаётся как есть; перекрашена рамка вокруг
        (фон, верхняя строка, панель, кнопки), панель перенесена под телефон. */
     '.mlbm.mlbm{--page:#151311;--panel:#1d1a17;--panel2:rgba(241,236,226,.06);--ptxt:#cfc6b8;--pmut:#9d9488;--line:rgba(241,236,226,.14);--ok:#6fbf8a;--bad:#e5735f;--warn:#fd7e2f;--or:#fd7e2f;--hd:"Russo One",sans-serif;font-family:Montserrat,system-ui,sans-serif;background:radial-gradient(55% 70% at 92% 0%,rgba(253,126,47,.14),transparent 70%),radial-gradient(45% 60% at 0% 100%,rgba(137,74,31,.30),transparent 70%),#151311;border-radius:20px;padding:24px;line-height:1.5}',
+    '.mlbm.mlbm .bm-set .lft h2{font:700 22px/1.2 Lato,"Helvetica Neue",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#fff;text-transform:none;letter-spacing:0}',   /* 08.11: заголовок «Settings» брал шрифт и тёмный цвет заголовков сайта */
     '.mlbm.mlbm .mlbm-screen{font-family:Lato,"Helvetica Neue",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.35}',
     '.mlbm.mlbm button:focus-visible,.mlbm.mlbm [tabindex]:focus-visible,.mlbm.mlbm select:focus-visible,.mlbm.mlbm input:focus-visible{outline:2px solid var(--or);outline-offset:2px}',
     '.mlbm.mlbm .mlbm-top{gap:10px 10px;margin-bottom:18px}',

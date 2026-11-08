@@ -153,9 +153,9 @@
     function spacing(spec) { var n = spec.values.length; return n > 300 ? 2.2 : n > 100 ? 3.4 : n > 40 ? 7 : 14; }
     function draw() {
       if (!cur || !cur.cv) return;
-      var spec = cur.spec, cv = cur.cv, dpr = (window.devicePixelRatio || 1) * (app.scale || 1), W = 40, Hh = 397;
+      var spec = cur.spec, cv = cur.cv, dpr = (window.devicePixelRatio || 1) * (app.scale || 1), W = 56, Hh = 397;   /* 08.11: +16 px слева под подписи */
       if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(Hh * dpr); }
-      var ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, Hh);
+      var ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, Hh); ctx.translate(16, 0);
       var vals = spec.values, v = spec.cur(), i0 = nearestIdx(vals, v), step = spacing(spec), every = Math.max(1, Math.ceil(34 / step));
       /* точная позиция для дробных значений (автоматика) */
       var frac = i0;
