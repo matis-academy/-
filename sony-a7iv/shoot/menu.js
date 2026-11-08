@@ -124,6 +124,12 @@ export function makeBindings(api, X) {
   };
   map('af0_0', 'fm', { 'Покадровый AF': 'AF-S', 'Автоматич. AF': 'AF-A', 'Непрерывн. AF': 'AF-C', DMF: 'DMF', 'Ручной фокус': 'MF' },
     { sim: 'AF-A сам переходит в AF-C, когда объект движется. DMF фокусирует как AF-S.' });
+  // справочник, стр. 121: «Только [Непрерывн. AF] и [Ручной фокус] доступны… когда диск Фото/Видео/S&Q установлен в (Видео)»
+  {
+    const fm = B.af0_0, all = fm.opts, get = fm.get, VIDEO_FM = ['Непрерывн. AF', 'Ручной фокус'];
+    fm.opts = () => (X.movie ? VIDEO_FM : all());
+    fm.get = () => { const v = get(); return X.movie && !VIDEO_FM.includes(v) ? 'Непрерывн. AF' : v; };
+  }
   map('af1_0', 'area', { Широкая: 'wide', 'Зонная фокус.': 'zone', 'Фиксац. центра': 'center', 'Пятно: S': 'spotS', 'Пятно: M': 'point', 'Пятно: L': 'spotL', 'Расшир. пятно': 'spotX', Отслеживание: 'track' },
     { sim: 'Как камера выбирает, на что фокусироваться.' });
   map('af1_3', 'focusColor', { Белый: 'white', Красный: 'red' }, { sim: 'Цвет рамки фокусировки.' });
@@ -305,7 +311,13 @@ export class CameraMenu {
   // пункт недоступен в текущем режиме диска Фото/Видео/S&Q: 'movie' — только для видео, 'photo' — только для фото
   unavail(it) { return it.mode === 'movie' && !this.X.movie ? 'movie' : it.mode === 'photo' && this.X.movie ? 'photo' : ''; }
   movieOnly(it) { return this.unavail(it) === 'movie'; }
-  setMovie(on) { this.X.movie = on; this.stack = []; this.save(); this.render(); }
+  setMovie(on) {
+    // видео: режим фокусировки только AF-C или MF; выбранный для фото режим возвращается при переключении обратно
+    const S = this.api.S;
+    if (on && !this.X.movie && !['AF-C', 'MF'].includes(S.fm)) { this.X.photoFm = S.fm; this.api.set('fm', 'AF-C'); }
+    if (!on && this.X.movie && this.X.photoFm) { if (S.fm === 'AF-C') this.api.set('fm', this.X.photoFm); this.X.photoFm = null; }
+    this.X.movie = on; this.stack = []; this.save(); this.render();
+  }
   // пункт и его «хвост» (подпункты, которые на камере выбираются стрелками рядом со значением)
   expand(items) {
     const out = [];
