@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import * as O from './optics.js?v=3';
 import { LENSES, lensById } from './lenses.js?v=2';
 import { Pipeline, METER_W, METER_H } from './pipeline.js?v=4';
-import { CameraMenu } from './menu.js?v=7';
+import { CameraMenu } from './menu.js?v=8';
 import { MISSIONS, missionById } from './tasks.js?v=3';
 import { Tour } from './tour.js?v=1';
 import * as Park from './scenes/park.js?v=3';
@@ -363,7 +363,11 @@ $('swTripod').addEventListener('change', (e) => setKey('tripod', e.target.checke
 $('swPan').addEventListener('change', (e) => setKey('pan', e.target.checked));
 
 // Единая точка изменения настроек (панель, Fn, MENU)
+// справочник ILCE-7M4, стр. 121: в «Видео» доступны только AF-C и MF — во всех точках входа (меню, боковые кнопки, вызов настроек)
+const VIDEO_FM = ['AF-C', 'MF'];
+function isMovie() { try { return !!menu.X.movie; } catch (e) { return false; } }
 function setKey(k, v) {
+  if (k === 'fm' && isMovie() && !VIDEO_FM.includes(v)) { toast('В режиме «Видео» — только AF-C или MF'); return; }
   if (k === 'mode') {
     if (v === 'M' && R) { S.N = R.N; S.t = R.t; }
     if (v === 'A' && R) S.N = R.N;
@@ -401,13 +405,14 @@ function onChange(refocus = false) {
 
 // ───────────────────────── Обновление интерфейса ─────────────────────────
 function update() {
+  if (isMovie() && !VIDEO_FM.includes(S.fm)) S.fm = 'AF-C';
   if (!SC) return;
   const ls = lensSpec();
   if (S.N < ls.maxN) S.N = O.nearest(apertureList(), ls.maxN);
   R = O.solveExposure(S, ls, evSource());
   for (const c of Object.values(C)) c.refresh();
   document.querySelectorAll('#modes button').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.mode === S.mode)));
-  document.querySelectorAll('#focusModes button').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.fm === S.fm)));
+  document.querySelectorAll('#focusModes button').forEach((b) => { b.setAttribute('aria-checked', String(b.dataset.fm === S.fm)); const off = isMovie() && !VIDEO_FM.includes(b.dataset.fm); b.disabled = off; b.title = off ? 'В режиме «Видео» доступны только AF-C и MF' : ''; });
   const areaOn = { wide: areaWide(), point: areaPoint(), track: S.area === 'track' };
   document.querySelectorAll('#focusAreas button').forEach((b) => b.setAttribute('aria-checked', String(areaOn[b.dataset.area])));
   $('lenses').querySelectorAll('button').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.lens === S.lensId)));
@@ -568,6 +573,7 @@ const menu = new CameraMenu($('camMenu'), {
   S,
   snapshot: () => JSON.parse(JSON.stringify(Object.fromEntries(Object.keys(DEFAULTS).map((k) => [k, S[k]])))),
   set: (k, v) => setKey(k, v),
+  refresh: () => update(),
   act: (a, arg) => {
     if (a === 'gallery') { menu.close(); if (shots.length) openPhoto(0); else toast('Снимков пока нет'); }
     if (a === 'clear' || a === 'clearOld') { shots.length = a === 'clear' ? 0 : Math.min(1, shots.length); renderGallery(); menu.render(); toast(a === 'clear' ? 'Все снимки удалены' : 'Оставлен последний снимок'); }

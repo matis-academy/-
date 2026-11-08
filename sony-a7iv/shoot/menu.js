@@ -313,11 +313,13 @@ export class CameraMenu {
   movieOnly(it) { return this.unavail(it) === 'movie'; }
   setMovie(on) {
     // видео: режим фокусировки только AF-C или MF; выбранный для фото режим возвращается при переключении обратно
-    const S = this.api.S;
-    if (on && !this.X.movie && !['AF-C', 'MF'].includes(S.fm)) { this.X.photoFm = S.fm; this.api.set('fm', 'AF-C'); }
-    if (!on && this.X.movie && this.X.photoFm) { if (S.fm === 'AF-C') this.api.set('fm', this.X.photoFm); this.X.photoFm = null; }
-    this.X.movie = on; this.stack = []; this.save(); this.render();
+    const S = this.api.S, was = this.X.movie;
+    this.X.movie = on;   // сначала режим — app.js не пускает AF-S в «Видео»
+    if (on && !was && !['AF-C', 'MF'].includes(S.fm)) { this.X.photoFm = S.fm; this.api.set('fm', 'AF-C'); }
+    if (!on && was && this.X.photoFm) { if (S.fm === 'AF-C') this.api.set('fm', this.X.photoFm); this.X.photoFm = null; }
+    this.stack = []; this.save(); this.render(); this.api.refresh?.();
   }
+
   // пункт и его «хвост» (подпункты, которые на камере выбираются стрелками рядом со значением)
   expand(items) {
     const out = [];

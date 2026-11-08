@@ -410,3 +410,4 @@ h2 small { font-family: var(--font); text-transform: none; font-size: 12px; font
 .mission-list button { border-radius: 12px; }
 .mission-list button.on { border-color: var(--accent); }
 .gallery button, .gallery img { border-radius: 10px; }
+.seg button:disabled { opacity: .35; cursor: not-allowed; }
