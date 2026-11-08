@@ -533,7 +533,7 @@ export class CameraMenu {
     sel.row = Math.max(0, Math.min(sel.row, rows.length - 1));
     const rowHtml = (x, i) => {
       const ex = x.opt != null && x.item ? this.optText(x.item, x.opt) : '';
-      return `<button class="mn-row${i === sel.row ? ' sel' : ''}${x.on ? ' on' : ''}${x.dim ? ' dim' : ''}${x.child ? ' child' : ''}${ex ? ' ex' : ''}" data-row="${i}">${x.sim ? '<i class="mn-sim" title="Влияет на кадр"></i>' : ''}<span>${esc(x.name)}${ex ? `<small class="mn-ex">${esc(ex)}</small>` : ''}</span>${x.def ? '<small class="mn-def">завод.</small>' : ''}${x.on ? '<b class="mn-dot">●</b>' : `<em>${esc(x.val ?? '')}</em>`}</button>`;
+      return `<button class="mn-row${i === sel.row ? ' sel' : ''}${x.on ? ' on' : ''}${x.dim ? ' dim' : ''}${x.child ? ' child' : ''}${ex ? ' ex' : ''}" data-row="${i}">${x.sim ? '<i class="mn-sim" title="Влияет на кадр"></i>' : ''}<span>${esc(x.name)}${ex ? `<small class="mn-ex">${esc(ex)}</small>` : ''}</span>${x.def ? '<small class="mn-def">завод.</small>' : ''}${x.on ? '<b class="mn-dot">●</b>' : `<em${String(x.val ?? '').length > 22 ? ' class="long"' : ''}>${esc(x.val ?? '')}</em>`}</button>`;
     };
     r.innerHTML = `
       <div class="mn ${scr ? 'deep' : ''} col-${this.col}">

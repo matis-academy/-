@@ -127,6 +127,8 @@ h2 small { font-weight: 500; color: var(--muted); font-size: 12px; margin-left: 
 .mn-row { position: relative; display: flex; align-items: center; gap: 10px; width: 100%; border: 0; background: transparent; padding: 7px 10px 7px 16px; border-radius: 6px; cursor: pointer; text-align: left; font-size: 13.5px; }
 .mn-row span { flex: 1; min-width: 0; }
 .mn-row em { font-style: normal; color: #ffb36b; font-weight: 600; white-space: nowrap; max-width: 52%; overflow: hidden; text-overflow: ellipsis; }
+/* длинное значение (например, «Стандартное значение и диапазон») переносится, а не обрезается */
+.mn-row em.long { white-space: normal; text-align: right; line-height: 1.25; }
 .mn-row .mn-def { font-size: 10.5px; color: #a69985; border: 1px solid #4a443c; border-radius: 4px; padding: 0 4px; flex: none; }
 .mn-row.ex { align-items: flex-start; }
 .mn-row .mn-ex { display: block; margin-top: 2px; font-size: 11.5px; line-height: 1.35; color: #a69985; font-weight: 400; }
