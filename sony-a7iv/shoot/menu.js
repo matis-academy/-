@@ -28,7 +28,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 // ───────────── Привязки пунктов меню к симулятору ─────────────
 // api: { S, set(key, value), act(name, arg) }. X — сохранённые значения пунктов без привязки и «память» подписей.
 export function makeBindings(api, X) {
-  const S = api.S, B = {};
+  const S = api.S, B = {}, U = api.ui;
   const same = (a, b) => (typeof a === 'number' && typeof b === 'number' ? Math.abs(a - b) < 1e-6 : a === b);
   // несколько подписей могут вести к одному значению: показываем ту, что выбрали последней
   const map = (id, key, table, extra = {}) => {
@@ -97,7 +97,31 @@ export function makeBindings(api, X) {
   map('exp5_0', 'dro', { Выкл: false, 'Опт.Д-диап.: Авто': true }, { sim: 'Вытягивает тени.' });
   map('exp5_1', 'look', tbl(MENU_ITEM('exp5_1').opts, MENU_ITEM('exp5_1').opts), { sim: 'Стиль цвета и контраста.' });
   map('exp6_0', 'zebraOn', onOff, { sim: 'Штриховка ярких мест в видоискателе.' });
-  map('exp6_1', 'zebraLvl', { 70: 70, 75: 75, 80: 80, 85: 85, 90: 90, 95: 95, 100: 100, '100+': 101 }, { sim: 'Порог яркости зебры.' });
+  map('exp6_1', 'zebraLvl', { 70: 70, 75: 75, 80: 80, 85: 85, 90: 90, 95: 95, 100: 100, '100+': 101, 'Пользоват. 1': 'c1', 'Пользоват. 2': 'c2' }, {
+    sim: 'Порог яркости зебры. «Пользоват.» — зебра только в заданном диапазоне или от минимального значения и выше.',
+    next: (l) => (l === 'Пользоват. 1' ? zebraCustom(1) : l === 'Пользоват. 2' ? zebraCustom(2) : null),
+  });
+  // «Пользоват. 1/2» (справочник, стр. 192, «Совет»): для проверки правильной экспозиции — стандартное значение и диапазон,
+  // для проверки засветки — минимальное значение. Ряды чисел — учебные (в справочнике не перечислены).
+  const ZC_TYPE = { 'Стандартное значение и диапазон': true, 'Минимальное значение': false };
+  const ZC_STD = Array.from({ length: 11 }, (_, i) => String(50 + i * 5));
+  const ZC_RNG = Array.from({ length: 10 }, (_, i) => `±${i + 1}`);
+  const ZC_MIN = ['70', '75', '80', '85', '90', '95', '100', '100+'];
+  const zcItem = (n, id, name, opts, help, get, put) => {
+    const key = `zc${n}`;
+    B[id] = { key, opts: () => opts, get: () => get(S[key]), set: (l) => api.set(key, { ...S[key], ...put(l) }), sim: 'Зебра в кадре симулятора сразу перестраивается.' };
+    return { id, name, kind: 'value', mode: 'all', page: 192, opts, help };
+  };
+  const zebraCustom = (n) => {
+    const t = zcItem(n, `x_zc${n}_type`, 'Тип', Object.keys(ZC_TYPE),
+      'Для проверки правильной экспозиции установите стандартное значение и диапазон для уровня яркости. Для проверки засветки установите минимальное значение для уровня яркости.',
+      (c) => Object.keys(ZC_TYPE).find((l) => ZC_TYPE[l] === c.range), (l) => ({ range: ZC_TYPE[l] }));
+    const std = zcItem(n, `x_zc${n}_std`, 'Стандартное значение', ZC_STD, 'Стандартное значение уровня яркости (IRE).', (c) => String(c.std), (l) => ({ std: +l }));
+    const rng = zcItem(n, `x_zc${n}_rng`, 'Диапазон', ZC_RNG, 'Шаблон зебра появится в областях, которые находятся в установленном диапазоне.', (c) => `±${c.rng}`, (l) => ({ rng: +l.slice(1) }));
+    const min = zcItem(n, `x_zc${n}_min`, 'Минимальное значение', ZC_MIN,
+      'Шаблон зебры появится на областях, уровень яркости которых равен или превышает установленное значение.', (c) => (c.min > 100 ? '100+' : String(c.min)), (l) => ({ min: l === '100+' ? 101 : +l }));
+    return { title: `Пользоват. ${n}`, item: t, items: () => (S[`zc${n}`].range ? [t, std, rng] : [t, min]) };
+  };
   map('af0_0', 'fm', { 'Покадровый AF': 'AF-S', 'Автоматич. AF': 'AF-A', 'Непрерывн. AF': 'AF-C', DMF: 'DMF', 'Ручной фокус': 'MF' },
     { sim: 'AF-A сам переходит в AF-C, когда объект движется. DMF фокусирует как AF-S.' });
   map('af1_0', 'area', { Широкая: 'wide', 'Зонная фокус.': 'zone', 'Фиксац. центра': 'center', 'Пятно: S': 'spotS', 'Пятно: M': 'point', 'Пятно: L': 'spotL', 'Расшир. пятно': 'spotX', Отслеживание: 'track' },
@@ -114,6 +138,86 @@ export function makeBindings(api, X) {
   map('setup4_3', 'touchFn', { 'Сенсорн. фокус': 'focus', 'Сенс. отслежив.': 'track', 'Сенсорн.затвор': 'shutter', Выкл: 'off' }, { sim: 'Что делает касание кадра.' });
   map('setup7_4', 'review', { '10 сек.': 10, '5 сек.': 5, '2 сек.': 2, Выкл: 0 }, { sim: 'Показ снимка сразу после съемки.' });
   map('setup9_2', 'beep', onOff, { sim: 'Сигнал фокусировки.' });
+
+  // ── экраны пунктов, которые в симуляторе только запоминают значение (на кадр не влияют) ──
+  const stored = (id, name, opts, help, extra = {}) => ({ id, name, kind: 'value', mode: 'movie', page: 251, opts, help, ...extra });
+  // Парамет. прокси (справочник, стр. 251)
+  const pxPar = () => ((X.vals.x_px_fmt || 'XAVC HS HD') === 'XAVC S HD' ? ['6M 4:2:0 8bit'] : ['16M 4:2:0 10bit', '9M 4:2:0 10bit']);
+  B.shoot0_11 = {
+    screen: () => ({
+      title: 'Парамет. прокси',
+      items: () => [
+        stored('x_px_rec', 'Запись прокси', ['Вкл', 'Выкл'], 'Выбирается, выполнять ли одновременно запись вспомогательных видеороликов.'),
+        stored('x_px_fmt', 'ФормФ-лПрокси', ['XAVC HS HD', 'XAVC S HD'], 'Выбор формата записи вспомогательного видеоролика.'),
+        stored('x_px_par', 'Пар. зап. прокси', pxPar(), 'Выбор битрейта, цветовой дискретизации и битовой глубины вспомогательного видеоролика.'),
+      ],
+    }),
+  };
+  B.x_px_rec = { help: { opts: { Вкл: 'Одновременно с видео записывается вспомогательный видеоролик с низким битрейтом — его удобно передать на смартфон или загрузить на веб-сайт.' } } };
+  B.x_px_fmt = {
+    help: { opts: { 'XAVC HS HD': '1920×1080, макс. 60p/макс. 50p, MPEG-H HEVC/H.265.', 'XAVC S HD': '1280×720, макс. 60p/макс. 50p, MPEG-4 AVC/H.264.' } },
+    onSet: () => { if (!pxPar().includes(X.vals.x_px_par)) X.vals.x_px_par = pxPar().at(-1); },
+  };
+  B.x_px_par = { help: { opts: { '16M 4:2:0 10bit': '16 Мбит/сек, 4:2:0, 10 бит.', '9M 4:2:0 10bit': '9 Мбит/сек, 4:2:0, 10 бит.', '6M 4:2:0 8bit': '6 Мбит/сек, 4:2:0, 8 бит.' } } };
+
+  // Настр. устран.мерц. (справочник, стр. 272): Перемен. затвор — выдержка с высоким разрешением.
+  // Ряд значений — по примеру справочника 250.6 → 253.3 → 256.0 → 258.8 (шаг ≈ 1,08 %), «числа могут отличаться от фактических».
+  const VS_R = (258.8 / 250.6) ** (1 / 3);
+  const vsNearest = (den) => 256 * VS_R ** Math.round(Math.log(den / 256) / Math.log(VS_R));
+  const vsLabel = (den) => `1/${den.toFixed(1)}`;
+  const manualT = () => S.mode === 'S' || S.mode === 'M';
+  B.shoot6_5 = {
+    screen: () => ({
+      title: 'Настр. устран.мерц.',
+      items: () => [
+        { ...stored('x_flk_shoot', 'Съем. устр.мерц.', ['Вкл', 'Выкл'], 'Обнаруживает мерцание и уменьшает его влияние, если частота источника освещения составляет 100 Гц или 120 Гц во время фотосъемки. Обнаружение мерцания выполняется путем нажатия кнопки затвора наполовину.'), mode: 'photo', page: 272 },
+        { ...stored('x_vs_on', 'Перемен. затвор', ['Вкл', 'Выкл'], 'Снижает проявление полосообразных светлых и темных оттенков на изображении путем точной регулировки выдержки в соответствии с частотой мерцания.'), mode: 'all', page: 272 },
+        { id: 'x_vs_set', name: 'Наст. перем.затв.', kind: 'value', mode: 'all', page: 272, help: 'Устанавливает выдержку, если [Перемен. затвор] установлен в [Вкл]. Выберите выдержку, которая уменьшает влияние мерцания, проверяя по монитору.' },
+      ],
+    }),
+  };
+  B.x_vs_on = {
+    guard: (l) => (l !== 'Вкл' || manualT() ? '' : '[Перемен. затвор] можно выбрать только в том случае, если камера находится в режиме экспозиции, который позволяет вручную регулировать выдержку (S или M).'),
+    onSet: (l) => { if (l === 'Вкл') X.vals.x_vs_set = vsLabel(vsNearest(1 / S.t)); },
+  };
+  B.x_vs_set = {
+    open: () => (X.vals.x_vs_on === 'Вкл' && manualT() ? '' : 'Сначала установите [Перемен. затвор] в [Вкл] (режим экспозиции S или M).'),
+    shown: () => (X.vals.x_vs_on === 'Вкл' && manualT() ? X.vals.x_vs_set || vsLabel(vsNearest(1 / S.t)) : '—'),
+    // выдержка с высоким разрешением: знаменатель в десятичном формате; в списке — октава вокруг обычной выдержки (передний диск: ×2/÷2)
+    opts: () => { const c = vsNearest(1 / S.t), out = []; for (let k = -64; k <= 64; k++) out.push(vsLabel(c * VS_R ** k)); return out; },
+    help: {
+      what: 'Если [Перемен. затвор] установлен в [Вкл], знаменатель выдержки отображается в десятичном формате (выдержка с высоким разрешением). Например, если нормальная выдержка установлена в 1/250 секунды, значение будет отображаться как 250.6. (Числа могут отличаться от фактических).',
+      use: 'На экране [Наст. перем.затв.] выдержку точно регулируют задним диском L, задним диском R или колесиком управления: 250.6 → 253.3 → 256.0 → 258.8. Передним диском — на целое кратное: 125.3 ← 250.6 → 501.3.',
+    },
+  };
+
+  // Регис. настр.кам. / Вызов настр.кам. (справочник, стр. 338–339): до 3 номеров в камере и M1–M4 на карте — для каждого режима съемки
+  const SLOTS = ['1', '2', '3', 'M1', 'M2', 'M3', 'M4'];
+  const memOf = () => { X.mem ||= {}; return (X.mem[X.movie ? 'movie' : 'photo'] ||= {}); };
+  B.shoot3_2 = {
+    screen: () => ({
+      title: 'Регис. настр.кам.', text: 'Выберите нужный номер и нажмите центр колесика управления для подтверждения.',
+      rows: () => SLOTS.map((n) => ({ name: n, opt: n, val: memOf()[n] ? 'сохранено' : '', act: () => { memOf()[n] = api.snapshot(); U.save(); U.stack = []; U.flash(`Настройки сохранены под номером ${n}`); } })),
+    }),
+  };
+  B.shoot3_1 = {
+    screen: () => ({
+      title: 'Вызов настр.кам.', text: 'Выберите номер, под которым сохранены настройки.',
+      rows: () => SLOTS.map((n) => ({ name: n, opt: n, val: memOf()[n] ? '›' : 'пусто', dim: !memOf()[n], act: () => (memOf()[n] ? api.act('recall', memOf()[n]) : U.flash(`Под номером ${n} ничего не сохранено`)) })),
+    }),
+  };
+  // Перекл. NTSC/PAL (справочник, стр. 446): MENU → Настройка → Область/Дата → Перекл. NTSC/PAL → [Ввод]
+  const sys = () => X.vals.setup0_2 || 'NTSC';
+  B.setup0_2 = {
+    shown: sys,
+    screen: () => ({
+      title: 'Перекл. NTSC/PAL', text: `Воспроизведение видео, записанного с помощью этого устройства, на телевизоре системы NTSC/PAL. Сейчас: ${sys()}.`,
+      rows: () => [
+        { name: 'Ввод', act: () => { X.vals.setup0_2 = sys() === 'NTSC' ? 'PAL' : 'NTSC'; U.save(); U.stack = []; U.flash(`Перекл. NTSC/PAL: ${sys()}`); } },
+        { name: 'Отмена', act: () => U.pop() },
+      ],
+    }),
+  };
 
   // разделы с вложенными пунктами
   B.shoot0_1p = { help: { what: 'Раздел качества снимка: формат файла (RAW или JPEG), тип RAW, качество и размер JPEG/HEIF.', use: 'Загляните сюда, чтобы решить, в каком виде камера сохранит снимок: RAW — для обработки в редакторе, JPEG — чтобы сразу показать или опубликовать.' } };
@@ -149,7 +253,7 @@ export class CameraMenu {
     try { Object.assign(this.X, JSON.parse(localStorage.getItem(STORE) || '{}')); } catch (e) { /* хранилище недоступно */ }
     this.X.my = this.X.my.filter((id) => INDEX.has(id));
     if (this.X.fn.length !== 12 || !this.X.fn.every((id) => INDEX.has(id))) this.X.fn = [...FN_DEFAULT];
-    this.B = makeBindings(api, this.X);
+    this.B = makeBindings({ ...api, ui: this }, this.X);
     this.mode = null;            // 'menu' | 'fn' | null
     this.tab = 0; this.group = 0; this.row = 0; this.col = 'items';
     this.stack = [];             // вложенные экраны: { title, rows: () => [], row, opts? }
@@ -171,7 +275,7 @@ export class CameraMenu {
   save() { try { localStorage.setItem(STORE, JSON.stringify(this.X)); } catch (e) { /* хранилище недоступно */ } }
   resetStore(all) {
     this.X.vals = {};
-    if (all) { this.X.my = []; this.X.fn = [...FN_DEFAULT]; }
+    if (all) { this.X.my = []; this.X.fn = [...FN_DEFAULT]; this.X.keys = {}; this.X.mem = {}; this.X.movie = false; }
     this.save();
   }
   get open() { return !!this.mode; }
@@ -198,7 +302,10 @@ export class CameraMenu {
     if (!b?.set) this.render();          // привязанные пункты перерисует setKey
   }
   bound(it) { const b = this.B[it.id]; return !!(b && (b.set || b.act || b.sub)); }
-  movieOnly(it) { return it.mode === 'movie'; }
+  // пункт недоступен в текущем режиме диска Фото/Видео/S&Q: 'movie' — только для видео, 'photo' — только для фото
+  unavail(it) { return it.mode === 'movie' && !this.X.movie ? 'movie' : it.mode === 'photo' && this.X.movie ? 'photo' : ''; }
+  movieOnly(it) { return this.unavail(it) === 'movie'; }
+  setMovie(on) { this.X.movie = on; this.stack = []; this.save(); this.render(); }
   // пункт и его «хвост» (подпункты, которые на камере выбираются стрелками рядом со значением)
   expand(items) {
     const out = [];
@@ -216,10 +323,11 @@ export class CameraMenu {
   get groups() { return this.groupsOf(MENU_TABS[this.tab]); }
 
   rowOf(it) {
-    const dim = this.movieOnly(it);
+    const dim = !!this.unavail(it), b = this.B[it.id];
     let val = '';
-    if (it.kind === 'value') val = dim ? '' : this.value(it);
-    else if (it.kind !== 'info') val = '›';
+    if (b?.shown) val = dim ? '' : b.shown();
+    else if (it.kind === 'value') val = dim ? '' : this.value(it);
+    else if (it.kind !== 'info' || b?.screen) val = '›';
     return { name: it.name, val, dim, sim: this.bound(it), child: it.child, item: it, act: () => this.activate(it) };
   }
   mainRows() {
@@ -235,16 +343,31 @@ export class CameraMenu {
   }
 
   activate(it) {
-    if (this.movieOnly(it)) return this.flash(`«${it.name}» — пункт для видеосъемки. В режиме фото он недоступен.`);
+    const off = this.unavail(it);
+    if (off === 'movie') return this.flash(`«${it.name}» — пункт для видеосъемки. В режиме фото он недоступен: переключите вверху меню «Фото | Видео» на «Видео».`);
+    if (off === 'photo') return this.flash(`«${it.name}» — пункт для фотосъемки. В режиме видео он недоступен.`);
     const b = this.B[it.id];
+    const no = b?.open?.();
+    if (no) return this.flash(no);
+    if (b?.screen) return this.screen({ item: it, ...b.screen() });
     if (it.id.startsWith('my') && it.kind === 'action') return this.myAction(it);
     if (it.id === 'setup2_3') return this.fnEditor();
-    if (it.id === 'setup2_0' || it.id === 'setup3_0') return this.keysScreen(it);
+    if (['setup2_0', 'setup2_1', 'setup3_0', 'setup3_1'].includes(it.id)) return this.keysScreen(it);
     if (it.kind === 'value') {
       const cur = this.value(it), list = this.opts(it);
       return this.push({
-        title: it.name, item: it, row: Math.max(0, list.indexOf(cur)), opts: true,
-        rows: () => this.opts(it).map((l) => ({ name: l, opt: l, item: it, on: l === this.value(it), def: l === it.def, act: () => { this.setValue(it, l); this.pop(); } })),
+        title: it.name, item: it, row: Math.max(0, list.indexOf(cur)), opts: true, center: list.length > 12,
+        rows: () => this.opts(it).map((l) => ({
+          name: l, opt: l, item: it, on: l === this.value(it), def: l === it.def, val: b?.next?.(l) ? '›' : '',
+          act: () => {
+            const no = b?.guard?.(l);
+            if (no) return this.flash(no);
+            this.setValue(it, l); b?.onSet?.(l);
+            const nx = b?.next?.(l);
+            if (nx) return this.screen(nx);
+            this.save(); this.pop();
+          },
+        })),
       });
     }
     if (it.kind === 'group') return this.push({ title: it.name, item: it, rows: () => this.expand(it.children).map((c) => this.rowOf(c)) });
@@ -263,6 +386,11 @@ export class CameraMenu {
       });
     }
     this.flash(`«${it.name}» — в симуляторе нет экрана этой функции. Описание — в справочнике, стр. ${it.page}.`);
+  }
+  // экран со списком: items — пункты (как в меню), rows — готовые строки
+  screen(scr) {
+    const items = scr.items;
+    this.push({ item: scr.item, ...scr, rows: scr.rows || (() => items().map((x) => this.rowOf(x))) });
   }
   confirm(it, c) {
     this.push({
@@ -291,7 +419,7 @@ export class CameraMenu {
               name: g.name, val: '›',
               act: () => this.push({
                 title: g.name,
-                rows: () => g.items.map((x) => ({ name: x.name, val: this.X.my.includes(x.id) ? '★' : '', dim: this.movieOnly(x), act: () => { if (!this.X.my.includes(x.id)) this.addToMy(x); else this.flash('Этот пункт уже в Мое меню'); } })),
+                rows: () => g.items.map((x) => ({ name: x.name, val: this.X.my.includes(x.id) ? '★' : '', dim: !!this.unavail(x), act: () => { if (!this.X.my.includes(x.id)) this.addToMy(x); else this.flash('Этот пункт уже в Мое меню'); } })),
               }),
             })),
           }),
@@ -330,10 +458,25 @@ export class CameraMenu {
       })),
     });
   }
-  // назначения пользовательских клавиш по умолчанию (справочник, стр. 512–513)
+  // пользовательские клавиши: заводские назначения — справочник, стр. 512–513; выбранные запоминаются (сами кнопки в симуляторе не нажимаются)
   keysScreen(it) {
-    const keys = KEY_DEFAULTS?.photo || {};
-    this.push({ title: it.name, item: it, text: 'Функции кнопок и дисков при фотосъемке (заводские). Переназначение в симуляторе недоступно.', rows: () => Object.entries(keys).map(([k, v]) => ({ name: k, val: v, act: () => this.render() })) });
+    const mode = it.mode === 'movie' ? 'movie' : 'photo';
+    const fix = (v) => v.replace('След. польз. ( )', 'След. польз. (фото)');
+    const keys = KEY_DEFAULTS?.[mode] || {};
+    const mine = () => ((this.X.keys ||= {})[mode] ||= {});
+    const cur = (k) => mine()[k] || fix(keys[k]);
+    const funcs = [...new Set([...(mode === 'movie' ? ['След. польз. (фото)'] : []), ...Object.values(KEY_DEFAULTS?.photo || {}), 'Фокусировоч. лупа', 'Выбор отобр. Зебры', 'AF на глаз'])];
+    this.push({
+      title: it.name, item: it,
+      text: mode === 'movie' ? 'Функции кнопок и дисков при видеосъемке. «След. польз. (фото)» — как при фотосъемке.' : 'Функции кнопок и дисков при фотосъемке.',
+      rows: () => Object.keys(keys).map((k) => ({
+        name: k, val: cur(k), item: it, opt: k,
+        act: () => this.push({
+          title: k, item: it, opts: true, row: Math.max(0, funcs.indexOf(cur(k))),
+          rows: () => funcs.map((f) => ({ name: f, on: f === cur(k), def: f === fix(keys[k]), act: () => { mine()[k] = f; this.save(); this.pop(); } })),
+        }),
+      })),
+    });
   }
 
   // ── справка: «что это», «когда менять», расшифровка значений (menu-help.js) ──
@@ -342,7 +485,7 @@ export class CameraMenu {
   // панель справки для пункта it; opt — вариант, на который указывают (в списке значений или подпунктов)
   infoHtml(it, opt) {
     if (!it) return this.stack.at(-1)?.text ? `<p class="mi-what">${esc(this.stack.at(-1).text)}</p>` : '';
-    const h = this.helpOf(it), movie = this.movieOnly(it);
+    const h = this.helpOf(it), off = this.unavail(it), movie = !!off;
     const what = h.what || it.help || '';
     let val = '';
     if (opt != null) {
@@ -353,7 +496,7 @@ export class CameraMenu {
       val = `<div class="mi-val"><span>Сейчас: <b>${esc(cur)}</b>${cur === it.def ? ' <i>заводское</i>' : it.def ? ` · заводское: ${esc(it.def)}` : ''}</span>${ex ? `<p>${esc(ex)}</p>` : ''}</div>`;
     }
     const range = h.opts?._range ? `<p class="mi-range">${esc(h.opts._range)}</p>` : '';
-    const sim = movie ? '<span class="mn-badge movie">Только для видео</span>' : this.bound(it) ? '<span class="mn-badge">Влияет на кадр в симуляторе</span>' : '';
+    const sim = it.mode === 'movie' ? '<span class="mn-badge movie">Только для видео</span>' : off === 'photo' ? '<span class="mn-badge movie">Только для фото</span>' : this.bound(it) ? '<span class="mn-badge">Влияет на кадр в симуляторе</span>' : '';
     const simLong = this.bound(it) && !movie ? this.B[it.id]?.sim || '' : '';
     const scr = this.stack.at(-1), tab = MENU_TABS[this.tab];
     const star = !scr?.opts && tab.id !== 'my' && !it.id.startsWith('x_') && !it.child && INDEX.has(it.id) ? `<button class="mn-star${this.X.my.includes(it.id) ? ' on' : ''}" data-star="${it.id}" title="Добавить в Мое меню / убрать">${this.X.my.includes(it.id) ? '★' : '☆'} Мое меню</button>` : '';
@@ -395,13 +538,17 @@ export class CameraMenu {
     r.innerHTML = `
       <div class="mn ${scr ? 'deep' : ''} col-${this.col}">
         <nav class="mn-tabs" aria-label="Вкладки меню">${MENU_TABS.map((t, i) => `<button data-tab="${i}" class="${i === this.tab ? 'on' : ''}" title="${t.name}" aria-label="${t.name}">${ICONS[t.id]}<small>${SHORT[t.id]}</small></button>`).join('')}</nav>
-        <div class="mn-head"><span class="mn-tabname">${esc(tab.name)}</span>${scr ? `<button class="mn-back" data-back>‹ ${esc(this.stack.length > 1 ? this.stack.at(-2).title : groups[this.group].name)}</button><b>${esc(scr.title)}</b>` : `<b>${this.group + 1}/${groups.length} ${esc(groups[this.group].name)}</b>`}</div>
+        <div class="mn-head"><span class="mn-tabname">${esc(tab.name)}</span>${scr ? `<button class="mn-back" data-back>‹ ${esc(this.stack.length > 1 ? this.stack.at(-2).title : groups[this.group].name)}</button><b>${esc(scr.title)}</b>` : `<b>${this.group + 1}/${groups.length} ${esc(groups[this.group].name)}</b>`}${scr ? '' : `<span class="mn-mode" role="group" aria-label="Режим съемки: диск Фото/Видео/S&amp;Q" title="Диск Фото/Видео/S&amp;Q камеры. В режиме «Видео» открываются пункты видеосъемки; сам кадр симулятора не меняется."><button data-mmode="photo" class="${this.X.movie ? '' : 'on'}">Фото</button><button data-mmode="movie" class="${this.X.movie ? 'on' : ''}">Видео</button></span>`}</div>
         <div class="mn-groups" role="list">${groups.map((g, i) => `<button data-group="${i}" class="${i === this.group ? 'on' : ''}"><small>${i + 1}</small>${esc(g.name)}</button>`).join('')}</div>
         <div class="mn-list" role="list">${scr?.text ? `<p class="mn-text">${esc(scr.text)}</p>` : ''}${rows.length ? rows.map(rowHtml).join('') : '<p class="mn-text">Пусто. Добавьте пункты: «Добавить пункт» ниже или кнопка ☆ у любого пункта меню.</p>'}</div>
         <div class="mn-info" aria-live="polite">${this.rowInfo(rows[sel.row])}</div>
         <button class="menu-close" data-close aria-label="Закрыть меню">✕</button>
       </div>`;
-    r.querySelector('.mn-list .sel')?.scrollIntoView({ block: 'nearest' });
+    const selRow = r.querySelector('.mn-list .sel');
+    if (selRow && scr?.center) {          // длинный список значений: выбранное — по центру списка (страницу не прокручиваем)
+      const l = r.querySelector('.mn-list');
+      l.scrollTop += selRow.getBoundingClientRect().top - l.getBoundingClientRect().top - (l.clientHeight - selRow.offsetHeight) / 2;
+    } else selRow?.scrollIntoView({ block: 'nearest' });
     r.querySelector('.mn-groups .on')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }
 
@@ -454,6 +601,7 @@ export class CameraMenu {
     if (d.tab) { this.tab = +d.tab; this.group = 0; this.row = 0; this.stack = []; this.col = 'tabs'; return this.render(); }
     if (d.group) { this.group = +d.group; this.row = 0; this.stack = []; this.col = 'groups'; return this.render(); }
     if (d.back !== undefined) return this.pop();
+    if (d.mmode) return this.setMovie(d.mmode === 'movie');
     if (d.star) return this.addToMy(INDEX.get(d.star).it);
     if (d.row) {
       const scr = this.stack.at(-1), rows = scr ? scr.rows() : this.mainRows();

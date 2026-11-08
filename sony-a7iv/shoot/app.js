@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import * as O from './optics.js?v=3';
 import { LENSES, lensById } from './lenses.js?v=2';
-import { Pipeline, METER_W, METER_H } from './pipeline.js?v=3';
-import { CameraMenu } from './menu.js?v=4';
+import { Pipeline, METER_W, METER_H } from './pipeline.js?v=4';
+import { CameraMenu } from './menu.js?v=5';
 import { MISSIONS, missionById } from './tasks.js?v=3';
 import { Tour } from './tour.js?v=1';
 import * as Park from './scenes/park.js?v=3';
@@ -32,6 +32,8 @@ const DEFAULTS = {
   meter: 'multi', spotLink: 'center',
   wb: 'AWB', wbK: 5500, awbPri: 'std', dro: false, look: 'ST',
   zebraOn: false, zebraLvl: 101, peakOn: false, peakLvl: 1, peakColor: 'white',
+  // «Пользоват. 1/2» уровня зебры (справочник, стр. 192, «Совет»): 1 — стандартное значение и диапазон, 2 — минимальное значение
+  zc1: { range: true, std: 70, rng: 5, min: 101 }, zc2: { range: false, std: 70, rng: 5, min: 101 },
   drive: 'single', burstFps: 10, timerSec: 10, brStep: 1, steady: true, tripod: false, pan: false,
   fileFormat: 'JPEG', jpegSize: 'L', aspect: '3:2', nr: 1, lvOff: false,
 };
@@ -63,7 +65,12 @@ const awbKeep = (st) => (st.wb === 'AWBa' ? 0.3 : st.wb === 'AWBw' ? 0.02 : { st
 const wbKelvin = (st = S) => Math.round(autoWB(st.wb) ? O.awbKelvin(SC.lightK, awbKeep(st)) : st.wb === 'K' ? st.wbK : /^c\d$/.test(st.wb) ? SC.lightK : WB_K[st.wb]);
 const WB_TAG = { AWB: 'AWB', AWBa: 'AWB A', AWBw: 'AWB W', uw: 'AWB ≈', c1: 'C1', c2: 'C2', c3: 'C3' };
 const PEAK = { red: [1, 0.12, 0.1], yellow: [1, 0.9, 0.1], blue: [0.3, 0.5, 1], white: [1, 1, 1] };
-const zebraThr = () => (S.zebraLvl > 100 ? 0.985 : S.zebraLvl / 100 * 0.97);
+const zebraY = (v) => (v > 100 ? 0.985 : v / 100 * 0.97);
+// [нижний, верхний] порог зебры: уровень 70…100+ — «от и выше», «Пользоват.» — диапазон или минимальное значение
+const zebraThr = () => {
+  const c = S.zebraLvl === 'c1' ? S.zc1 : S.zebraLvl === 'c2' ? S.zc2 : { range: false, min: S.zebraLvl };
+  return c.range ? [zebraY(c.std - c.rng), zebraY(c.std + c.rng)] : [zebraY(c.min), 9];
+};
 const ASPECT = { '3:2': 1.5, '4:3': 4 / 3, '16:9': 16 / 9, '1:1': 1 };
 // Область фокусировки: «широкие» (камера выбирает сама) и «точечные» (там, куда указали)
 const areaWide = (a = S.area) => a === 'wide' || a === 'zone';
@@ -559,10 +566,15 @@ function drawDofBar(A) {
 // ───────────────────────── Меню камеры ─────────────────────────
 const menu = new CameraMenu($('camMenu'), {
   S,
+  snapshot: () => JSON.parse(JSON.stringify(Object.fromEntries(Object.keys(DEFAULTS).map((k) => [k, S[k]])))),
   set: (k, v) => setKey(k, v),
-  act: (a) => {
+  act: (a, arg) => {
     if (a === 'gallery') { menu.close(); if (shots.length) openPhoto(0); else toast('Снимков пока нет'); }
     if (a === 'clear' || a === 'clearOld') { shots.length = a === 'clear' ? 0 : Math.min(1, shots.length); renderGallery(); menu.render(); toast(a === 'clear' ? 'Все снимки удалены' : 'Оставлен последний снимок'); }
+    if (a === 'recall' && arg) {      // Вызов настр.кам.: настройки, сохранённые в «Регис. настр.кам.»
+      Object.assign(S, arg); lockedEV = null; trackRoot = null; touchTrack = false;
+      menu.close(); acquireFocus(true); toast('Настройки камеры вызваны');
+    }
     if (a === 'reset' || a === 'init') {
       Object.assign(S, DEFAULTS); S.lensId = SC.defaults.lensId; S.f = SC.defaults.f; lockedEV = null; trackRoot = null; touchTrack = false;
       if (a === 'init') { Object.assign(S, VIEW_DEFAULTS); shots.length = 0; renderGallery(); }
@@ -927,7 +939,7 @@ function loop(now) {
       f: S.f, N: R.N, focus: focusCur, iso: R.iso, nr: S.nr,
       gain: lv ? GAIN0 * 2 ** (12 - evSource()) : gainFor(R), wb: O.wbGains(lv ? O.awbKelvin(SC.lightK) : wbKelvin()),
       look: lv ? 'ST' : S.look, dro: lv ? 0 : S.dro,
-      peak: S.peakOn ? S.peakLvl : 0, peakColor: PEAK[S.peakColor], zebra: S.zebraOn ? zebraThr() : 0,
+      peak: S.peakOn ? S.peakLvl : 0, peakColor: PEAK[S.peakColor], zebra: S.zebraOn ? zebraThr()[0] : 0, zebraHi: zebraThr()[1],
     });
     if (S.disp === 'level' && frameNo % 6 === 0) drawLevel();
     if (frameNo % 8 === 0) {

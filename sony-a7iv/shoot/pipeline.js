@@ -63,7 +63,7 @@ const MIX_FRAG = /* glsl */`
 const FINAL_FRAG = /* glsl */`
   varying vec2 vUv;
   uniform sampler2D tHDR;
-  uniform float uScale, uNoise, uChroma, uSeed, uVignette, uDro, uPeak, uZebra;
+  uniform float uScale, uNoise, uChroma, uSeed, uVignette, uDro, uPeak, uZebra, uZebraHi;
   uniform int uLook;
   uniform vec3 uWB, uPeakColor;
   uniform vec2 uRes;
@@ -104,8 +104,8 @@ const FINAL_FRAG = /* glsl */`
     c += (hash(q) - 0.5) * amp * max(lum, 0.02) * 6.0;
     c += (vec3(hash(q + 17.1), hash(q + 41.7), hash(q + 83.3)) - 0.5) * uChroma * max(lum, 0.02) * 5.0;
     vec3 s = look(toSRGB(aces(max(c, 0.0))));
-    // Зебра: штриховка там, где яркость выше порога
-    if (uZebra > 0.0 && dot(s, LUMA) >= uZebra && mod(gl_FragCoord.x + gl_FragCoord.y, 10.0) < 4.0) s = mix(s, vec3(0.15), 0.6);
+    // Зебра: штриховка там, где яркость в пределах порогов (верхний — для «Пользоват.» с диапазоном)
+    if (uZebra > 0.0 && dot(s, LUMA) >= uZebra && dot(s, LUMA) <= uZebraHi && mod(gl_FragCoord.x + gl_FragCoord.y, 10.0) < 4.0) s = mix(s, vec3(0.15), 0.6);
     // Пикинг: подсветка резких контуров
     if (uPeak > 0.0) {
       vec2 t = 1.0 / uRes;
@@ -179,7 +179,7 @@ export class Pipeline {
       uniforms: {
         tHDR: { value: null }, uScale: { value: 1 }, uNoise: { value: 0 }, uChroma: { value: 0 }, uSeed: { value: 0 }, uVignette: { value: 0 },
         uRes: { value: new THREE.Vector2() }, uWB: { value: new THREE.Vector3(1, 1, 1) }, uLook: { value: 0 }, uDro: { value: 0 },
-        uPeak: { value: 0 }, uPeakColor: { value: new THREE.Vector3(1, 0.1, 0.1) }, uZebra: { value: 0 },
+        uPeak: { value: 0 }, uPeakColor: { value: new THREE.Vector3(1, 0.1, 0.1) }, uZebra: { value: 0 }, uZebraHi: { value: 9 },
       },
     });
     this.meterMat = new THREE.ShaderMaterial({
@@ -247,6 +247,7 @@ export class Pipeline {
     fu.uPeak.value = live && p.peak ? p.peak : 0;      // множитель порога: меньше — больше контуров
     if (p.peakColor) fu.uPeakColor.value.set(...p.peakColor);
     fu.uZebra.value = live && p.zebra ? p.zebra : 0;
+    fu.uZebraHi.value = p.zebraHi ?? 9;
     this.finalQ.render(this.r, target);
   }
 
