@@ -1640,6 +1640,7 @@
       var s = Math.min((avail - pad) / 932, (availH - pad) / 430);
       if (!fs) { s = Math.min(s, 1.1);   /* 01.11: телефон на всю ширину блока, но не крупнее 1025 px */ if (window.innerHeight < 620 && window.innerWidth > window.innerHeight) s = Math.min(s, (window.innerHeight - 24) / 430); }
       s = Math.max(s, 0.25);
+      if (s !== app.scale && app.cancelGesture) app.cancelGesture();   /* R06 */
       app.scale = s;
       scr.style.transform = 'scale(' + s + ')';
       box.style.width = 932 * s + 'px'; box.style.height = 430 * s + 'px';
@@ -1658,6 +1659,7 @@
     var pfsX = h('button', { cls: 'mlbm-pfs-x', type: 'button', 'aria-label': 'Закрыть полный экран' }, '<span>✕</span><span class="t">&nbsp;Закрыть</span>'); phone.appendChild(pfsX);
     var bFull = top.querySelector('.b-full');
     var pfsSave = null, pfsHost = null, pfsNext = null, pfsMo = null, lifeMo = null;
+    var fsOwn = false;   /* R03: свой phone был в нативном fullscreen */
     var fsWanted = false, fsTicket = 0;   /* намерение пользователя и номер запроса: поздний отказ/успех устаревшего запроса игнорируем */
     function fsEl() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
     function fsExit() {
@@ -1667,6 +1669,7 @@
     function fsCancel() { fsWanted = false; ++fsTicket; }
     function pfsStart() {
       if (app.pfs || app.destroyed) return;
+      if (!root.isConnected) { fsCancel(); phone.classList.remove('fs'); return; }   /* R01: root уже удалён — запрос отменяем */
       if (activePfs && activePfs !== app) activePfs.stopPfs();   /* F03 */
       activePfs = app;
       if (app.helpMode) { var hb = top.querySelector('.b-help'); if (hb) hb.click(); }   /* F01: кнопка справки и панель объяснений остаются вне слоя — выключаем общим переключателем */
@@ -1687,6 +1690,7 @@
     }
     function pfsStop() {
       if (!app.pfs) return;
+      fsCancel();   /* R04: вытеснение/закрытие сбрасывает и намерение */
       app.cancelGesture();
       app.pfs = false; app.rot = false; phone.classList.remove('fs', 'pfs');
       phone.style.left = ''; phone.style.top = '';   /* F05 */
@@ -1702,13 +1706,14 @@
     app.stopPfs = pfsStop;
     bFull.onclick = function () {
       if (!(phone.classList.contains('fs') || fsWanted || app.pfs)) {
+        if (!root.isConnected || app.destroyed) return;   /* R01 */
         fsWanted = true; var t = ++fsTicket;
         phone.classList.add('fs');
         var rq = phone.requestFullscreen || phone.webkitRequestFullscreen, ok = false;
         if (rq) {
           try {
             var pr = rq.call(phone); ok = true;
-            if (pr && pr.then) pr.then(function () { if (!fsWanted || t !== fsTicket) fsExit(); },   /* поздний успех отменённого запроса — выходим из него */
+            if (pr && pr.then) pr.then(function () { if (!fsWanted) fsExit(); },   /* поздний успех отменённого запроса — выходим из него */
               function () { if (fsWanted && t === fsTicket && !fsEl()) pfsStart(); });               /* поздний отказ — только если пользователь всё ещё хочет */
           } catch (er) { ok = false; }
         }
@@ -1719,11 +1724,16 @@
     };
     pfsX.onclick = function (e) { e.stopPropagation(); fsCancel(); pfsStop(); };
     function onFsChange() {
-      if (!fsEl()) { if (!app.pfs) { phone.classList.remove('fs'); fsCancel(); } }
-      else if (fsEl() === phone && !fsWanted) fsExit();
+      var cur = fsEl();
+      if (cur === phone) { if (!fsWanted) fsExit(); else fsOwn = true; }
+      else if (fsOwn) { fsOwn = false; if (!app.pfs) { phone.classList.remove('fs'); fsCancel(); } }   /* вышли из СВОЕГО нативного режима; чужой fullscreen не трогаем */
       setTimeout(fit, 60);
     }
-    function onFsError() { if (fsWanted && !fsEl() && !app.pfs && phone.classList.contains('fs')) pfsStart(); }   /* в т.ч. webkitfullscreenerror без Promise */
+    function onFsError(e) {   /* в т.ч. webkitfullscreenerror без Promise */
+      var t = e && e.target;
+      if (t && t.nodeType === 1 && t !== phone) return;   /* ошибка чужого элемента */
+      if (fsWanted && !fsEl() && !app.pfs && phone.classList.contains('fs')) pfsStart();
+    }
     document.addEventListener('keydown', function (e) { if (app.pfs && (e.key === 'Escape' || e.key === 'Esc')) { fsCancel(); pfsStop(); } }, sg);
     window.addEventListener('orientationchange', function () { setTimeout(fit, 150); }, sg);
     window.addEventListener('resize', function () { if (app.pfs) fit(); }, sg);
@@ -1734,6 +1744,7 @@
       if (app.destroyed) return;
       fsCancel(); app.cancelGesture();
       if (app.pfs) pfsStop();
+      fsExit(); phone.classList.remove('fs', 'pfs'); phone.style.left = ''; phone.style.top = '';   /* R02: выходим из нативного fullscreen своего phone */
       if (activePfs === app) activePfs = null;
       app.destroyed = true;
       if (lifeMo) { lifeMo.disconnect(); lifeMo = null; }
@@ -2095,7 +2106,7 @@
 
     /* клавиши: кнопки громкости — ↑/↓, пробел */
     app.onSimKey = function (e) {
-      if (e.target.closest('input,select,textarea')) return;
+      if (e.target.closest('input,select,textarea') ||(e.target.closest('.mlbm-pfs-x') && (e.key === ' ' || e.key === 'Enter'))) return;   /* R05: Space/Enter на «Закрыть» — штатная активация кнопки (Esc по-прежнему закрывает шкалу) */
       if ((e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === ' ') && S.volumeRec && app.view === 'camera') { e.preventDefault(); app.toggleRec(); }
       if (e.key === 'Escape') { app.closeDial(); app.closeOverlay(); }
     };
