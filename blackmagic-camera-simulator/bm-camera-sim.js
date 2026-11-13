@@ -1138,6 +1138,7 @@
     pause: svg('<path d="M8 5v14M16 5v14" stroke-width="3"/>')
   };
   /* ---------- Стили (вся вёрстка приложения — в точках 932×430) ---------- */
+  var activePfs = null;   /* 13.11.2026 (ревью Codex F03): один владелец запасного полного экрана на документ */
   var CSS = [
     '.mlbm{--bg:#0b0f17;--rail:#0f141c;--blue:#2f7fff;--blue2:#3a8cff;--navact:#0f2747;--txt:#fff;--mut:#8d95a3;--card:#1c1c1e;--sep:#2e2e31;--red:#e0302a;',
     '--page:#0d1015;--panel:#151a22;--panel2:#1b212b;--ptxt:#e7eaf0;--pmut:#9aa3b2;--line:#262d38;--ok:#3ccf6e;--bad:#ff5d52;--warn:#ffbf3c;',
@@ -1586,6 +1587,7 @@
   function mount(root, opts) {
     opts = opts || {};
     injectCSS();
+    if (root.__mlbmApp && root.__mlbmApp.destroy) root.__mlbmApp.destroy();   /* F04: повторный mount на том же root */
     root.innerHTML = '';
     var saved = store('settings');
     var S = defaults();
@@ -1593,7 +1595,7 @@
     S.scene = opts.scene || (saved && saved.scene) || 'day';
     S.recording = false; S.tap = null;
     var app = { S: S, root: root, clips: [], tcFrames: 0, free: 51e9, total: 512e9, battery: 82, view: 'camera', open: null, helpMode: false, opts: opts };
-    var eng = createEngine(S); app.eng = eng;
+    var eng = createEngine(S); app.eng = eng; root.__mlbmApp = app;
 
     /* ---------- каркас ---------- */
     var el = h('div', { cls: 'mlbm', tabindex: '0' });
@@ -1614,13 +1616,16 @@
     var side = h('div', { cls: 'mlbm-side' }); main.appendChild(side); app.side = side;
 
     /* масштаб экрана телефона под ширину блока */
-    function vp() { var v = window.visualViewport; return { w: v ? v.width : window.innerWidth, h: v ? v.height : window.innerHeight }; }
+    function vp() { var v = window.visualViewport; return { w: v ? v.width : window.innerWidth, h: v ? v.height : window.innerHeight, x: v ? v.offsetLeft : 0, y: v ? v.offsetTop : 0 }; }
     function fit() {
       if (app.pfs) {   /* запасной полный экран: вписываем в видимую область, при портрете поворачиваем на 90° */
         var v = vp(), cs = getComputedStyle(phone);
         var aw = v.w - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0), ah = v.h - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0);
         var rot = v.h > v.w, sp = rot ? Math.min(aw / 430, ah / 932) : Math.min(aw / 932, ah / 430);
-        sp = Math.max(sp, 0.2); app.rot = rot; app.scale = sp;
+        sp = Math.max(sp, 0.2);
+        if (rot !== app.rot || sp !== app.scale) app.cancelGesture();   /* F06: другая система координат */
+        app.rot = rot; app.scale = sp;
+        phone.style.left = v.x + 'px'; phone.style.top = v.y + 'px';   /* F05: смещение visualViewport */
         phone.style.width = v.w + 'px'; phone.style.height = v.h + 'px';
         scr.style.transform = rot ? 'translate(' + 430 * sp + 'px,0) rotate(90deg) scale(' + sp + ')' : 'scale(' + sp + ')';
         box.style.width = (rot ? 430 : 932) * sp + 'px'; box.style.height = (rot ? 932 : 430) * sp + 'px';
@@ -1644,46 +1649,99 @@
     /* координаты указателя в системе экрана приложения (с учётом поворота) */
     app.pt = function (e) { return app.pfs && app.rot ? { x: e.clientY, y: -e.clientX } : { x: e.clientX, y: e.clientY }; };
     app.fit = fit;
-    if (window.ResizeObserver) new ResizeObserver(fit).observe(stage); else window.addEventListener('resize', fit);
+    /* 13.11.2026, ревью Codex: жесты (F06), один владелец режима (F03), жизненный цикл (F04), запросы fullscreen (F02), смещение visualViewport (F05), клавиши и фокус (F07), справка (F01) */
+    app.cancelers = [];
+    app.cancelGesture = function () { if (app.cancelDrag) app.cancelDrag(); for (var i = 0; i < app.cancelers.length; i++) { try { app.cancelers[i](); } catch (er) {} } };
+    var lifetime = window.AbortController ? new AbortController() : null, sg = lifetime ? { signal: lifetime.signal } : false;
+    var ro = null;
+    if (window.ResizeObserver) { ro = new ResizeObserver(fit); ro.observe(stage); } else window.addEventListener('resize', fit, sg);
     var pfsX = h('button', { cls: 'mlbm-pfs-x', type: 'button', 'aria-label': 'Закрыть полный экран' }, '<span>✕</span><span class="t">&nbsp;Закрыть</span>'); phone.appendChild(pfsX);
-    var pfsSave = null, pfsHost = null, pfsNext = null, pfsMo = null;
+    var bFull = top.querySelector('.b-full');
+    var pfsSave = null, pfsHost = null, pfsNext = null, pfsMo = null, lifeMo = null;
+    var fsWanted = false, fsTicket = 0;   /* намерение пользователя и номер запроса: поздний отказ/успех устаревшего запроса игнорируем */
+    function fsEl() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
+    function fsExit() {
+      var ex = document.exitFullscreen || document.webkitExitFullscreen;
+      if (fsEl() === phone && ex) { try { var p = ex.call(document); if (p && p.catch) p.catch(function () {}); } catch (er) {} }
+    }
+    function fsCancel() { fsWanted = false; ++fsTicket; }
     function pfsStart() {
-      if (app.pfs) return;
+      if (app.pfs || app.destroyed) return;
+      if (activePfs && activePfs !== app) activePfs.stopPfs();   /* F03 */
+      activePfs = app;
+      if (app.helpMode) { var hb = top.querySelector('.b-help'); if (hb) hb.click(); }   /* F01: кнопка справки и панель объяснений остаются вне слоя — выключаем общим переключателем */
+      app.cancelGesture();
       app.pfs = true; phone.classList.add('fs', 'pfs');
       /* выносим тренажёр в <body>: иначе шапка сайта/плашки/кот остаются поверх (родительские слои страницы со своим z-index) */
       pfsNext = phone.nextSibling; stage.style.minHeight = stage.offsetHeight + 'px'; pfsHost = h('div', { cls: el.className }); pfsHost.style.display = 'contents'; document.body.appendChild(pfsHost); pfsHost.appendChild(phone);
-      if (window.MutationObserver) { pfsMo = new MutationObserver(function () { pfsHost.className = el.className; }); pfsMo.observe(el, { attributes: true, attributeFilter: ['class'] }); }
+      if (app.onSimKey) pfsHost.addEventListener('keydown', app.onSimKey);   /* F07: клавиши на актуальном host */
+      if (window.MutationObserver) {
+        pfsMo = new MutationObserver(function () { pfsHost.className = el.className; }); pfsMo.observe(el, { attributes: true, attributeFilter: ['class'] });
+        lifeMo = new MutationObserver(function () { if (!root.isConnected) app.destroy(); }); lifeMo.observe(document.documentElement, { childList: true, subtree: true });   /* F04: root удалён из страницы */
+      }
       var y = window.pageYOffset || 0, b = document.body, de = document.documentElement;
       pfsSave = { y: y, pos: b.style.position, top: b.style.top, w: b.style.width, ov: de.style.overflow };
       de.style.overflow = 'hidden'; b.style.position = 'fixed'; b.style.top = -y + 'px'; b.style.width = '100%';
       fit(); setTimeout(fit, 120);
+      try { pfsX.focus({ preventScroll: true }); } catch (er) {}   /* F07: фокус внутрь слоя */
     }
     function pfsStop() {
       if (!app.pfs) return;
+      app.cancelGesture();
       app.pfs = false; app.rot = false; phone.classList.remove('fs', 'pfs');
+      phone.style.left = ''; phone.style.top = '';   /* F05 */
       var b = document.body, de = document.documentElement;
       if (pfsSave) { de.style.overflow = pfsSave.ov; b.style.position = pfsSave.pos; b.style.top = pfsSave.top; b.style.width = pfsSave.w; window.scrollTo(0, pfsSave.y); pfsSave = null; }
       if (pfsMo) { pfsMo.disconnect(); pfsMo = null; }
-      if (pfsHost) { stage.insertBefore(phone, pfsNext && pfsNext.parentNode === stage ? pfsNext : null); pfsHost.parentNode && pfsHost.parentNode.removeChild(pfsHost); pfsHost = null; }
+      if (lifeMo) { lifeMo.disconnect(); lifeMo = null; }
+      if (pfsHost) { if (app.onSimKey) pfsHost.removeEventListener('keydown', app.onSimKey); stage.insertBefore(phone, pfsNext && pfsNext.parentNode === stage ? pfsNext : null); pfsHost.parentNode && pfsHost.parentNode.removeChild(pfsHost); pfsHost = null; }
+      if (activePfs === app) activePfs = null;
       stage.style.minHeight = ''; phone.style.height = ''; fit(); setTimeout(fit, 60);
+      try { bFull.focus({ preventScroll: true }); } catch (er) {}   /* F07: фокус обратно на кнопку */
     }
-    top.querySelector('.b-full').onclick = function () {
-      var on = !phone.classList.contains('fs');
-      if (on) {
+    app.stopPfs = pfsStop;
+    bFull.onclick = function () {
+      if (!(phone.classList.contains('fs') || fsWanted || app.pfs)) {
+        fsWanted = true; var t = ++fsTicket;
         phone.classList.add('fs');
         var rq = phone.requestFullscreen || phone.webkitRequestFullscreen, ok = false;
-        if (rq) { try { var pr = rq.call(phone); ok = true; if (pr && pr.then) pr.then(null, function () { if (!document.fullscreenElement) pfsStart(); }); } catch (er) { ok = false; } }
+        if (rq) {
+          try {
+            var pr = rq.call(phone); ok = true;
+            if (pr && pr.then) pr.then(function () { if (!fsWanted || t !== fsTicket) fsExit(); },   /* поздний успех отменённого запроса — выходим из него */
+              function () { if (fsWanted && t === fsTicket && !fsEl()) pfsStart(); });               /* поздний отказ — только если пользователь всё ещё хочет */
+          } catch (er) { ok = false; }
+        }
         if (!ok) pfsStart();   /* iPhone: Fullscreen API для не-video элементов нет */
       }
-      else { if (app.pfs) pfsStop(); else { phone.classList.remove('fs'); if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen(); } }
+      else { fsCancel(); if (app.pfs) pfsStop(); else { phone.classList.remove('fs'); fsExit(); } }
       setTimeout(fit, 60);
     };
-    pfsX.onclick = function (e) { e.stopPropagation(); pfsStop(); };
-    document.addEventListener('keydown', function (e) { if (app.pfs && (e.key === 'Escape' || e.key === 'Esc')) pfsStop(); });
-    window.addEventListener('orientationchange', function () { setTimeout(fit, 150); });
-    window.addEventListener('resize', function () { if (app.pfs) fit(); });
-    if (window.visualViewport) window.visualViewport.addEventListener('resize', function () { if (app.pfs) fit(); });
-    document.addEventListener('fullscreenchange', function () { if (!document.fullscreenElement && !app.pfs) phone.classList.remove('fs'); setTimeout(fit, 60); });
+    pfsX.onclick = function (e) { e.stopPropagation(); fsCancel(); pfsStop(); };
+    function onFsChange() {
+      if (!fsEl()) { if (!app.pfs) { phone.classList.remove('fs'); fsCancel(); } }
+      else if (fsEl() === phone && !fsWanted) fsExit();
+      setTimeout(fit, 60);
+    }
+    function onFsError() { if (fsWanted && !fsEl() && !app.pfs && phone.classList.contains('fs')) pfsStart(); }   /* в т.ч. webkitfullscreenerror без Promise */
+    document.addEventListener('keydown', function (e) { if (app.pfs && (e.key === 'Escape' || e.key === 'Esc')) { fsCancel(); pfsStop(); } }, sg);
+    window.addEventListener('orientationchange', function () { setTimeout(fit, 150); }, sg);
+    window.addEventListener('resize', function () { if (app.pfs) fit(); }, sg);
+    if (window.visualViewport) { window.visualViewport.addEventListener('resize', function () { if (app.pfs) fit(); }, sg); window.visualViewport.addEventListener('scroll', function () { if (app.pfs) fit(); }, sg); }
+    document.addEventListener('fullscreenchange', onFsChange, sg); document.addEventListener('webkitfullscreenchange', onFsChange, sg);
+    document.addEventListener('fullscreenerror', onFsError, sg); document.addEventListener('webkitfullscreenerror', onFsError, sg);
+    app.destroy = function () {   /* F04: явный жизненный цикл */
+      if (app.destroyed) return;
+      fsCancel(); app.cancelGesture();
+      if (app.pfs) pfsStop();
+      if (activePfs === app) activePfs = null;
+      app.destroyed = true;
+      if (lifeMo) { lifeMo.disconnect(); lifeMo = null; }
+      if (ro) ro.disconnect();
+      if (app.io) app.io.disconnect();
+      if (lifetime) lifetime.abort();
+      if (root.__mlbmApp === app) root.__mlbmApp = null;
+    };
     var selScene = top.querySelector('.sel-scene'); selScene.value = S.scene;
     selScene.onchange = function () { setScene(selScene.value); };
     function setScene(id) { S.scene = id; selScene.value = id; eng.dirty = true; app.save(); app.showHelpText(sceneById(id).name, 'Условия съёмки', sceneById(id).about); }
@@ -2010,6 +2068,8 @@
 
     /* ---------- касания по кадру: AE/AF, свайпы ---------- */
     var gst = null;
+    app.cancelers.push(function () { gst = null; });
+    img.addEventListener('pointercancel', function () { gst = null; });
     img.addEventListener('pointerdown', function (e) {
       if (e.target.closest('.bm-dial,.bm-tools,.bm-lutp,.bm-stabp,.bm-side,.bm-card,.bm-panel,.bm-hud .it,.bm-handle,.bm-tc,.bm-fmt,.bm-bat,.bm-onoff,.bm-gridpop,.bm-slate')) return;
       var q = app.pt(e); gst = { x: q.x, y: q.y, t: performance.now() };
@@ -2034,11 +2094,12 @@
     dimEl.addEventListener('click', function () { dimEl.style.opacity = '0'; dimEl.style.pointerEvents = 'none'; });
 
     /* клавиши: кнопки громкости — ↑/↓, пробел */
-    el.addEventListener('keydown', function (e) {
+    app.onSimKey = function (e) {
       if (e.target.closest('input,select,textarea')) return;
       if ((e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === ' ') && S.volumeRec && app.view === 'camera') { e.preventDefault(); app.toggleRec(); }
       if (e.key === 'Escape') { app.closeDial(); app.closeOverlay(); }
-    });
+    };
+    el.addEventListener('keydown', app.onSimKey);
 
     /* ---------- сохранение ---------- */
     var saveT = null;
@@ -2055,8 +2116,9 @@
     /* ---------- главный цикл ---------- */
     var last = performance.now(), visible = true, acc = 0;
     app.time = 0;
-    if (window.IntersectionObserver) new IntersectionObserver(function (en) { visible = en[0].isIntersecting; }).observe(el);
+    if (window.IntersectionObserver) { app.io = new IntersectionObserver(function (en) { visible = en[0].isIntersecting; }); app.io.observe(el); }
     function loop(now) {
+      if (app.destroyed) return;
       requestAnimationFrame(loop);
       var dt = Math.min(0.1, (now - last) / 1000); last = now;
       if (!visible || document.hidden) return;
@@ -2219,6 +2281,7 @@
       cur.cv = cvs; cur.bub = bub; cur.spec = spec; cur.scaleEl = d;
       /* перетаскивание */
       var drag = null;
+      app.cancelDrag = function () { drag = null; };
       d.addEventListener('pointerdown', function (e) {
         if (app.helpMode || e.target.closest('button')) return;
         e.preventDefault(); e.stopPropagation();
@@ -2234,6 +2297,8 @@
         draw();
       });
       d.addEventListener('pointerup', function () { drag = null; app.save(); });
+      d.addEventListener('pointercancel', function () { drag = null; });
+      d.addEventListener('lostpointercapture', function () { drag = null; });
       d.addEventListener('wheel', function (e) {
         e.preventDefault(); var i = nearestIdx(spec.values, spec.cur());
         var ni = clamp(i + (e.deltaY < 0 ? 1 : -1) * (spec.values.length > 300 ? 5 : 1), 0, spec.values.length - 1);

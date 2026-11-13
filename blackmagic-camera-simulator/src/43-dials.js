@@ -128,6 +128,7 @@
       cur.cv = cvs; cur.bub = bub; cur.spec = spec; cur.scaleEl = d;
       /* перетаскивание */
       var drag = null;
+      app.cancelDrag = function () { drag = null; };
       d.addEventListener('pointerdown', function (e) {
         if (app.helpMode || e.target.closest('button')) return;
         e.preventDefault(); e.stopPropagation();
@@ -143,6 +144,8 @@
         draw();
       });
       d.addEventListener('pointerup', function () { drag = null; app.save(); });
+      d.addEventListener('pointercancel', function () { drag = null; });
+      d.addEventListener('lostpointercapture', function () { drag = null; });
       d.addEventListener('wheel', function (e) {
         e.preventDefault(); var i = nearestIdx(spec.values, spec.cur());
         var ni = clamp(i + (e.deltaY < 0 ? 1 : -1) * (spec.values.length > 300 ? 5 : 1), 0, spec.values.length - 1);

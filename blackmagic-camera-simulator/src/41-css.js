@@ -1,4 +1,5 @@
   /* ---------- Стили (вся вёрстка приложения — в точках 932×430) ---------- */
+  var activePfs = null;   /* 13.11.2026 (ревью Codex F03): один владелец запасного полного экрана на документ */
   var CSS = [
     '.mlbm{--bg:#0b0f17;--rail:#0f141c;--blue:#2f7fff;--blue2:#3a8cff;--navact:#0f2747;--txt:#fff;--mut:#8d95a3;--card:#1c1c1e;--sep:#2e2e31;--red:#e0302a;',
     '--page:#0d1015;--panel:#151a22;--panel2:#1b212b;--ptxt:#e7eaf0;--pmut:#9aa3b2;--line:#262d38;--ok:#3ccf6e;--bad:#ff5d52;--warn:#ffbf3c;',
