@@ -107,7 +107,9 @@
     function mark(el) {
       if (!el) { hl.style.display = 'none'; return; }
       var r = el.getBoundingClientRect(), s = scr.getBoundingClientRect(), k = app.scale;
-      hl.style.display = ''; hl.style.left = (r.left - s.left) / k - 2 + 'px'; hl.style.top = (r.top - s.top) / k - 2 + 'px'; hl.style.width = r.width / k + 4 + 'px'; hl.style.height = r.height / k + 4 + 'px';
+      hl.style.display = '';
+      if (app.pfs && app.rot) { hl.style.left = (r.top - s.top) / k - 2 + 'px'; hl.style.top = (s.right - r.right) / k - 2 + 'px'; hl.style.width = r.height / k + 4 + 'px'; hl.style.height = r.width / k + 4 + 'px'; return; }
+      hl.style.left = (r.left - s.left) / k - 2 + 'px'; hl.style.top = (r.top - s.top) / k - 2 + 'px'; hl.style.width = r.width / k + 4 + 'px'; hl.style.height = r.height / k + 4 + 'px';
     }
     btn.onclick = function () {
       app.helpMode = !app.helpMode; btn.classList.toggle('on', app.helpMode); app.el.classList.toggle('helpmode', app.helpMode); mark(null);

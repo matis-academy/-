@@ -60,7 +60,20 @@
     var side = h('div', { cls: 'mlbm-side' }); main.appendChild(side); app.side = side;
 
     /* масштаб экрана телефона под ширину блока */
+    function vp() { var v = window.visualViewport; return { w: v ? v.width : window.innerWidth, h: v ? v.height : window.innerHeight }; }
     function fit() {
+      if (app.pfs) {   /* запасной полный экран: вписываем в видимую область, при портрете поворачиваем на 90° */
+        var v = vp(), cs = getComputedStyle(phone);
+        var aw = v.w - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0), ah = v.h - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0);
+        var rot = v.h > v.w, sp = rot ? Math.min(aw / 430, ah / 932) : Math.min(aw / 932, ah / 430);
+        sp = Math.max(sp, 0.2); app.rot = rot; app.scale = sp;
+        phone.style.width = v.w + 'px'; phone.style.height = v.h + 'px';
+        scr.style.transform = rot ? 'translate(' + 430 * sp + 'px,0) rotate(90deg) scale(' + sp + ')' : 'scale(' + sp + ')';
+        box.style.width = (rot ? 430 : 932) * sp + 'px'; box.style.height = (rot ? 932 : 430) * sp + 'px';
+        if (app.dial) app.dial.redraw();
+        return;
+      }
+      app.rot = false; phone.style.height = '';
       var fs = phone.classList.contains('fs');
       var avail = fs ? window.innerWidth : stage.clientWidth;
       var availH = fs ? window.innerHeight : Infinity;
@@ -74,15 +87,49 @@
       phone.style.width = (932 * s + pad) + 'px';
       if (app.dial) app.dial.redraw();
     }
+    /* координаты указателя в системе экрана приложения (с учётом поворота) */
+    app.pt = function (e) { return app.pfs && app.rot ? { x: e.clientY, y: -e.clientX } : { x: e.clientX, y: e.clientY }; };
     app.fit = fit;
     if (window.ResizeObserver) new ResizeObserver(fit).observe(stage); else window.addEventListener('resize', fit);
+    var pfsX = h('button', { cls: 'mlbm-pfs-x', type: 'button', 'aria-label': 'Закрыть полный экран' }, '<span>✕</span><span class="t">&nbsp;Закрыть</span>'); phone.appendChild(pfsX);
+    var pfsSave = null, pfsHost = null, pfsNext = null, pfsMo = null;
+    function pfsStart() {
+      if (app.pfs) return;
+      app.pfs = true; phone.classList.add('fs', 'pfs');
+      /* выносим тренажёр в <body>: иначе шапка сайта/плашки/кот остаются поверх (родительские слои страницы со своим z-index) */
+      pfsNext = phone.nextSibling; stage.style.minHeight = stage.offsetHeight + 'px'; pfsHost = h('div', { cls: el.className }); pfsHost.style.display = 'contents'; document.body.appendChild(pfsHost); pfsHost.appendChild(phone);
+      if (window.MutationObserver) { pfsMo = new MutationObserver(function () { pfsHost.className = el.className; }); pfsMo.observe(el, { attributes: true, attributeFilter: ['class'] }); }
+      var y = window.pageYOffset || 0, b = document.body, de = document.documentElement;
+      pfsSave = { y: y, pos: b.style.position, top: b.style.top, w: b.style.width, ov: de.style.overflow };
+      de.style.overflow = 'hidden'; b.style.position = 'fixed'; b.style.top = -y + 'px'; b.style.width = '100%';
+      fit(); setTimeout(fit, 120);
+    }
+    function pfsStop() {
+      if (!app.pfs) return;
+      app.pfs = false; app.rot = false; phone.classList.remove('fs', 'pfs');
+      var b = document.body, de = document.documentElement;
+      if (pfsSave) { de.style.overflow = pfsSave.ov; b.style.position = pfsSave.pos; b.style.top = pfsSave.top; b.style.width = pfsSave.w; window.scrollTo(0, pfsSave.y); pfsSave = null; }
+      if (pfsMo) { pfsMo.disconnect(); pfsMo = null; }
+      if (pfsHost) { stage.insertBefore(phone, pfsNext && pfsNext.parentNode === stage ? pfsNext : null); pfsHost.parentNode && pfsHost.parentNode.removeChild(pfsHost); pfsHost = null; }
+      stage.style.minHeight = ''; phone.style.height = ''; fit(); setTimeout(fit, 60);
+    }
     top.querySelector('.b-full').onclick = function () {
       var on = !phone.classList.contains('fs');
-      if (on) { phone.classList.add('fs'); var rq = phone.requestFullscreen || phone.webkitRequestFullscreen; if (rq) { var pr = rq.call(phone); if (pr && pr.catch) pr.catch(function () {}); } }
-      else { phone.classList.remove('fs'); if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen(); }
+      if (on) {
+        phone.classList.add('fs');
+        var rq = phone.requestFullscreen || phone.webkitRequestFullscreen, ok = false;
+        if (rq) { try { var pr = rq.call(phone); ok = true; if (pr && pr.then) pr.then(null, function () { if (!document.fullscreenElement) pfsStart(); }); } catch (er) { ok = false; } }
+        if (!ok) pfsStart();   /* iPhone: Fullscreen API для не-video элементов нет */
+      }
+      else { if (app.pfs) pfsStop(); else { phone.classList.remove('fs'); if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen(); } }
       setTimeout(fit, 60);
     };
-    document.addEventListener('fullscreenchange', function () { if (!document.fullscreenElement) phone.classList.remove('fs'); setTimeout(fit, 60); });
+    pfsX.onclick = function (e) { e.stopPropagation(); pfsStop(); };
+    document.addEventListener('keydown', function (e) { if (app.pfs && (e.key === 'Escape' || e.key === 'Esc')) pfsStop(); });
+    window.addEventListener('orientationchange', function () { setTimeout(fit, 150); });
+    window.addEventListener('resize', function () { if (app.pfs) fit(); });
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', function () { if (app.pfs) fit(); });
+    document.addEventListener('fullscreenchange', function () { if (!document.fullscreenElement && !app.pfs) phone.classList.remove('fs'); setTimeout(fit, 60); });
     var selScene = top.querySelector('.sel-scene'); selScene.value = S.scene;
     selScene.onchange = function () { setScene(selScene.value); };
     function setScene(id) { S.scene = id; selScene.value = id; eng.dirty = true; app.save(); app.showHelpText(sceneById(id).name, 'Условия съёмки', sceneById(id).about); }
@@ -411,17 +458,18 @@
     var gst = null;
     img.addEventListener('pointerdown', function (e) {
       if (e.target.closest('.bm-dial,.bm-tools,.bm-lutp,.bm-stabp,.bm-side,.bm-card,.bm-panel,.bm-hud .it,.bm-handle,.bm-tc,.bm-fmt,.bm-bat,.bm-onoff,.bm-gridpop,.bm-slate')) return;
-      gst = { x: e.clientX, y: e.clientY, t: performance.now() };
+      var q = app.pt(e); gst = { x: q.x, y: q.y, t: performance.now() };
     });
     img.addEventListener('pointerup', function (e) {
       if (!gst || app.helpMode) { gst = null; return; }
-      var dx = (e.clientX - gst.x) / app.scale, dy = (e.clientY - gst.y) / app.scale; gst = null;
+      var q = app.pt(e), dx = (q.x - gst.x) / app.scale, dy = (q.y - gst.y) / app.scale; gst = null;
       if (dimEl.style.opacity === '0.92') { dimEl.style.opacity = '0'; return; }
       if (Math.abs(dy) > 45 && Math.abs(dy) > Math.abs(dx)) { hud.classList.toggle('hidden'); return; }
       if (dx > 60 && Math.abs(dx) > Math.abs(dy)) { if (S.recording && S.swipeDim) { dimEl.style.opacity = '0.92'; dimEl.style.pointerEvents = 'auto'; } return; }
       if (Math.abs(dx) < 8 && Math.abs(dy) < 8) {
         if (app.open && app.open !== 'tools') { app.closeDial(); return; }
         var r = img.getBoundingClientRect(), px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+        if (app.pfs && app.rot) { px = (e.clientY - r.top) / r.height; py = (r.right - e.clientX) / r.width; }
         if (!S.afAuto && !S.shAuto && !S.isoAuto) return;
         S.tap = { x: px, y: py };
         afBox.style.left = px * 705 + 'px'; afBox.style.top = py * 397 + 'px';

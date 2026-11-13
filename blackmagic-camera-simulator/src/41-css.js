@@ -21,6 +21,11 @@
     '.mlbm-stage{position:relative;width:100%;min-width:0}',
     '.mlbm-phone{position:relative;margin:0 auto;border-radius:56px;background:#1d1f24;box-shadow:0 0 0 2px #3b3e45 inset,0 10px 40px rgba(0,0,0,.5);padding:14px}',
     '.mlbm-phone.fs{border-radius:0;padding:0;box-shadow:none;background:#000}',
+    /* 13.11.2026: запасной полноэкранный режим (iPhone без Fullscreen API): фиксированный слой поверх страницы, экран приложения при портрете повёрнут на 90° */
+    '.mlbm-phone.pfs{position:fixed;left:0;top:0;margin:0;width:100vw;height:100vh;height:100dvh;z-index:2147483000;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;background:#000;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}',
+    '.mlbm-pfs-x{display:none}',
+    '.mlbm-phone.pfs .mlbm-pfs-x{display:flex;align-items:center;justify-content:center;gap:6px;position:absolute;z-index:5;right:calc(10px + env(safe-area-inset-right));top:calc(10px + env(safe-area-inset-top));min-width:44px;min-height:44px;padding:0 14px;border-radius:22px;background:rgba(20,24,32,.88);border:1px solid rgba(255,255,255,.35)!important;color:#fff;font-size:15px;font-weight:700}',
+    '@media (orientation:landscape){.mlbm-phone.pfs .mlbm-pfs-x{right:auto;left:calc(4px + env(safe-area-inset-left));top:calc(8px + env(safe-area-inset-top));padding:0;width:44px}.mlbm-pfs-x .t{display:none}}',
     '.mlbm-screenbox{position:relative;overflow:hidden;border-radius:44px;background:#000}',
     '.mlbm-phone.fs .mlbm-screenbox{border-radius:0}',
     '.mlbm-screen{position:absolute;left:0;top:0;width:932px;height:430px;transform-origin:0 0;overflow:hidden;background:var(--bg);color:var(--txt);font-size:12px;user-select:none;-webkit-user-select:none;touch-action:none}',

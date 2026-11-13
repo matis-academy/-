@@ -131,12 +131,12 @@
       d.addEventListener('pointerdown', function (e) {
         if (app.helpMode || e.target.closest('button')) return;
         e.preventDefault(); e.stopPropagation();
-        drag = { y: e.clientY, i0: nearestIdx(spec.values, spec.cur()), moved: false };
+        drag = { y: app.pt(e).y, i0: nearestIdx(spec.values, spec.cur()), moved: false };
         try { d.setPointerCapture(e.pointerId); } catch (er) {}
       });
       d.addEventListener('pointermove', function (e) {
         if (!drag) return;
-        var dy = (e.clientY - drag.y) / app.scale, step = spacing(spec);
+        var dy = (app.pt(e).y - drag.y) / app.scale, step = spacing(spec);
         if (Math.abs(dy) > 2) drag.moved = true;
         var ni = clamp(Math.round(drag.i0 + dy / step), 0, spec.values.length - 1);
         if (spec.values[ni] !== spec.cur()) { spec.set(spec.values[ni]); app.updateHud(); }
