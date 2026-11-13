@@ -227,7 +227,7 @@
       /* Media */
       saveTo: 'inappphotos', saveLoc: true, filename: 'bm', proxy: true, autoUpload: true, uploadClips: 'proxies', liveSync: true, wifiOnly: false,
       /* Audio */
-      audioSrc: 'iphone', iphoneMic: 'auto', audioFmt: 'float', audioCh: 'stereo', sampleRate: 'auto', metering: 'vu18', audioMon: true, audioOut: 'speaker',
+      audioSrc: 'iphone', iphoneMic: 'auto', audioFmt: 'pcm', audioCh: 'stereo', sampleRate: '48', metering: 'vu18', audioMon: true, audioOut: 'speaker',
       /* Monitor */
       faMode: 'lines', faColor: 'red', guidesOp: '25', guidesColor: 'white', gridsOp: '25', hdmi: 'mirror',
       dispAudio: true, dispHist: true, dispStorage: true, dispStream: true, dispUpload: false, dispBattery: true,
