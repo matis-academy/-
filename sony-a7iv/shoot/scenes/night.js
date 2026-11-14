@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { rng, canvasTex, skyDome, makePerson, loopX } from './kit.js?v=2';
-import { kelvinRGB } from '../optics.js?v=3';
+import { kelvinRGB } from '../optics.js?v=4';
 
 // «Ночная улица», синий час. Свет — фонари (натриевые, ~2300 K), витрины, неон, фары машин.
 // Модель стоит под фонарём на тротуаре в начале координат, дорога — позади неё.
@@ -167,6 +167,8 @@ export function build({ mobile = false } = {}) {
   return {
     id: 'night', name: 'Ночная улица', about: 'Синий час, фонари и неон. Мало света: высокий ISO, штатив и длинные выдержки.',
     scene, solids, update, nominalEV: 4.5, lightK: 2700,
+    // видео: фонари и неон питаются от сети 50 Гц — свет пульсирует 100 раз в секунду; фон улицы для индикатора звука, дБ
+    mains: 50, mainsName: 'фонари и вывески', audioDb: -30,
     rig: { target: new THREE.Vector3(0, 1.6, 0), back: new THREE.Vector3(0, 0, 1), height: 1.6, thirds: true },
     dists: [1, 1.2, 1.5, 1.8, 2, 2.5, 3, 3.5, 4, 5, 6, 8, 10],
     defaults: { dist: 2.5, lensId: '50', f: 50 },

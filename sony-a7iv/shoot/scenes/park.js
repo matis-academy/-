@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { rng, canvasTex, skyDome, makePerson, makeTree, loopX } from './kit.js?v=2';
-import { kelvinRGB } from '../optics.js?v=3';
+import { kelvinRGB } from '../optics.js?v=4';
 
 // «Портрет в парке», золотой час. Солнце низко за спиной модели — контровой свет.
 // Модель стоит в начале координат лицом к +z, фотограф — на оси +z.
@@ -160,7 +160,7 @@ export function build({ mobile = false } = {}) {
 
   return {
     id: 'park', name: 'Портрет в парке', about: 'Золотой час, солнце за спиной модели. Гирлянды на фоне дают боке.',
-    scene, solids, update, nominalEV: 12, lightK: 4300,
+    scene, solids, update, nominalEV: 12, lightK: 4300, audioDb: -38,
     rig: { target: new THREE.Vector3(0, 1.6, 0), back: new THREE.Vector3(0, 0, 1), height: 1.6, thirds: true },
     dists: [0.8, 1, 1.2, 1.5, 1.8, 2, 2.5, 3, 3.5, 4, 5, 6, 7, 8, 10, 12, 15],
     defaults: { dist: 3, lensId: '85', f: 85 },

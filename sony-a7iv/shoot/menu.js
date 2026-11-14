@@ -1,7 +1,7 @@
 // MENU и Fn камеры α7 IV. Структура, названия, значения и справка — из «Справочного руководства ILCE-7M4»
 // (menu-data.js); значки и оформление свои. Пункты, которые влияют на картинку симулятора, связаны
 // с состоянием S через привязки (makeBindings), остальные просто запоминают выбранное значение.
-import * as O from './optics.js?v=3';
+import * as O from './optics.js?v=4';
 import { MENU_TABS, KEY_DEFAULTS } from './menu-data.js?v=2';
 import { HELP } from './menu-help.js?v=1';
 
@@ -145,6 +145,33 @@ export function makeBindings(api, X) {
   map('setup7_4', 'review', { '10 сек.': 10, '5 сек.': 5, '2 сек.': 2, Выкл: 0 }, { sim: 'Показ снимка сразу после съемки.' });
   map('setup9_2', 'beep', onOff, { sim: 'Сигнал фокусировки.' });
 
+  // ── видео (14.11.2026) ──
+  // Запись звука (справочник, стр. 318–323): индикатор уровня на экране видео следует за этими пунктами
+  map('shoot7_0', 'audioOn', onOff, { sim: 'Выкл — индикатор уровня звука на экране гаснет.' });
+  map('shoot7_1', 'audioLvl', Object.fromEntries(MENU_ITEM('shoot7_1').opts.map((l) => [l, +l])), { sim: 'Чем выше уровень, тем выше полоски индикатора звука; у 0 дБ — перегрузка.' });
+  map('shoot7_5', 'audioShow', onOff, { sim: 'Показывать ли индикатор уровня звука на экране видео.' });
+  // Парамет. видео (справочник, стр. 245): частота кадров записи. Ряд зависит от Перекл. NTSC/PAL (стр. 446)
+  const FPS_SYS = { NTSC: ['120p', '60p', '30p', '24p'], PAL: ['100p', '50p', '25p'] };
+  B.shoot0_9 = {
+    screen: () => ({
+      title: 'Парамет. видео',
+      items: () => [{ id: 'x_fps', name: 'Част. кадров зап.', kind: 'value', mode: 'movie', page: 245 }],
+    }),
+  };
+  B.x_fps = {
+    key: 'fps',
+    opts: () => FPS_SYS[X.vals.setup0_2 || 'NTSC'],
+    get: () => `${S.fps}p`,
+    set: (l) => api.set('fps', parseInt(l, 10)),
+    sim: 'Меняет плавность движения в видео: сцена показывается столько раз в секунду, сколько кадров пишет камера.',
+    help: {
+      what: 'Сколько кадров в секунду записывает камера в режиме «Видео».',
+      use: 'Для обычного видео в Украине и Европе — 25p (свет от сети 50 Гц не мерцает при выдержке 1/50). 50p — плавнее движение. 100p/120p — запас для замедления в монтаже. Ряд значений зависит от «Перекл. NTSC/PAL» в меню «Настройка».',
+      opts: { '120p': 'NTSC, 120 кадров в секунду — для замедления.', '60p': 'NTSC, 60 кадров в секунду — плавное движение.', '30p': 'NTSC, 30 кадров в секунду.', '24p': 'NTSC, 24 кадра в секунду — «киношное» движение.',
+        '100p': 'PAL, 100 кадров в секунду — для замедления.', '50p': 'PAL, 50 кадров в секунду — плавное движение.', '25p': 'PAL, 25 кадров в секунду — стандарт для Украины и Европы.' },
+    },
+  };
+
   // ── экраны пунктов, которые в симуляторе только запоминают значение (на кадр не влияют) ──
   const stored = (id, name, opts, help, extra = {}) => ({ id, name, kind: 'value', mode: 'movie', page: 251, opts, help, ...extra });
   // Парамет. прокси (справочник, стр. 251)
@@ -219,7 +246,13 @@ export function makeBindings(api, X) {
     screen: () => ({
       title: 'Перекл. NTSC/PAL', text: `Воспроизведение видео, записанного с помощью этого устройства, на телевизоре системы NTSC/PAL. Сейчас: ${sys()}.`,
       rows: () => [
-        { name: 'Ввод', act: () => { X.vals.setup0_2 = sys() === 'NTSC' ? 'PAL' : 'NTSC'; U.save(); U.stack = []; U.flash(`Перекл. NTSC/PAL: ${sys()}`); } },
+        { name: 'Ввод', act: () => {
+          X.vals.setup0_2 = sys() === 'NTSC' ? 'PAL' : 'NTSC'; U.save(); U.stack = [];
+          // частота кадров переходит в ближайшую из новой системы
+          const f = { 24: 25, 30: 25, 60: 50, 120: 100, 25: 30, 50: 60, 100: 120 }[S.fps];
+          if (f && !FPS_SYS[sys()].includes(`${S.fps}p`)) api.set('fps', f);
+          U.flash(`Перекл. NTSC/PAL: ${sys()}`);
+        } },
         { name: 'Отмена', act: () => U.pop() },
       ],
     }),
@@ -552,7 +585,7 @@ export class CameraMenu {
     r.innerHTML = `
       <div class="mn ${scr ? 'deep' : ''} col-${this.col}">
         <nav class="mn-tabs" aria-label="Вкладки меню">${MENU_TABS.map((t, i) => `<button data-tab="${i}" class="${i === this.tab ? 'on' : ''}" title="${t.name}" aria-label="${t.name}">${ICONS[t.id]}<small>${SHORT[t.id]}</small></button>`).join('')}</nav>
-        <div class="mn-head"><span class="mn-tabname">${esc(tab.name)}</span>${scr ? `<button class="mn-back" data-back>‹ ${esc(this.stack.length > 1 ? this.stack.at(-2).title : groups[this.group].name)}</button><b>${esc(scr.title)}</b>` : `<b>${this.group + 1}/${groups.length} ${esc(groups[this.group].name)}</b>`}${scr ? '' : `<span class="mn-mode" role="group" aria-label="Режим съемки: диск Фото/Видео/S&amp;Q" title="Диск Фото/Видео/S&amp;Q камеры. В режиме «Видео» открываются пункты видеосъемки; сам кадр симулятора не меняется."><button data-mmode="photo" class="${this.X.movie ? '' : 'on'}">Фото</button><button data-mmode="movie" class="${this.X.movie ? 'on' : ''}">Видео</button></span>`}</div>
+        <div class="mn-head"><span class="mn-tabname">${esc(tab.name)}</span>${scr ? `<button class="mn-back" data-back>‹ ${esc(this.stack.length > 1 ? this.stack.at(-2).title : groups[this.group].name)}</button><b>${esc(scr.title)}</b>` : `<b>${this.group + 1}/${groups.length} ${esc(groups[this.group].name)}</b>`}${scr ? '' : `<span class="mn-mode" role="group" aria-label="Режим съемки: диск Фото/Видео/S&amp;Q" title="Диск Фото/Видео/S&amp;Q камеры. В режиме «Видео» открываются пункты видеосъемки, а на экране — панель видео: частота кадров, выдержка, баланс белого, фокус, звук, кнопка REC."><button data-mmode="photo" class="${this.X.movie ? '' : 'on'}">Фото</button><button data-mmode="movie" class="${this.X.movie ? 'on' : ''}">Видео</button></span>`}</div>
         <div class="mn-groups" role="list">${groups.map((g, i) => `<button data-group="${i}" class="${i === this.group ? 'on' : ''}"><small>${i + 1}</small>${esc(g.name)}</button>`).join('')}</div>
         <div class="mn-list" role="list">${scr?.text ? `<p class="mn-text">${esc(scr.text)}</p>` : ''}${rows.length ? rows.map(rowHtml).join('') : '<p class="mn-text">Пусто. Добавьте пункты: «Добавить пункт» ниже или кнопка ☆ у любого пункта меню.</p>'}</div>
         <div class="mn-info" aria-live="polite">${this.rowInfo(rows[sel.row])}</div>

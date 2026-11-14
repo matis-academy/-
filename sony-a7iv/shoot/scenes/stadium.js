@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { rng, canvasTex, skyDome, makePerson, loopX } from './kit.js?v=2';
-import { kelvinRGB } from '../optics.js?v=3';
+import { kelvinRGB } from '../optics.js?v=4';
 
 // «Стадион», яркий полдень (≈ EV 15, «солнечные 16»). Бегун пересекает кадр по дорожке.
 export function build({ mobile = false } = {}) {
@@ -97,7 +97,7 @@ export function build({ mobile = false } = {}) {
 
   return {
     id: 'stadium', name: 'Стадион', about: 'Яркий полдень. Бегун мчится со скоростью ~29 км/ч: заморозить или передать движение?',
-    scene, solids, update, nominalEV: 15, lightK: 5600,
+    scene, solids, update, nominalEV: 15, lightK: 5600, audioDb: -24,
     rig: { target: new THREE.Vector3(0, 1.25, -11.4), back: new THREE.Vector3(0, 0, 1), height: 1.5, thirds: false },
     dists: [5, 6, 8, 10, 12, 15, 20, 25, 30, 40],
     defaults: { dist: 12, lensId: '70200', f: 100 },

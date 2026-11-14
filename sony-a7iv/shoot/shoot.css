@@ -411,3 +411,136 @@ h2 small { font-family: var(--font); text-transform: none; font-size: 12px; font
 .mission-list button.on { border-color: var(--accent); }
 .gallery button, .gallery img { border-radius: 10px; }
 .seg button:disabled { opacity: .35; cursor: not-allowed; }
+
+/* ===== Видео: экранная панель как на экране камеры (14.11.2026, Claude). Касание параметра — список значений внизу экрана. ===== */
+.vf.movie .vf-top, .vf.movie .vf-bottom { display: none; }
+.vid-ui { position: absolute; inset: 0; pointer-events: none; color: #fff; font: 600 13px/1.1 var(--font); text-shadow: 0 1px 2px rgba(0,0,0,.85); z-index: 3; }
+.vid-ui[hidden] { display: none; }
+.vd-chip { pointer-events: auto; border: 1px solid rgba(255,255,255,.18); background: rgba(10,9,8,.42); border-radius: 8px; color: #fff; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 9px 5px; text-shadow: inherit; backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+.vd-chip small { font: 600 9.5px/1 var(--font); color: rgba(255,255,255,.72); letter-spacing: .04em; text-transform: uppercase; }
+.vd-chip b { font: 700 15px/1.1 var(--font); white-space: nowrap; display: flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
+.vd-chip b svg { width: 16px; height: 16px; flex: none; }
+.vd-chip:hover { border-color: rgba(255,255,255,.45); }
+.vd-chip.on { border-color: var(--accent); background: rgba(253,126,47,.28); }
+.vd-top { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 12px; padding: 7px 10px; background: linear-gradient(rgba(0,0,0,.55), transparent); }
+.vd-mode { flex-direction: row; gap: 5px; padding: 3px 8px; }
+.vd-mode svg { width: 17px; height: 17px; }
+.vd-mode b { font-size: 14px; }
+.vd-rec { display: flex; align-items: center; gap: 5px; font-weight: 700; letter-spacing: .04em; }
+.vd-rec i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,.55); }
+.vd-rec.on { color: #ff4a3d; }
+.vd-rec.on i { background: #ff2d20; animation: blink 1s steps(2) infinite; }
+.vd-tc { font: 600 14px/1 ui-monospace, "SF Mono", Menlo, Consolas, monospace; letter-spacing: .02em; }
+.vd-fmt { color: rgba(255,255,255,.85); }
+.vd-flk { border: 1px solid rgba(122,212,138,.7); color: #bfe9c7; border-radius: 5px; padding: 2px 6px; font-size: 11.5px; }
+.vd-flk[hidden] { display: none; }
+.vd-flk.bad { border-color: var(--warn); color: #ffd59a; }
+.vd-aud { margin-left: auto; display: flex; flex-direction: column; gap: 3px; width: 128px; }
+.vd-aud[hidden] { display: none; }
+.vd-aud span { display: flex; align-items: center; gap: 5px; }
+.vd-aud em { font: 700 9px/1 var(--font); font-style: normal; color: rgba(255,255,255,.75); width: 6px; }
+/* шкала −48…0 дБ: метка −12 дБ — на 75 % */
+.vd-aud i { position: relative; flex: 1; height: 6px; border-radius: 2px; background: rgba(255,255,255,.16); overflow: hidden; }
+.vd-aud i::after { content: ''; position: absolute; left: 75%; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,.6); }
+.vd-aud s { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: linear-gradient(90deg, #e9e5df 0 75%, #ffd166 75% 94%, #ff4a3d 94%); background-size: 128px 100%; transition: width .05s linear; }
+.vd-aud u { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -2px; background: #fff; }
+.vd-aud span.clip u { background: #ff4a3d; }
+.vd-aud.off s, .vd-aud.off u { display: none; }
+.vd-left { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 7px; align-items: flex-start; }
+.vd-left .vd-chip { align-items: flex-start; min-width: 74px; }
+.vd-bottom { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; gap: 8px; padding: 22px 96px 10px 12px; background: linear-gradient(transparent, rgba(0,0,0,.55)); }
+.vd-bottom .vd-chip { min-width: 70px; }
+.vd-meter { position: absolute; left: 50%; bottom: 62px; transform: translateX(-50%); flex-direction: row; gap: 8px; padding: 4px 10px; }
+.vd-meter small { min-width: 34px; text-align: left; }
+.vd-meter b { font-size: 13px; min-width: 38px; }
+.vd-meter b.warn { color: var(--bad); }
+.vd-scale { position: relative; width: 170px; height: 16px; }
+/* шкала −5…+5: деление на каждую ступень, длинное — 0 */
+.vd-ticks { position: absolute; left: 0; right: 0; top: 6px; height: 6px;
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,.8) 0 1.5px, transparent 1.5px 10%); background-size: calc(100% + 1.5px) 100%; }
+.vd-ticks::before { content: ''; position: absolute; left: calc(50% - 1px); top: -4px; width: 2px; height: 12px; background: #fff; }
+.vd-ptr { position: absolute; top: -3px; width: 0; height: 0; margin-left: -5px; border: 5px solid transparent; border-top: 7px solid var(--accent); transition: left .2s; }
+.vd-ptr.over { animation: blink .8s steps(2) infinite; }
+/* список значений */
+.vd-pick { position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 6; pointer-events: auto; background: rgba(14,13,12,.94); border: 1px solid #4a443c; border-radius: 12px; padding: 7px 8px 8px; text-shadow: none; box-shadow: 0 8px 26px rgba(0,0,0,.5); }
+.vd-pick[hidden] { display: none; }
+.vd-ph { display: flex; align-items: center; gap: 10px; padding: 0 2px 6px; min-width: 0; }
+.vd-ph b { font-size: 13.5px; color: var(--accent); white-space: nowrap; }
+.vd-pn { flex: 1; min-width: 0; font: 500 12px/1.35 var(--font); color: #cfc6b8; }
+.vd-px { flex: none; width: 28px; height: 28px; border-radius: 7px; border: 0; background: rgba(255,255,255,.1); color: #fff; cursor: pointer; }
+.vd-pl { display: flex; gap: 5px; overflow-x: auto; scrollbar-width: none; padding-bottom: 1px; }
+.vd-pl::-webkit-scrollbar { display: none; }
+.vd-pl + .vd-pl { margin-top: 5px; }
+.vd-pl button { flex: none; border: 1px solid #39352e; background: #26231e; color: #f1ece2; border-radius: 8px; padding: 7px 11px; cursor: pointer; font: 600 13.5px/1.1 var(--font); display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.vd-pl button small { font-size: 9.5px; color: #a69985; font-weight: 600; }
+.vd-pl button:hover { border-color: #6b6255; }
+.vd-pl button.on { background: #f0eae2; color: #13110f; border-color: #f0eae2; }
+.vd-pl button.on small { color: #5b5247; }
+.vd-pick.locked .vd-pl button { opacity: .45; }
+.vd-pick.locked .vd-pl button.on { opacity: 1; }
+.vd-plock { display: flex; align-items: center; gap: 8px; margin-top: 6px; font: 500 12px/1.35 var(--font); color: #ffd59a; }
+.vd-plock[hidden] { display: none; }
+.vd-plock span { flex: 1; }
+.vd-plock button { flex: none; border: 0; border-radius: 8px; background: var(--accent); color: #151311; font: 700 12.5px/1 var(--font); padding: 8px 12px; cursor: pointer; }
+.vd-plock button[hidden] { display: none; }
+.vf.picking .vd-meter, .vf.picking .vd-bottom, .vf.picking .vf-shutter { visibility: hidden; }
+/* подсказка о касаниях в видео — выше экспонометра */
+.vf.movie .vf-hint { top: 30%; bottom: auto; }
+/* зона «Зонная фокус.» */
+.vf-zone { position: absolute; transform: translate(-50%, -50%); pointer-events: none; border: 1.5px dashed rgba(255,255,255,.55); border-radius: 4px; }
+.vf-zone[hidden] { display: none; }
+/* кнопка REC вместо спуска */
+.shutter.rec span { background: #e5322d; transition: transform .15s, border-radius .15s; }
+.shutter.rec.on span { transform: scale(.5); border-radius: 7px; }
+.shutter.rec.on { border-color: #ff4a3d; }
+/* диск Фото/Видео в ряду кнопок */
+.cam-bar .cb-pm { display: flex; flex: 1.7; min-width: 0; border: 1px solid #39352e; border-radius: 8px; overflow: hidden; background: #1c1a17; }
+.cam-bar .cb-pm button { flex: 1; height: 36px; border: 0; border-radius: 0; background: transparent; color: var(--muted); display: flex; align-items: center; justify-content: center; gap: 5px; padding: 0 6px; font-weight: 600; font-size: 12px; letter-spacing: 0; }
+.cam-bar .cb-pm button svg { width: 18px; height: 18px; flex: none; }
+.cam-bar .cb-pm button[aria-pressed="true"] { background: var(--accent); color: #151311; }
+.cam-bar .cb-pm button:hover:not([aria-pressed="true"]) { color: var(--text); background: #26231e; }
+.tile-wide { grid-column: 1 / -1; }
+.tile[hidden] { display: none; }
+.gallery button.clip::after { content: '▶'; position: absolute; left: 6px; top: 4px; font-size: 13px; color: #fff; text-shadow: 0 1px 3px #000; }
+.ph-img video { max-width: 100%; max-height: 88vh; display: block; background: #000; }
+.ph-img video[hidden], .ph-img img[hidden] { display: none; }
+@media (max-width: 860px) {
+  .vid-ui { font-size: 11px; }
+  .vd-top { gap: 7px; padding: 4px 6px; }
+  .vd-mode { padding: 2px 5px; } .vd-mode svg { width: 14px; height: 14px; } .vd-mode b { font-size: 12px; }
+  .vd-tc { font-size: 11.5px; }
+  .vd-fmt { display: none; }
+  .vd-flk { font-size: 10px; padding: 1px 4px; }
+  .vd-aud { width: 64px; gap: 2px; }
+  .vd-aud i { height: 4px; }
+  .vd-aud s { background-size: 64px 100%; }
+  .vd-chip { padding: 3px 6px 4px; border-radius: 7px; }
+  .vd-chip small { font-size: 8px; }
+  .vd-chip b { font-size: 12.5px; }
+  .vd-chip b svg { width: 13px; height: 13px; }
+  .vd-left { left: 6px; gap: 5px; top: 52%; }
+  .vd-left .vd-chip { min-width: 0; }
+  .vd-bottom { gap: 5px; padding: 14px 64px 6px 6px; }
+  .vd-bottom .vd-chip { min-width: 0; flex: 1; max-width: 72px; }
+  .vd-meter { bottom: 46px; padding: 2px 6px; gap: 5px; left: calc(50% - 26px); }
+  .vd-meter small { min-width: 0; }
+  .vd-meter b { font-size: 11px; min-width: 30px; }
+  .vd-scale { width: 104px; height: 13px; }
+  .vd-ticks { top: 5px; height: 4px; }
+  .vd-pick { left: 5px; right: 5px; bottom: 5px; padding: 5px 6px 6px; border-radius: 10px; }
+  .vd-ph { padding-bottom: 4px; gap: 6px; }
+  .vd-ph b { font-size: 12px; }
+  .vd-pn { font-size: 10.5px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .vd-px { width: 26px; height: 26px; }
+  .vd-pl button { padding: 6px 9px; font-size: 12.5px; }
+  .vd-plock { font-size: 10.5px; margin-top: 4px; }
+  .vd-plock button { padding: 7px 9px; font-size: 11.5px; }
+  .cam-bar { gap: 5px; }
+  .cam-bar .cb-pm { flex: none; }
+  .cam-bar .cb-pm button { padding: 0 8px; height: 34px; }
+  .cam-bar .cb-pm button[aria-pressed="false"] { display: none; }
+  .cam-bar .cb-why { white-space: nowrap; font-size: 11.5px; padding: 0 4px; flex: 1.8; }
+  .cam-bar .cb-pm button span { display: none; }
+  .ph-img video { max-height: 46dvh; }
+}

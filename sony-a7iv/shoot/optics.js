@@ -70,9 +70,10 @@ export function solveExposure(st, lens, sceneEV) {
   const isoAuto = mode === 'AUTO' || st.iso === 'AUTO';
   const ec = mode === 'AUTO' ? 0 : st.ec;
   const avMin = log2(lens.maxN ** 2), avMax = log2(lens.minN ** 2);
-  const tvMin = log2(1 / 30), tvMax = log2(8000);
-  // авто-ISO держит выдержку не длиннее 1/f (настройка «Мин. выдержка»: медленнее — 1/(f/2), быстрее — 1/(2f))
-  const tvHand = log2(lens.f * ({ slower: 0.25, slow: 0.5, fast: 2, faster: 4 }[st.autoMinSS] || 1));
+  // st.tMaxAuto (видео): самая длинная выдержка, которую камера выберет сама, — не длиннее кадра
+  const tvMin = log2(1 / (st.tMaxAuto || 30)), tvMax = log2(8000);
+  // авто-ISO держит выдержку не длиннее 1/f (настройка «Мин. выдержка»: медленнее — 1/(f/2), быстрее — 1/(2f)); в видео — не длиннее кадра
+  const tvHand = st.tMaxAuto ? tvMin : log2(lens.f * ({ slower: 0.25, slow: 0.5, fast: 2, faster: 4 }[st.autoMinSS] || 1));
   const isoMax = isoAuto ? log2(AUTO_ISO_MAX / 100) : 0;
   let isoS = isoAuto ? 0 : isoShift(st.iso);
   const need = () => sceneEV + isoS - ec;      // нужное av + tv

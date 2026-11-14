@@ -2,7 +2,7 @@
 // shot.A — разбор снимка (см. analyse в app.js), shot.st — настройки, shot.res — экспозиция,
 // shot.face — средняя яркость лица на снимке (0…1, sRGB) или null, если лица нет в кадре.
 // setup — стартовые настройки камеры: с них задачу ещё нужно решить.
-import * as O from './optics.js?v=3';
+import * as O from './optics.js?v=4';
 
 const faceOk = (s, lo = 0.33, hi = 0.72) => {
   if (s.face == null) return { ok: false, text: 'Лицо не попало в кадр.' };

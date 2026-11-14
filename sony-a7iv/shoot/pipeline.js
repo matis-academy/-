@@ -63,7 +63,7 @@ const MIX_FRAG = /* glsl */`
 const FINAL_FRAG = /* glsl */`
   varying vec2 vUv;
   uniform sampler2D tHDR;
-  uniform float uScale, uNoise, uChroma, uSeed, uVignette, uDro, uPeak, uZebra, uZebraHi;
+  uniform float uScale, uNoise, uChroma, uSeed, uVignette, uDro, uPeak, uZebra, uZebraHi, uFlk, uFlkPhase, uFlkBands;
   uniform int uLook;
   uniform vec3 uWB, uPeakColor;
   uniform vec2 uRes;
@@ -96,6 +96,8 @@ const FINAL_FRAG = /* glsl */`
   float dispLum(vec2 uv){ return dot(aces(expose(texture2D(tHDR, uv).rgb)), LUMA); }
   void main(){
     vec3 c = expose(texture2D(tHDR, vUv).rgb);
+    // Мерцание ламп (видео): строки матрицы считываются сверху вниз, каждая копит свет своего отрезка времени
+    if (uFlk != 0.0) c *= max(0.0, 1.0 + uFlk * cos(6.2831853 * (uFlkPhase + (1.0 - vUv.y) * uFlkBands)));
     vec2 p = vUv - 0.5;
     c *= 1.0 - uVignette * dot(p, p) * 2.2;
     vec2 q = floor(vUv * uRes) + uSeed;
@@ -180,7 +182,14 @@ export class Pipeline {
         tHDR: { value: null }, uScale: { value: 1 }, uNoise: { value: 0 }, uChroma: { value: 0 }, uSeed: { value: 0 }, uVignette: { value: 0 },
         uRes: { value: new THREE.Vector2() }, uWB: { value: new THREE.Vector3(1, 1, 1) }, uLook: { value: 0 }, uDro: { value: 0 },
         uPeak: { value: 0 }, uPeakColor: { value: new THREE.Vector3(1, 0.1, 0.1) }, uZebra: { value: 0 }, uZebraHi: { value: 9 },
+        uFlk: { value: 0 }, uFlkPhase: { value: 0 }, uFlkBands: { value: 0 },
       },
+    });
+    // копия HDR-кадра с множителем: подкадры видео складываются в один кадр (смаз за время выдержки)
+    this.copyMat = new THREE.ShaderMaterial({
+      vertexShader: VERT, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending, transparent: true,
+      fragmentShader: 'varying vec2 vUv; uniform sampler2D tSrc; uniform float uK; void main(){ gl_FragColor = vec4(texture2D(tSrc, vUv).rgb * uK, 1.0); }',
+      uniforms: { tSrc: { value: null }, uK: { value: 1 } },
     });
     this.meterMat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: METER_FRAG, depthTest: false, depthWrite: false,
@@ -190,6 +199,7 @@ export class Pipeline {
     this.mixQ = new FSQuad(this.mixMat);
     this.finalQ = new FSQuad(this.finalMat);
     this.meterQ = new FSQuad(this.meterMat);
+    this.copyQ = new FSQuad(this.copyMat);
     this.meterRT = new THREE.WebGLRenderTarget(METER_W, METER_H, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter });
     this.meterPx = new Uint8Array(METER_W * METER_H * 4);
     this.meterLog = new Float32Array(METER_W * METER_H);
@@ -199,7 +209,8 @@ export class Pipeline {
   setSize(w, h) {
     if (w === this.w && h === this.h) return;
     this.w = w; this.h = h;
-    for (const rt of [this.sceneRT, this.dofRT, this.mixRT]) rt?.dispose();
+    for (const rt of [this.sceneRT, this.dofRT, this.mixRT, this.vidRT]) rt?.dispose();
+    this.vidRT = null;
     this.sceneRT = hdrRT(w, h, true, 4);
     this.dofRT = hdrRT(Math.max(1, w >> 1), Math.max(1, h >> 1), false);
     this.mixRT = hdrRT(w, h, false);
@@ -248,6 +259,10 @@ export class Pipeline {
     if (p.peakColor) fu.uPeakColor.value.set(...p.peakColor);
     fu.uZebra.value = live && p.zebra ? p.zebra : 0;
     fu.uZebraHi.value = p.zebraHi ?? 9;
+    // мерцание: { amp — глубина пульсации за выдержку, phase — фаза сети в начале кадра, bands — полос на высоту кадра }
+    fu.uFlk.value = p.flk ? p.flk.amp : 0;
+    fu.uFlkPhase.value = p.flk ? p.flk.phase : 0;
+    fu.uFlkBands.value = p.flk ? p.flk.bands : 0;
     this.finalQ.render(this.r, target);
   }
 
@@ -255,6 +270,41 @@ export class Pipeline {
     this._optics(p, camera);
     this._sceneAndDof(scene, camera);
     this.mixQ.render(this.r, this.mixRT);
+    this.finalMat.uniforms.tHDR.value = this.mixRT.texture;
+    this._final(p, 1, null, true);
+  }
+
+  // Видео: кадр складывается из подкадров за время выдержки (смаз движения), глубина резкости — по сумме.
+  // step(k) ставит сцену и камеру в момент k-го подкадра.
+  renderVideo(scene, camera, p, { frames, step }) {
+    const r = this.r;
+    this._optics(p, camera);
+    if (frames <= 1) { step(0); return this.renderLive(scene, camera, p); }
+    if (!this.vidRT) this.vidRT = hdrRT(this.w, this.h, false);
+    const autoClear = r.autoClear, shadowAuto = r.shadowMap.autoUpdate;
+    r.setRenderTarget(this.vidRT);
+    r.setClearColor(0x000000, 0);
+    r.clear();
+    r.setClearColor(0x000000, 1);
+    r.autoClear = false;
+    this.copyMat.uniforms.tSrc.value = this.sceneRT.texture;
+    this.copyMat.uniforms.uK.value = 1 / frames;
+    for (let k = 0; k < frames; k++) {
+      step(k);
+      if (k === 1) r.shadowMap.autoUpdate = false;     // тени — по первому подкадру (экономия на телефоне)
+      r.setRenderTarget(this.sceneRT);
+      r.clear();
+      r.render(scene, camera);
+      this.copyQ.render(r, this.vidRT);
+    }
+    r.shadowMap.autoUpdate = shadowAuto;
+    r.autoClear = autoClear;
+    this.cocUniforms.tDepth.value = this.sceneRT.depthTexture;
+    this.dofMat.uniforms.tColor.value = this.vidRT.texture;
+    this.dofQ.render(r, this.dofRT);
+    this.mixMat.uniforms.tSharp.value = this.vidRT.texture;
+    this.mixMat.uniforms.tBlur.value = this.dofRT.texture;
+    this.mixQ.render(r, this.mixRT);
     this.finalMat.uniforms.tHDR.value = this.mixRT.texture;
     this._final(p, 1, null, true);
   }

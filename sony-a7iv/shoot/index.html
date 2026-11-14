@@ -6,7 +6,7 @@
   <title>Симулятор съёмки α7 IV</title>
   <meta name="description" content="Учебный симулятор съёмки на Sony α7 IV: экспозиция, глубина резкости, фокусное расстояние, смаз, замер и баланс белого считаются по законам оптики.">
   <link rel="icon" href="/favicon.ico?v=1" sizes="48x48"><link rel="icon" type="image/png" sizes="32x32" href="/wp-content/uploads/matis-favicon/favicon-32.png?v=1"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=1">
-  <link rel="stylesheet" href="shoot.css?v=9">
+  <link rel="stylesheet" href="shoot.css?v=10">
   <script type="importmap">
     { "imports": { "three": "../vendor/three.module.min.js" } }
   </script>
@@ -47,7 +47,9 @@
               <span id="oIso" class="vf-v">ISO 100</span>
             </div>
           </div>
+          <div class="vid-ui" id="vidUi" hidden></div>
           <div class="vf-mask" id="vfMask" hidden></div>
+          <div class="vf-zone" id="oZone" hidden></div>
           <div class="vf-spot" id="oSpot" hidden></div>
           <div class="vf-focus" id="oFocus"></div>
           <div class="vf-flash" id="vfFlash"></div>
@@ -59,6 +61,10 @@
           <div class="cam-menu" id="camMenu" hidden></div>
         </div>
         <div class="cam-bar" role="toolbar" aria-label="Кнопки камеры">
+          <span class="cb-pm" role="group" aria-label="Диск Фото/Видео">
+            <button data-pm="photo" aria-pressed="true" title="Фото"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.4"/></svg><span>Фото</span></button>
+            <button data-pm="movie" aria-pressed="false" title="Видео"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 11l5-3v8l-5-3z"/></svg><span>Видео</span></button>
+          </span>
           <button id="bMenu" title="Меню камеры">MENU</button>
           <button id="bFn" title="Быстрое меню">Fn</button>
           <button id="bAel" aria-pressed="false" title="Фиксация экспозиции">AEL</button>
@@ -77,6 +83,7 @@
           <article class="tile" id="tBlur"><h3>Смаз</h3><div class="big"></div><p></p></article>
           <article class="tile" id="tNoise"><h3>Шум</h3><div class="big"></div><p></p></article>
           <article class="tile" id="tWb"><h3>Цвет света</h3><div class="big"></div><p></p></article>
+          <article class="tile tile-wide" id="tVid" hidden><h3>Свет и мерцание</h3><div class="big"></div><p></p></article>
         </div>
         <div class="dofbar" id="dofBar" aria-label="Шкала глубины резкости">
           <div class="dof-zone" id="dofZone"></div>
@@ -149,7 +156,7 @@
 
   <dialog id="photo" class="photo">
     <div class="ph-inner">
-      <div class="ph-img"><img id="phImg" alt="Снимок"></div>
+      <div class="ph-img"><img id="phImg" alt="Снимок"><video id="phVid" controls playsinline loop hidden></video></div>
       <div class="ph-side">
         <div class="ph-exif" id="phExif"></div>
         <div id="phMission"></div>
@@ -165,6 +172,6 @@
   </dialog>
 
   <div class="loading" id="loading">Готовлю сцену…</div>
-  <script type="module" src="app.js?v=9"></script>
+  <script type="module" src="app.js?v=10"></script>
 </body>
 </html>
