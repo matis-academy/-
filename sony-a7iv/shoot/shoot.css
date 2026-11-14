@@ -545,3 +545,7 @@ h2 small { font-family: var(--font); text-transform: none; font-size: 12px; font
   .cam-bar .cb-pm button span { display: none; }
   .ph-img video { max-height: 46dvh; }
 }
+@media (max-width: 370px) {
+  .cam-bar button { font-size: 11px; letter-spacing: 0; }
+  .cam-bar .cb-why { font-size: 10.5px; }
+}
