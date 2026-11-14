@@ -676,7 +676,7 @@ const vidShutters = () => VID_T.filter((t) => S.fps < 100 || t <= 1 / S.fps + 1e
 // выдержка длиннее кадра: камера повторяет кадр — картинка обновляется реже
 const vidInterval = () => Math.max(1, Math.ceil(R.t * S.fps - 1e-6)) / S.fps;
 const tcBase = (f) => (f === 24 ? 24 : fpsSystem(f) === 'PAL' ? 25 : 30);
-const V = { last: -1, rec: false, recT0: 0, tc: 0, dur: 0, recorder: null, chunks: [], type: '', thumb: null, thumbWant: false, track: null,
+const V = { last: -1, rec: false, recT0: 0, tc: 0, rs: null,
   flk: null, flkMax: 0, aud: [-60, -60], peak: [-60, -60], peakT: [0, 0], nz: [0, 0], pick: null };
 
 // Мерцание ламп от сети 50 Гц: свет пульсирует 100 раз в секунду. Каждая строка матрицы копит свет за выдержку t;
@@ -724,10 +724,11 @@ function renderVideoFrame(tf) {
       placeCamera();
     },
   });
-  if (V.rec) {
-    V.flkMax = Math.max(V.flkMax, Math.abs(p.flk?.amp || 0));
-    V.track?.requestFrame?.();
-    if (V.thumbWant) { V.thumbWant = false; try { V.thumb = canvas.toDataURL('image/jpeg', 0.8); } catch (e) { V.thumb = null; } }
+  const rs = V.rs;
+  if (V.rec && rs) {
+    rs.flkMax = Math.max(rs.flkMax, Math.abs(p.flk?.amp || 0));
+    rs.track?.requestFrame?.();
+    if (rs.thumbWant) { rs.thumbWant = false; try { rs.thumb = canvas.toDataURL('image/jpeg', 0.8); } catch (e) { rs.thumb = null; } }
   }
 }
 
@@ -926,44 +927,48 @@ function vidTick(now, dt) {
 }
 
 // ── запись: REC — кадры с экрана пишутся в видеофайл (если браузер умеет) ──
+// У каждой записи свой объект rs: быстрый стоп-старт не смешивает кадры и настройки двух роликов
 function recToggle() {
   if (!isMovie() || menu.open) return;
   if (V.rec) { recStop(); return; }
   if (V.pick) openPick(null);
-  V.rec = true; V.recT0 = performance.now(); V.flkMax = 0; V.thumbWant = true; V.thumb = null; V.chunks = []; V.recorder = null;
+  const rs = { t0: performance.now(), chunks: [], type: '', recorder: null, track: null, thumb: null, thumbWant: true, flkMax: 0 };
   try {
     const types = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
-    V.type = window.MediaRecorder ? types.find((x) => MediaRecorder.isTypeSupported?.(x)) || '' : '';
-    if (V.type && canvas.captureStream) {
+    rs.type = window.MediaRecorder ? types.find((x) => MediaRecorder.isTypeSupported?.(x)) || '' : '';
+    if (rs.type && canvas.captureStream) {
       const stream = canvas.captureStream(0);
-      V.track = stream.getVideoTracks()[0];
-      V.recorder = new MediaRecorder(stream, { mimeType: V.type, videoBitsPerSecond: mobile ? 6e6 : 12e6 });
-      V.recorder.ondataavailable = (e) => { if (e.data.size) V.chunks.push(e.data); };
-      V.recorder.onstop = saveClip;
-      V.recorder.start(1000);
+      rs.track = stream.getVideoTracks()[0];
+      rs.recorder = new MediaRecorder(stream, { mimeType: rs.type, videoBitsPerSecond: mobile ? 6e6 : 12e6 });
+      rs.recorder.ondataavailable = (e) => { if (e.data.size) rs.chunks.push(e.data); };
+      rs.recorder.onstop = () => { rs.track?.stop?.(); saveClip(rs); };
+      rs.recorder.start(1000);
     }
-  } catch (e) { V.recorder = null; }
-  V.last = -1;
+  } catch (e) { rs.recorder = null; }
+  V.rs = rs; V.rec = true; V.recT0 = rs.t0; V.last = -1;
   update();
 }
 function recStop() {
-  if (!V.rec) return;
-  V.rec = false;
-  V.dur = (performance.now() - V.recT0) / 1000;
-  V.tc += V.dur;
-  V.track = null;
-  if (V.recorder && V.recorder.state !== 'inactive') V.recorder.stop(); else saveClip();
+  const rs = V.rs;
+  if (!V.rec || !rs) return;
+  V.rec = false; V.rs = null;
+  // настройки ролика — на момент остановки
+  rs.dur = (performance.now() - rs.t0) / 1000;
+  rs.st = { ...S }; rs.res = { ...R }; rs.focus = focusTarget;
+  rs.scene = { id: SC.id, mains: SC.mains, mainsName: SC.mainsName };
+  rs.A = analyse(rs.st, rs.res, focusTarget);
+  V.tc += rs.dur;
+  if (rs.recorder && rs.recorder.state !== 'inactive') rs.recorder.stop(); else saveClip(rs);
   update();
 }
-function saveClip() {
-  const blob = V.chunks.length ? new Blob(V.chunks, { type: V.type.split(';')[0] }) : null;
-  V.chunks = []; V.recorder = null;
-  const st = { ...S }, res = { ...R };
-  const clip = { kind: 'clip', url: V.thumb || '', video: blob ? URL.createObjectURL(blob) : null, ext: V.type.includes('mp4') ? 'mp4' : 'webm',
-    st, res, dur: V.dur, flk: V.flkMax, mains: SC.mains, mainsName: SC.mainsName, sceneId: SC.id, A: analyse(st, res, focusTarget), focus: focusTarget, n: shots.length + 1 };
+function saveClip(rs) {
+  const blob = rs.chunks.length ? new Blob(rs.chunks, { type: rs.type.split(';')[0] }) : null;
+  rs.chunks = [];
+  const clip = { kind: 'clip', url: rs.thumb || '', video: blob ? URL.createObjectURL(blob) : null, ext: rs.type.includes('mp4') ? 'mp4' : 'webm',
+    st: rs.st, res: rs.res, dur: rs.dur, flk: rs.flkMax, mains: rs.scene.mains, mainsName: rs.scene.mainsName, sceneId: rs.scene.id, A: rs.A, focus: rs.focus, n: shots.length + 1 };
   shots.unshift(clip);
   renderGallery();
-  toast(blob ? `Видео ${fmtDur(V.dur)} сохранено — в «Снимки»` : 'Запись остановлена. Этот браузер не умеет сохранять видео с экрана — файл не создан.');
+  toast(blob ? `Видео ${fmtDur(rs.dur)} сохранено — в «Снимки»` : 'Запись остановлена. Этот браузер не умеет сохранять видео с экрана — файл не создан.');
 }
 const fmtDur = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
