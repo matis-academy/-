@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import * as O from './optics.js?v=4';
 import { LENSES, lensById } from './lenses.js?v=2';
 import { Pipeline, METER_W, METER_H } from './pipeline.js?v=5';
-import { CameraMenu } from './menu.js?v=9';
+import { CameraMenu } from './menu.js?v=10';
 import { MISSIONS, missionById } from './tasks.js?v=4';
 import { Tour } from './tour.js?v=1';
 import * as Park from './scenes/park.js?v=4';
@@ -111,6 +111,7 @@ function disposeScene(sc) {
 }
 
 function loadScene(id, { keep = true } = {}) {
+  if (typeof V !== 'undefined' && V.rec) recStop();        // ролик — одна сцена: смена сцены завершает запись
   if (SC) disposeScene(SC);
   SC = SCENES[id].build({ mobile });
   SC.scene.updateMatrixWorld(true);       // координаты нужны лучам автофокуса ещё до первого кадра
@@ -590,9 +591,12 @@ const menu = new CameraMenu($('camMenu'), {
   snapshot: () => JSON.parse(JSON.stringify(Object.fromEntries(Object.keys(DEFAULTS).map((k) => [k, S[k]])))),
   set: (k, v) => setKey(k, v),
   refresh: () => update(),
+  recording: () => V.rec,
+  stopRec: () => recStop(),
   act: (a, arg) => {
     if (a === 'gallery') { menu.close(); if (shots.length) openPhoto(0); else toast('Снимков пока нет'); }
     if (a === 'clear' || a === 'clearOld') { shots.slice(a === 'clear' ? 0 : 1).forEach((x) => x.video && URL.revokeObjectURL(x.video)); shots.length = a === 'clear' ? 0 : Math.min(1, shots.length); renderGallery(); menu.render(); toast(a === 'clear' ? 'Все снимки удалены' : 'Оставлен последний снимок'); }
+    if (['recall', 'reset', 'init'].includes(a)) recStop();      // запись заканчивается до массовой смены настроек
     if (a === 'recall' && arg) {      // Вызов настр.кам.: настройки, сохранённые в «Регис. настр.кам.»
       Object.assign(S, arg); lockedEV = null; trackRoot = null; touchTrack = false;
       menu.close(); acquireFocus(true); toast('Настройки камеры вызваны');
@@ -692,6 +696,12 @@ function flickerAt(tf, t) {
   if (Math.abs(amp) < 0.006) return null;
   return { amp, phase: (((f * (tf + t / 2)) % 1) + 1) % 1, bands: f * READOUT };
 }
+// Совет под фонарями 50 Гц: выдержка, кратная 1/100, которую можно поставить при этой частоте кадров
+function flkAdvice(fps = S.fps) {
+  if (fps >= 120) return 'при 120p кратной 1/100 выдержки нет (длиннее 1/125 нельзя) — перейдите на 100p и поставьте 1/100';
+  if (fps === 100) return 'поставьте 1/100';
+  return 'поставьте 1/50 или 1/100';
+}
 const flickerAmp = (t = R.t) => (SC?.mains ? Math.abs(MAINS_DEPTH * Math.sin(Math.PI * 2 * SC.mains * t) / (Math.PI * 2 * SC.mains * t)) : 0);
 
 // Сколько подкадров нужно, чтобы смаз за выдержку был сплошным (не «двоился»)
@@ -767,7 +777,7 @@ const PICK = {
     note: () => (S.fps >= 100 ? 'Экран показывает до 60 кадров в секунду — 100p/120p нужны для замедления в монтаже.' : 'Смотрите на движущиеся объекты: меньше кадров — движение «шагает».'),
     lock: () => (V.rec ? ['Во время записи частоту кадров не изменить.', null] : null) },
   t: { title: 'Выдержка', opts: () => vidShutters().map((t) => [t, O.fmtShutter(t)]), cur: () => R.t, set: (v) => { S.t = v; onChange(); },
-    note: () => (SC.mains ? 'Под фонарями (сеть 50 Гц) без полос — 1/50 или 1/100.' : 'Длиннее — мягкий смаз движения, короче — чёткие «рваные» фазы.'),
+    note: () => (SC.mains ? `Под фонарями (сеть 50 Гц) без полос: ${flkAdvice()}.` : 'Длиннее — мягкий смаз движения, короче — чёткие «рваные» фазы.'),
     lock: () => (S.mode === 'S' || S.mode === 'M' ? null : [`В режиме ${modeName(S.mode)} выдержку подбирает камера.`, 'mode', 'S', 'Режим S']) },
   N: { title: 'Диафрагма', opts: () => apertureList().map((n) => [n, O.fmtF(n)]), cur: () => R.N, set: (v) => { S.N = v; onChange(); },
     note: () => 'Меньше число F — больше света и сильнее размыт фон.',
@@ -825,7 +835,8 @@ function renderVid() {
   $('vMode').textContent = modeName(S.mode);
   $('vRec').classList.toggle('on', V.rec);
   $('vRec').querySelector('b').textContent = V.rec ? 'REC' : 'STBY';
-  $('vFmt').textContent = `${S.fps >= 100 ? 'HD' : '4K'} ${S.fps}p`;
+  // «Формат файла» из MENU (по умолчанию XAVC S HD); 100p/120p — только HD
+  $('vFmt').textContent = `${/4K/.test(menu.X.vals.shoot0_8 || 'XAVC S HD') && S.fps < 100 ? '4K' : 'HD'} ${S.fps}p`;
   $('vFm').textContent = S.fm;
   $('vArea').innerHTML = `${areaIco(S.area)}${AREA_SHORT[S.area] || S.area}`;
   $('vWb').textContent = S.wb === 'K' ? `${S.wbK}K` : WB_SHORT[S.wb] || S.wb;
@@ -867,7 +878,9 @@ function openPick(id) {
     const P2 = PICK[V.pick], lk = P2.lock?.();
     if (lk) { toast(lk[0]); return; }
     const rr = row.dataset.row === '2' ? P2.row2() : null;
-    const [v] = (rr ? rr.opts : P2.opts())[+b.dataset.i];
+    const opt = (rr ? rr.opts : P2.opts())[+b.dataset.i];
+    if (!opt) { openPick(V.pick); return; }
+    const [v] = opt;
     (rr ? rr.set : P2.set)(v);
     if (P2.row2 && !rr) openPick(V.pick); else refreshPick();
   }));
@@ -887,6 +900,10 @@ function refreshPick(scroll = false) {
   const lb = el.querySelector('.vd-plock');
   lb.hidden = !lk;
   if (lk) { lb.querySelector('span').textContent = lk[0]; lb.querySelector('button').hidden = !lk[1]; lb.querySelector('button').textContent = lk[3] || ''; }
+  // состав значений поменялся (например, 120p сократил ряд выдержек) — список перестраивается
+  const r2n = P.row2?.();
+  if (el.querySelector('[data-row="1"]').children.length !== P.opts().length || !!el.querySelector('[data-row="2"]') !== !!r2n
+    || (r2n && el.querySelector('[data-row="2"]').children.length !== r2n.opts.length)) { openPick(V.pick); return; }
   const mark = (row, opts, cur) => {
     if (!row) return;
     let on = null;
@@ -944,7 +961,7 @@ function recToggle() {
       rs.recorder.onstop = () => { rs.track?.stop?.(); saveClip(rs); };
       rs.recorder.start(1000);
     }
-  } catch (e) { rs.recorder = null; }
+  } catch (e) { rs.track?.stop?.(); rs.track = null; rs.recorder = null; }
   V.rs = rs; V.rec = true; V.recT0 = rs.t0; V.last = -1;
   update();
 }
@@ -958,7 +975,7 @@ function recStop() {
   rs.scene = { id: SC.id, mains: SC.mains, mainsName: SC.mainsName };
   rs.A = analyse(rs.st, rs.res, focusTarget);
   V.tc += rs.dur;
-  if (rs.recorder && rs.recorder.state !== 'inactive') rs.recorder.stop(); else saveClip(rs);
+  if (rs.recorder && rs.recorder.state !== 'inactive') rs.recorder.stop(); else { rs.track?.stop?.(); saveClip(rs); }
   update();
 }
 function saveClip(rs) {
@@ -996,7 +1013,7 @@ function explainVideo(A) {
   const src = SC.mainsName[0].toUpperCase() + SC.mainsName.slice(1);
   if (a <= 0.006) setTile('tVid', 'ok tile-wide', 'Без мерцания', `${src} питаются от сети 50 Гц и мигают 100 раз в секунду. Выдержка ${O.fmtShutter(t)} кратна 1/100: каждая строка кадра собирает целое число вспышек — яркость ровная.`);
   else setTile('tVid', a > 0.12 ? 'bad tile-wide' : 'warn tile-wide', `Мерцание: ${rolling ? 'полосы ползут' : 'полосы стоят'}`,
-    `${src} мигают 100 раз в секунду (сеть 50 Гц). Выдержка ${O.fmtShutter(t)} не кратна 1/100 — строки кадра получают разный свет, по кадру идут полосы${rolling ? `, а при ${fps}p они ещё и ползут` : ''}. Поставьте 1/50 или 1/100${fpsSystem(fps) === 'NTSC' ? ` или перейдите на ${{ 24: 25, 30: 25, 60: 50, 120: 100 }[fps]}p` : ''}.`);
+    `${src} мигают 100 раз в секунду (сеть 50 Гц). Выдержка ${O.fmtShutter(t)} не кратна 1/100 — строки кадра получают разный свет, по кадру идут полосы${rolling ? `, а при ${fps}p они ещё и ползут (при 25p/50p полосы стоят на месте, но не исчезают)` : ''}. Чтобы полос не было, ${flkAdvice(fps)}.`);
 }
 
 chipHtml();
@@ -1191,6 +1208,8 @@ function renderMissions() {
   setMissionsOpen(missionsOpen);
 }
 function startMission(id) {
+  recStop();
+  if (isMovie()) { openPick(null); menu.setMovie(false); }     // задания — фотосъёмка: диск переходит в «Фото»
   activeMission = id;
   const ms = missionById(id);
   Object.assign(S, DEFAULTS);
@@ -1218,11 +1237,12 @@ function notesForClip(s) {
   const n = [], A = s.A, fps = s.st.fps, t = s.res.t;
   const target = s.st.mode === 'M' && !s.res.isoAuto ? 0 : s.res.ec;
   n.push([Math.abs(s.res.offset - target) < 0.34 ? 'ok' : Math.abs(s.res.offset) < 1.5 ? 'warn' : 'bad', Math.abs(s.res.offset - target) < 0.34 ? 'Экспозиция по замеру в норме.' : `Видео ${s.res.offset > 0 ? 'светлее' : 'темнее'} замера на ${Math.abs(s.res.offset).toFixed(1).replace('.', ',')} EV.`]);
-  if (s.mains) n.push(s.flk > 0.006 ? ['bad', `Мерцание: ${s.mainsName} мигают 100 раз в секунду, а выдержка ${O.fmtShutter(t)} не кратна 1/100 — по кадру шли полосы. Нужна 1/50 или 1/100.`] : ['ok', `Без мерцания: выдержка ${O.fmtShutter(t)} кратна 1/100.`]);
+  if (s.mains) n.push(s.flk > 0.006 ? ['bad', `Мерцание: ${s.mainsName} мигают 100 раз в секунду, а выдержка ${O.fmtShutter(t)} не кратна 1/100 — по кадру шли полосы. Чтобы их не было, ${flkAdvice(s.st.fps)}.`] : ['ok', `Без мерцания: выдержка ${O.fmtShutter(t)} кратна 1/100.`]);
   const m = A.movers.filter((x) => x.inFrame).sort((a, b) => b.motion - a.motion)[0];
   if (m) n.push(t * fps < 0.2 && m.motion > 0.5 ? ['warn', `${m.name[0].toUpperCase() + m.name.slice(1)} при ${O.fmtShutter(t)} резкий в каждом кадре — движение «рваное». Для плавности выдержку делают длиннее, например 1/${fps >= 50 ? 100 : 50}.`] : ['ok', `${fps}p, ${O.fmtShutter(t)}: движение ${m.motion > 2 ? 'с лёгким смазом, плавное' : 'чёткое'}.`]);
   n.push([A.subjSharp ? 'ok' : 'bad', A.subjSharp ? `${A.subjName[0].toUpperCase() + A.subjName.slice(1)} в фокусе.` : `${A.subjName[0].toUpperCase() + A.subjName.slice(1)} вне зоны резкости.`]);
   if (s.res.iso > 6400) n.push(['warn', `ISO ${s.res.iso}: шум заметен.`]);
+  if (fps >= 100) n.push(['warn', `Файл тренажёра записан с экрана — в нём не больше 60 кадров в секунду, замедлить его не получится. На камере ${fps}p дают запас для замедления в монтаже.`]);
   return n;
 }
 function notesFor(s) {
@@ -1258,7 +1278,7 @@ function openPhoto(i) {
   $('phDl').href = clip ? s.video || '' : s.url;
   $('phDl').download = clip ? `a7iv_C${String(s.n).padStart(4, '0')}.${s.ext}` : `a7iv_${String(s.n).padStart(3, '0')}.jpg`;
   if (clip) {
-    $('phExif').innerHTML = `<b>Видео ${s.n}</b> · ${fmtDur(s.dur)}<br>${lensById(s.st.lensId).name}<br>${s.st.fps >= 100 ? 'HD' : '4K'} ${s.st.fps}p · ${O.fmtShutter(s.res.t)} · ${O.fmtF(s.res.N)} · ISO ${s.res.iso} · ${modeName(s.st.mode)}<br>ББ ${WB_TAG[s.st.wb] ? `${WB_TAG[s.st.wb]} ` : ''}${s.A.wbK} K · фокус ${O.fmtDist(s.focus)}`;
+    $('phExif').innerHTML = `<b>Видео ${s.n}</b> · ${fmtDur(s.dur)}<br>${lensById(s.st.lensId).name}<br>${s.st.fps}p · ${O.fmtShutter(s.res.t)} · ${O.fmtF(s.res.N)} · ISO ${s.res.iso} · ${modeName(s.st.mode)}<br>ББ ${WB_TAG[s.st.wb] ? `${WB_TAG[s.st.wb]} ` : ''}${s.A.wbK} K · фокус ${O.fmtDist(s.focus)}`;
     $('phMission').innerHTML = '';
     $('phNotes').innerHTML = notesFor(s).map(([c, t]) => `<li class="${c}">${t}</li>`).join('');
     if (s.url) drawHist(s.url);
