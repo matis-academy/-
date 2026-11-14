@@ -536,11 +536,12 @@ h2 small { font-family: var(--font); text-transform: none; font-size: 12px; font
   .vd-pl button { padding: 6px 9px; font-size: 12.5px; }
   .vd-plock { font-size: 10.5px; margin-top: 4px; }
   .vd-plock button { padding: 7px 9px; font-size: 11.5px; }
-  .cam-bar { gap: 5px; }
+  .cam-bar { gap: 4px; padding: 6px; }
+  .cam-bar button { padding: 0 2px; }
   .cam-bar .cb-pm { flex: none; }
   .cam-bar .cb-pm button { padding: 0 8px; height: 34px; }
   .cam-bar .cb-pm button[aria-pressed="false"] { display: none; }
-  .cam-bar .cb-why { white-space: nowrap; font-size: 11.5px; padding: 0 4px; flex: 1.8; }
+  .cam-bar .cb-why { white-space: nowrap; font-size: 11px; letter-spacing: -.01em; padding: 0 4px; flex: 2.1; }
   .cam-bar .cb-pm button span { display: none; }
   .ph-img video { max-height: 46dvh; }
 }
