@@ -592,14 +592,14 @@ const menu = new CameraMenu($('camMenu'), {
   refresh: () => update(),
   act: (a, arg) => {
     if (a === 'gallery') { menu.close(); if (shots.length) openPhoto(0); else toast('Снимков пока нет'); }
-    if (a === 'clear' || a === 'clearOld') { shots.length = a === 'clear' ? 0 : Math.min(1, shots.length); renderGallery(); menu.render(); toast(a === 'clear' ? 'Все снимки удалены' : 'Оставлен последний снимок'); }
+    if (a === 'clear' || a === 'clearOld') { shots.slice(a === 'clear' ? 0 : 1).forEach((x) => x.video && URL.revokeObjectURL(x.video)); shots.length = a === 'clear' ? 0 : Math.min(1, shots.length); renderGallery(); menu.render(); toast(a === 'clear' ? 'Все снимки удалены' : 'Оставлен последний снимок'); }
     if (a === 'recall' && arg) {      // Вызов настр.кам.: настройки, сохранённые в «Регис. настр.кам.»
       Object.assign(S, arg); lockedEV = null; trackRoot = null; touchTrack = false;
       menu.close(); acquireFocus(true); toast('Настройки камеры вызваны');
     }
     if (a === 'reset' || a === 'init') {
       Object.assign(S, DEFAULTS); S.lensId = SC.defaults.lensId; S.f = SC.defaults.f; lockedEV = null; trackRoot = null; touchTrack = false;
-      if (a === 'init') { Object.assign(S, VIEW_DEFAULTS); shots.length = 0; renderGallery(); }
+      if (a === 'init') { Object.assign(S, VIEW_DEFAULTS); shots.forEach((x) => x.video && URL.revokeObjectURL(x.video)); shots.length = 0; renderGallery(); }
       menu.resetStore(a === 'init');
       menu.close(); acquireFocus(true); toast(a === 'init' ? 'Камера инициализирована' : 'Настройки камеры сброшены');
     }
@@ -809,6 +809,9 @@ function chipHtml() {
 
 function renderVid() {
   const mv = isMovie();
+  if (!mv && V.rec) recStop();                    // диск переведён в «Фото» (в т. ч. из MENU или сбросом) — запись останавливается
+  // система NTSC/PAL следует за частотой кадров (после сброса настроек, заданий, вызова настроек)
+  if (menu.X.vals.setup0_2 && menu.X.vals.setup0_2 !== fpsSystem(S.fps) && !V.rec) { menu.X.vals.setup0_2 = fpsSystem(S.fps); menu.save(); }
   vf.classList.toggle('movie', mv);
   $('vidUi').hidden = !mv || S.disp === 'none';
   $('shutter').classList.toggle('rec', mv);
